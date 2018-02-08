@@ -1,0 +1,27 @@
+From b760bfdbc737c49bbe47c6eee1143a20b113ae13 Mon Sep 17 00:00:00 2001
+From: Jay Young <yangjian@patsnap.com>
+Date: Wed, 22 Nov 2017 16:56:52 +0800
+Subject: [PATCH 4/4] Add dependenctyy to tensorflow/python/keras/BUILD
+
+---
+ tensorflow/python/keras/BUILD | 1 +
+ 1 file changed, 1 insertion(+)
+ mode change 100644 => 100755 tensorflow/python/keras/BUILD
+
+diff --git a/tensorflow/python/keras/BUILD b/tensorflow/python/keras/BUILD
+old mode 100644
+new mode 100755
+index f1266cdf9e..de8667893d
+--- a/tensorflow/python/keras/BUILD
++++ b/tensorflow/python/keras/BUILD
+@@ -145,6 +145,7 @@ py_library(
+         "//tensorflow/python:variables",
+         "//tensorflow/python/estimator",
+         "//tensorflow/python/estimator:model_fn",
++        "//tensorflow/python/saved_model",
+         "@six_archive//:six",
+     ],
+ )
+-- 
+2.15.1
+

@@ -1,0 +1,31 @@
+From a4210e65fe7e2f9d0e5bd0f07c9a8a704666fa45 Mon Sep 17 00:00:00 2001
+From: Marcio Dos Santos <mvs@amazon.com>
+Date: Tue, 23 Jan 2018 09:20:58 -0800
+Subject: [PATCH 2/4] update AWS SDK version to be compatible with ECS
+
+---
+ tensorflow/workspace.bzl | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tensorflow/workspace.bzl b/tensorflow/workspace.bzl
+index 53a75fda14..1efb38d400 100644
+--- a/tensorflow/workspace.bzl
++++ b/tensorflow/workspace.bzl
+@@ -652,11 +652,11 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
+   temp_workaround_http_archive(
+       name = "aws",
+       urls = [
+-          "http://bazel-mirror.storage.googleapis.com/github.com/aws/aws-sdk-cpp/archive/1.0.90.tar.gz",
++          "https://github.com/aws/aws-sdk-cpp/archive/1.2.3.tar.gz",
+           # "https://github.com/aws/aws-sdk-cpp/archive/1.0.90.tar.gz",
+       ],
+-      sha256 = "f599b57aec4f03ad696044dd430b2d201864113937353adc346f53ad47991319",
+-      strip_prefix = "aws-sdk-cpp-1.0.90",
++      sha256 = "39d7b2960325b97d6e9c13f3edda0db7ce155fa3c92ac7263cfeb1388372ed2a",
++      strip_prefix = "aws-sdk-cpp-1.2.3",
+       build_file = str(Label("//third_party:aws.BUILD")),
+   )
+ 
+-- 
+2.15.1
+
