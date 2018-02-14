@@ -113,7 +113,11 @@ RUN git clone --recurse-submodules https://github.com/tensorflow/serving && \
   git checkout
 
 # Configure Tensorflow to use the GPU
-RUN cd /serving/tensorflow && tensorflow/tools/ci_build/builds/configured GPU
+RUN cd /serving && \
+    git clone --recursive https://github.com/tensorflow/tensorflow.git && \
+    cd tensorflow && \
+    git checkout v1.4.0 && \
+    tensorflow/tools/ci_build/builds/configured GPU
 
 # Build TensorFlow Serving and Install it in /usr/local/bin
 WORKDIR /serving
