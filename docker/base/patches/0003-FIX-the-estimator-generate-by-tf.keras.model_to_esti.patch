@@ -1,0 +1,70 @@
+From 985395ee4cf1323e67da9cc9cce4a037d5b03294 Mon Sep 17 00:00:00 2001
+From: Jay Young <yangjian@patsnap.com>
+Date: Wed, 8 Nov 2017 16:22:59 +0800
+Subject: [PATCH 3/4] [FIX]the estimator generate by
+ tf.keras.model_to_estimator() cannot export saved_model because the model_fn
+ provided by _create_keras_model_fn wasn't set export_outputs in the returned
+ EstimatorSpec. Here I provide a default export_outputs with serve_default key
+ and Predict API, and the result inside is same as predictions
+ [FIX]_save_first_checkpoint call saver.save with only a path and without
+ filename, that make the ckpt saved with name like `{model_dir}/.meta` and
+ `{model_dir}/.index`, which can not be found by
+ latest_checkpoint("{model_dir}"). As state by save method of Saver, save_path
+ should be a path to the checkpoint name. So to fix this, I change the name to
+ `{model_dir}/keras_model.ckpt`
+
+---
+ tensorflow/python/keras/_impl/keras/estimator.py | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/tensorflow/python/keras/_impl/keras/estimator.py b/tensorflow/python/keras/_impl/keras/estimator.py
+index 125e63e1b8..a2a2fe0ead 100644
+--- a/tensorflow/python/keras/_impl/keras/estimator.py
++++ b/tensorflow/python/keras/_impl/keras/estimator.py
+@@ -19,10 +19,12 @@ from __future__ import absolute_import
+ from __future__ import division
+ from __future__ import print_function
+ 
++import os
+ 
+ from tensorflow.python.client import session
+ from tensorflow.python.estimator import estimator as estimator_lib
+ from tensorflow.python.estimator import model_fn as model_fn_lib
++from tensorflow.python.estimator import export as export_lib
+ from tensorflow.python.framework import ops
+ from tensorflow.python.framework import random_seed
+ from tensorflow.python.framework import sparse_tensor as sparse_tensor_lib
+@@ -33,6 +35,9 @@ from tensorflow.python.ops import metrics as metrics_module
+ from tensorflow.python.platform import tf_logging as logging
+ from tensorflow.python.training import saver as saver_lib
+ from tensorflow.python.training import training_util
++from tensorflow.python.saved_model import signature_constants
++
++_DEFAULT_SERVING_KEY = signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
+ 
+ 
+ def _create_ordered_io(keras_model, estimator_io_dict, is_input=True):
+@@ -184,7 +189,10 @@ def _create_keras_model_fn(keras_model, custom_objects=None):
+         predictions=predictions,
+         loss=loss,
+         train_op=train_op,
+-        eval_metric_ops=eval_metric_ops)
++        eval_metric_ops=eval_metric_ops,
++        export_outputs={
++            _DEFAULT_SERVING_KEY: export_lib.export_output.PredictOutput(predictions)
++        })
+ 
+   return model_fn
+ 
+@@ -222,7 +230,7 @@ def _save_first_checkpoint(keras_model, estimator, custom_objects,
+           K._initialize_variables(sess)
+           # pylint: enable=protected-access
+         saver = saver_lib.Saver()
+-        saver.save(sess, estimator.model_dir + '/')
++        saver.save(sess, os.path.join(estimator.model_dir, 'keras_model.ckpt'))
+ 
+ 
+ def model_to_estimator(keras_model=None,
+-- 
+2.15.1
+
