@@ -14,8 +14,8 @@ RUN apt-get -y update && \
 RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==1.4 gevent gunicorn
 
 # Install tensorflow-model-server 1.4.
-wget 'http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_1.4.0_all.deb'
-dpkg -i tensorflow-model-server_1.4.0_all.deb
+RUN wget 'http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_1.4.0_all.deb' && \
+    dpkg -i tensorflow-model-server_1.4.0_all.deb
 
 # install telegraf
 RUN cd /tmp && \
