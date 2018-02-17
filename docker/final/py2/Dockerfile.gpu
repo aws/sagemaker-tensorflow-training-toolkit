@@ -19,13 +19,13 @@ RUN cd /tmp && \
     cd -
 
 # Will install from pypi once packages are released there. For now, copy from local file system.
-COPY sagemaker_container_support-1.0.zip .
-COPY sagemaker_tensorflow_container-1.0.zip .
+COPY sagemaker_container_support-1.0.tar.gz .
+COPY sagemaker_tensorflow_container-1.0.tar.gz .
 
-RUN pip install sagemaker_container_support-1.0.zip && \
-    pip install sagemaker_tensorflow_container-1.0.zip
+RUN pip install sagemaker_container_support-1.0.tar.gz && \
+    pip install sagemaker_tensorflow_container-1.0.tar.gz
 
-RUN rm sagemaker_container_support-1.0.zip && \
-    rm sagemaker_tensorflow_container-1.0.zip
+RUN rm sagemaker_container_support-1.0.tar.gz && \
+    rm sagemaker_tensorflow_container-1.0.tar.gz
 
 ENTRYPOINT ["entry.py"]
