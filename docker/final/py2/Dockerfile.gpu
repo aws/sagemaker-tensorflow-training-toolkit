@@ -1,5 +1,5 @@
 # Use local version of image built from Dockerfile.cpu in /docker/base
-FROM tf-base-py2-gpu
+FROM tf-1.5-base-py2-gpu
 MAINTAINER Amazon AI
 
 WORKDIR /root
@@ -10,7 +10,7 @@ RUN apt-get -y update && \
     apt-get -y install iputils-ping && \
     apt-get -y install nginx
 
-RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==1.4 gevent gunicorn
+RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==1.5 gevent gunicorn
 
 # install telegraf
 RUN cd /tmp && \

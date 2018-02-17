@@ -5,13 +5,13 @@ Subject: [PATCH 1/4] address S3 timeout configurability pr:
  https://github.com/tensorflow/tensorflow/pull/15899
 
 ---
- tensorflow/contrib/s3/s3_file_system.cc | 16 ++++++++++++++++
+ tensorflow/core/platform/s3/s3_file_system.cc | 16 ++++++++++++++++
  1 file changed, 16 insertions(+)
 
-diff --git a/tensorflow/contrib/s3/s3_file_system.cc b/tensorflow/contrib/s3/s3_file_system.cc
+diff --git a/tensorflow/core/platform/s3/s3_file_system.cc b/tensorflow/core/platform/s3/s3_file_system.cc
 index daced83145..8a86edb52b 100644
---- a/tensorflow/contrib/s3/s3_file_system.cc
-+++ b/tensorflow/contrib/s3/s3_file_system.cc
+--- a/tensorflow/core/platform/s3/s3_file_system.cc
++++ b/tensorflow/core/platform/s3/s3_file_system.cc
 @@ -69,6 +69,22 @@ Aws::Client::ClientConfiguration& GetDefaultClientConfig() {
          cfg.verifySSL = true;
        }
