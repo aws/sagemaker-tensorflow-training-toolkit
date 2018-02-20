@@ -1,5 +1,5 @@
 # Use local version of image built from Dockerfile.cpu in /docker/base
-FROM tensorflow-base:1.5-gpu-py2
+FROM tensorflow-base:1.5.0-gpu-py2
 MAINTAINER Amazon AI
 
 WORKDIR /root
