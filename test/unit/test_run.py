@@ -1,6 +1,6 @@
 import pytest
 from mock import MagicMock, patch, call, mock_open
-from test.utils import mock_import_modules
+from test.unit.utils import mock_import_modules
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 import pytest
 from mock import patch, call, MagicMock, ANY
-from test.utils import mock_import_modules
+from test.unit.utils import mock_import_modules
 
 mock_script = {}
 hosts = ['algo-1', 'algo-2', 'algo-3']
