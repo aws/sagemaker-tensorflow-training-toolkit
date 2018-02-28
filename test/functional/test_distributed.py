@@ -21,14 +21,24 @@ script_path = 'test/resources/cifar_10/code'
 data_path = 'test/resources/cifar_10/data/training'
 
 
-@pytest.fixture(scope="module", params=['cpu', 'gpu'])
-def xpu(request):
+@pytest.fixture(scope='module', params=['1.4.1', '1.5.0'])
+def tf_version(request):
+    return request.param
+
+
+@pytest.fixture(scope='module', params=['py2'])
+def python_version(request):
+    return request.param
+
+
+@pytest.fixture(scope='module', params=['cpu', 'gpu'])
+def processor(request):
     return request.param
 
 
 @pytest.fixture(scope='module')
-def docker_image(xpu, tag):
-    return 'sagemaker-tensorflow-py2-{}:{}'.format(xpu, tag)
+def docker_image(tf_version, processor, python_version):
+    return 'preprod-tensorflow:{}-{}-{}'.format(tf_version, processor, python_version)
 
 
 @pytest.fixture(scope='module')
@@ -45,20 +55,13 @@ class MyEstimator(TensorFlow):
         return self.docker_image_uri
 
     def create_model(self, model_server_workers=None):
-        return TensorFlowModel(self.model_data, self.role, self.entry_point,
-                               source_dir=self.source_dir,
-                               enable_cloudwatch_metrics=self.enable_cloudwatch_metrics,
-                               name=self._current_job_name,
-                               container_log_level=self.container_log_level,
-                               code_location=self.code_location,
-                               py_version=self.py_version,
-                               model_server_workers=model_server_workers,
-                               sagemaker_session=self.sagemaker_session,
-                               image=self.docker_image_uri)
+        model = super(MyEstimator, self).create_model()
+        model.image = self.docker_image_uri
+        return model
 
 
-def test_distributed(xpu, sagemaker_session, docker_image_uri):
-    instance_type = 'ml.c4.xlarge' if xpu == 'cpu' else 'ml.p2.xlarge'
+def test_distributed(processor, sagemaker_session, docker_image_uri):
+    instance_type = 'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
 
     with timeout(minutes=15):
         estimator = MyEstimator(entry_point='resnet_cifar_10.py',
@@ -72,7 +75,7 @@ def test_distributed(xpu, sagemaker_session, docker_image_uri):
                                 docker_image_uri=docker_image_uri)
 
         logger.info("uploading training data")
-        key_prefix = 'integ-test-data/tf-cifar-{}'.format(xpu)
+        key_prefix = 'integ-test-data/tf-cifar-{}'.format(processor)
         inputs = estimator.sagemaker_session.upload_data(path=data_path,
                                                          key_prefix=key_prefix)
 
