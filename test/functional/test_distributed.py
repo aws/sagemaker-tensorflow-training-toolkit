@@ -1,10 +1,7 @@
 import logging
 
-import boto3
 import numpy as np
-import pytest
-from sagemaker import Session
-from sagemaker.tensorflow import TensorFlow, TensorFlowModel
+from sagemaker.tensorflow import TensorFlow
 
 from test.resources.python_sdk.timeout import timeout, timeout_and_delete_endpoint
 
@@ -35,9 +32,7 @@ class MyEstimator(TensorFlow):
         return model
 
 
-def test_distributed(processor, sagemaker_session, docker_image_uri):
-    instance_type = 'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
-
+def test_distributed(instance_type, sagemaker_session, docker_image_uri):
     with timeout(minutes=15):
         estimator = MyEstimator(entry_point='resnet_cifar_10.py',
                                 source_dir=script_path,
@@ -50,7 +45,7 @@ def test_distributed(processor, sagemaker_session, docker_image_uri):
                                 docker_image_uri=docker_image_uri)
 
         logger.info("uploading training data")
-        key_prefix = 'integ-test-data/tf-cifar-{}'.format(processor)
+        key_prefix = 'integ-test-data/tf-cifar-{}'.format(instance_type)
         inputs = estimator.sagemaker_session.upload_data(path=data_path,
                                                          key_prefix=key_prefix)
 

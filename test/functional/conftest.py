@@ -13,11 +13,16 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 
 def pytest_addoption(parser):
-    parser.addoption('--docker-base-name', action='store', default='preprod-tensorflow')
-    parser.addoption('--tag', action='store', default='1.4.1-cpu-py2')
-    parser.addoption('--processor', action='store', default='cpu')
-    parser.addoption('--region', action='store', default='us-west-2')
-    parser.addoption('--aws-id', action='store')
+    parser.addoption('--aws-id')
+    parser.addoption('--docker-base-name', default='preprod-tensorflow')
+    parser.addoption('--instance-type')
+    parser.addoption('--region', default='us-west-2')
+    parser.addoption('--tag')
+
+
+@pytest.fixture(scope='session')
+def aws_id(request):
+    return request.config.getoption('--aws-id')
 
 
 @pytest.fixture(scope='session')
@@ -26,13 +31,8 @@ def docker_base_name(request):
 
 
 @pytest.fixture(scope='session')
-def tag(request):
-    return request.config.getoption('--tag')
-
-
-@pytest.fixture(scope='session')
-def processor(request):
-    return request.config.getoption('--processor')
+def instance_type(request):
+    return request.config.getoption('--instance-type')
 
 
 @pytest.fixture(scope='session')
@@ -41,8 +41,8 @@ def region(request):
 
 
 @pytest.fixture(scope='session')
-def aws_id(request):
-    return request.config.getoption('--aws-id')
+def tag(request):
+    return request.config.getoption('--tag')
 
 
 @pytest.fixture(scope='session')
