@@ -21,31 +21,6 @@ script_path = 'test/resources/cifar_10/code'
 data_path = 'test/resources/cifar_10/data/training'
 
 
-@pytest.fixture(scope='module', params=['1.4.1', '1.5.0'])
-def tf_version(request):
-    return request.param
-
-
-@pytest.fixture(scope='module', params=['py2'])
-def python_version(request):
-    return request.param
-
-
-@pytest.fixture(scope='module', params=['cpu', 'gpu'])
-def processor(request):
-    return request.param
-
-
-@pytest.fixture(scope='module')
-def docker_image(tf_version, processor, python_version):
-    return 'preprod-tensorflow:{}-{}-{}'.format(tf_version, processor, python_version)
-
-
-@pytest.fixture(scope='module')
-def sagemaker_session(region):
-    return Session(boto_session=boto3.Session(region_name=region))
-
-
 class MyEstimator(TensorFlow):
     def __init__(self, docker_image_uri, **kwargs):
         super(MyEstimator, self).__init__(**kwargs)
