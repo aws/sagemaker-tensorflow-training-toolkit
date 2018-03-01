@@ -2,7 +2,7 @@ import json
 import pytest
 from mock import MagicMock, patch, ANY
 
-from test.utils import mock_import_modules
+from test.unit.utils import mock_import_modules
 
 REGRESSION = 'tensorflow/serving/regression'
 INFERENCE = 'tensorflow/serving/inference'

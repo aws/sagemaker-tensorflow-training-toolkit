@@ -2,7 +2,7 @@ import json
 
 import pytest
 from mock import mock, Mock, call, patch
-from test.utils import mock_import_modules
+from test.unit.utils import mock_import_modules
 from types import ModuleType
 
 JSON_CONTENT_TYPE = "application/json"

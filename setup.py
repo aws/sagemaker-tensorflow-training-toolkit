@@ -35,7 +35,8 @@ setup(
     ],
 
     install_requires=[],
-    extra_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'run']
+    extras_require={
+        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'run',
+                 'sagemaker', 'tensorflow']
     },
 )
