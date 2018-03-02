@@ -125,12 +125,47 @@ class Trainer(object):
             logging.info("creating Experiment:")
             logging.info(experiment_params)
 
+            '''
+            TensorFlow input functions (train_input_fn, and eval_input_fn) can return features and
+            labels, or a function that returns features and labels
+            Examples of valid input functions:
+
+                def train_input_fn(training_dir, hyperparameters):
+                    ...
+                    return tf.estimator.inputs.numpy_input_fn(x={"x": train_data}, y=train_labels)
+
+                def train_input_fn(training_dir, hyperparameters):
+                    ...
+                    return features, labels
+            '''
+            def _train_input_fn():
+                return _function(self.customer_script.train_input_fn(self.training_path, self.customer_params))()
+
+            def _eval_input_fn():
+                return _function(self.customer_script.eval_input_fn(self.training_path, self.customer_params))()
+
+            '''
+            TensorFlow serving input functions (serving_input_fn) can return a ServingInputReceiver object or a
+            function that a ServingInputReceiver
+            Examples of valid serving input functions:
+
+                def serving_input_fn(params):
+                    feature_spec = {INPUT_TENSOR_NAME: tf.FixedLenFeature(dtype=tf.float32, shape=[4])}
+                    return tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)
+
+                def serving_input_fn(hyperpameters):
+                    inputs = {INPUT_TENSOR_NAME: tf.placeholder(tf.float32, [None, 32, 32, 3])}
+                    return tf.estimator.export.ServingInputReceiver(inputs, inputs)
+            '''
+            def _serving_input_fn():
+                return _function(self.customer_script.serving_input_fn(self.customer_params))()
+
             return Experiment(
                 estimator=estimator,
-                train_input_fn=lambda: self.customer_script.train_input_fn(self.training_path, self.customer_params),
-                eval_input_fn=lambda: self.customer_script.eval_input_fn(self.training_path, self.customer_params),
+                train_input_fn=_train_input_fn,
+                eval_input_fn=_eval_input_fn,
                 export_strategies=[saved_model_export_utils.make_export_strategy(
-                    serving_input_fn=lambda: self.customer_script.serving_input_fn(self.customer_params),
+                    serving_input_fn=_serving_input_fn,
                     default_output_alternative_key=None,
                     exports_to_keep=1)],
                 train_steps=self.train_steps,
@@ -184,3 +219,16 @@ class Trainer(object):
         if bucket_location:
             os.environ['S3_REGION'] = bucket_location
         os.environ['S3_USE_HTTPS'] = "1"
+
+
+def _function(object):
+    """Ensures that the object is a function. Wraps the object in a function otherwise.
+    Args:
+        object: object to be wrapped as function
+
+    Returns: function with the wrapped object.
+    """
+    if hasattr(object, '__call__'):
+        return object
+
+    return lambda: object

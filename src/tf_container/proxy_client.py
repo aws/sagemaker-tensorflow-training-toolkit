@@ -1,4 +1,7 @@
+import logging
+
 import numpy as np
+from google.protobuf import json_format
 from grpc.beta import implementations
 from tensorflow import make_tensor_proto
 from tensorflow.core.example import example_pb2, feature_pb2
@@ -7,6 +10,8 @@ from tensorflow.python.saved_model.signature_constants import DEFAULT_SERVING_SI
 from tensorflow_serving.apis import get_model_metadata_pb2
 from tensorflow_serving.apis import predict_pb2, classification_pb2, inference_pb2, regression_pb2
 from tensorflow_serving.apis import prediction_service_pb2
+
+_logger = logging.getLogger(__name__)
 
 REGRESSION = 'tensorflow/serving/regression'
 CLASSIFY = 'tensorflow/serving/classify'
@@ -58,6 +63,10 @@ class GRPCProxyClient(object):
         request.model_spec.name = self.model_name
         request.metadata_field.append('signature_def')
         result = stub.GetModelMetadata(request, self.request_timeout)
+
+        _logger.info('---------------------------Model Spec---------------------------')
+        _logger.info(json_format.MessageToJson(result))
+        _logger.info('----------------------------------------------------------------')
 
         signature_def = result.metadata['signature_def']
         signature_map = get_model_metadata_pb2.SignatureDefMap()
@@ -137,8 +146,12 @@ class GRPCProxyClient(object):
             input                                   => output
             {'age': 39., 'workclass': 'Private'}    => [{'age': 39., 'workclass': 'Private'}]
             [{'age': 39., 'workclass': 'Private'}]  => [{'age': 39., 'workclass': 'Private'}]
+            [{'age': 39., 'workclass': 'Private'}, {'age': 39., 'workclass':'Public'}]
+                                                    => [{'age': 39., 'workclass': 'Private'},
+                                                        {'age': 39., 'workclass': 'Public'}]
             [1, 2, 'string']                        => [{PREDICT_INPUTS: [1, 2, 'string']}]
             42                                      => [{PREDICT_INPUTS: [42]}]
+
 
         Args:
             data: request data. Can be an instance of float, int, str, map, or any iterable object.
@@ -156,7 +169,7 @@ class GRPCProxyClient(object):
         return [{self.input_tensor_name: [data]}]
 
     def _raise_not_implemented_exception(self, data):
-        raise NotImplementedError('This prediction service type is not supported py SageMaker yet')
+        raise NotImplementedError('This prediction service type is not supported by SageMaker yet')
 
     def _create_input_map(self, data):
         """
@@ -204,33 +217,32 @@ def _create_tf_example(feature_map):
     Creates a tf example protobuf message given a feature map. The protobuf message is defined here
         https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/input.proto#L19
     Args:
-        feature_map: a list of feature maps
+        feature_map: a feature maps
 
     Returns:
         a tf.train.Example including the features
     """
 
-    def _create_feature(feature_list):
-        float_list = []
-        int64_list = []
-        bytes_list = []
+    def _create_feature(feature):
+        feature_list = feature if isinstance(feature, list) else [feature]
 
-        for x in feature_list:
-            if type(x) == int:
-                int64_list.append(x)
-            elif type(x) == str:
-                bytes_list.append(x)
-            elif type(x) == float:
-                float_list.append(x)
-            else:
-                message = """Unsupported request data format: {}.
-                                Valid formats: float, int, str any object that implements __iter__
-                                               or classification_pb2.ClassificationRequest"""
-                raise ValueError(message.format(feature_list))
+        # Each feature can be exactly one kind:
+        # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/feature.proto#L76
 
-        return feature_pb2.Feature(int64_list=feature_pb2.Int64List(value=int64_list),
-                                   bytes_list=feature_pb2.BytesList(value=bytes_list),
-                                   float_list=feature_pb2.FloatList(value=float_list))
+        feature_type = type(feature_list[0])
+        if feature_type == int:
+            return feature_pb2.Feature(int64_list=feature_pb2.Int64List(value=feature_list))
+        elif feature_type == str:
+            return feature_pb2.Feature(bytes_list=feature_pb2.BytesList(value=feature_list))
+        elif feature_type == unicode:
+            return feature_pb2.Feature(bytes_list=feature_pb2.BytesList(value=map(lambda x: str(x), feature_list)))
+        elif feature_type == float:
+            return feature_pb2.Feature(float_list=feature_pb2.FloatList(value=feature_list))
+        else:
+            message = """Unsupported request data format: {}, {}.
+                            Valid formats: float, int, str any object that implements __iter__
+                                           or classification_pb2.ClassificationRequest"""
+            raise ValueError(message.format(feature, type(feature)))
 
     features = {k: _create_feature(v) for k, v in feature_map.items()}
     return example_pb2.Example(features=feature_pb2.Features(feature=features))
