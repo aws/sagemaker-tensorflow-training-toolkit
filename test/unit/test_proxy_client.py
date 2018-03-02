@@ -74,16 +74,16 @@ class Features(object):
         self.feature = feature
 
 
-class Feature(object):
-    def __init__(self, int64_list, bytes_list, float_list):
-        self.int64_list = int64_list
-        self.bytes_list = bytes_list
-        self.float_list = float_list
-
-
 class FeatureList(object):
     def __init__(self, value):
         self.value = value
+
+
+class Feature(object):
+    def __init__(self, int64_list=FeatureList([]), bytes_list=FeatureList([]), float_list=FeatureList([])):
+        self.int64_list = int64_list
+        self.bytes_list = bytes_list
+        self.float_list = float_list
 
 
 class TensorProto(object):
@@ -279,20 +279,6 @@ def test_classification_with_int_list(set_up, set_up_requests):
     assert feature['inputs'].bytes_list.value == []
 
 
-def test_classification_with_dict(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
-    proxy_client.classification({'my_tensor_name': [1, 2., 'private', 0]})
-
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
-    feature = _get_feature(classification_request)
-
-    assert feature['my_tensor_name'].float_list.value == [2.]
-    assert feature['my_tensor_name'].int64_list.value == [1, 0]
-    assert feature['my_tensor_name'].bytes_list.value == ['private']
-
-
 def test_classification_with_bytes_list(set_up, set_up_requests):
     mock, proxy_client = set_up
 
@@ -365,21 +351,6 @@ def test_classification_with_float(set_up, set_up_requests):
     assert feature['inputs'].float_list.value == [data]
     assert feature['inputs'].int64_list.value == []
     assert feature['inputs'].bytes_list.value == []
-
-
-def test_classification_with_mixed_elements(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
-    data = [3.4, 0, 'aaargh']
-    proxy_client.classification(data)
-
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
-    feature = _get_feature(classification_request)
-
-    assert feature['inputs'].float_list.value == [3.4]
-    assert feature['inputs'].int64_list.value == [0]
-    assert feature['inputs'].bytes_list.value == ['aaargh']
 
 
 def test_classification_with_invalid_payload(set_up, set_up_requests):

@@ -79,7 +79,14 @@ def train():
     train_steps = env.hyperparameters.get('training_steps', 1000)
     eval_steps = env.hyperparameters.get('evaluation_steps', 100)
 
+    # https://github.com/tensorflow/tensorflow/issues/15868
+    # The default request timeout for S3, within the C++ SDK, is 3 seconds, which times out when
+    # saving checkpoints of larger sizes.
+    os.environ['S3_REQUEST_TIMEOUT_MSEC'] = str(env.hyperparameters.get('s3_checkpoint_save_timeout', 60000))
+
     env.download_user_module()
+    env.pip_install_requirements()
+
     customer_script = env.import_user_module()
 
     train_wrapper = Trainer(customer_script=customer_script,
