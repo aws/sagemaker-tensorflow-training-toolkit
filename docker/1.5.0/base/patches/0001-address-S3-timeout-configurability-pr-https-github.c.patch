@@ -1,0 +1,40 @@
+From bf3af68e3d8e80506d8a547e0345547e528bc98d Mon Sep 17 00:00:00 2001
+From: Marcio Dos Santos <mvs@amazon.com>
+Date: Tue, 23 Jan 2018 09:12:47 -0800
+Subject: [PATCH 1/4] address S3 timeout configurability pr:
+ https://github.com/tensorflow/tensorflow/pull/15899
+
+---
+ tensorflow/core/platform/s3/s3_file_system.cc | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/tensorflow/core/platform/s3/s3_file_system.cc b/tensorflow/core/platform/s3/s3_file_system.cc
+index daced83145..8a86edb52b 100644
+--- a/tensorflow/core/platform/s3/s3_file_system.cc
++++ b/tensorflow/core/platform/s3/s3_file_system.cc
+@@ -69,6 +69,22 @@ Aws::Client::ClientConfiguration& GetDefaultClientConfig() {
+         cfg.verifySSL = true;
+       }
+     }
++    const char* connect_timeout = getenv("S3_CONNECT_TIMEOUT_MSEC");
++    if (connect_timeout) {
++      int64 timeout;
++
++      if (strings::safe_strto64(connect_timeout, &timeout)) {
++        cfg.connectTimeoutMs = timeout;
++      }
++    }
++    const char* request_timeout = getenv("S3_REQUEST_TIMEOUT_MSEC");
++    if (request_timeout) {
++      int64 timeout;
++
++      if (strings::safe_strto64(request_timeout, &timeout)) {
++        cfg.requestTimeoutMs = timeout;
++      }
++    }
+ 
+     init = true;
+   }
+-- 
+2.15.1
+
