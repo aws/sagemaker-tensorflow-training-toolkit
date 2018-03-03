@@ -26,6 +26,7 @@ def train(image_name, resource_folder):
            '-v', '{}:/opt/ml'.format(resource_folder),
            '-e', 'AWS_ACCESS_KEY_ID',
            '-e', 'AWS_SECRET_ACCESS_KEY',
+           '-e', 'AWS_SESSION_TOKEN',
            image_name, 'train']
     check_call(cmd)
 
@@ -59,6 +60,7 @@ class Container(object):
                '-t',
                '-e', 'AWS_ACCESS_KEY_ID',
                '-e', 'AWS_SECRET_ACCESS_KEY',
+               '-e', 'AWS_SESSION_TOKEN',
                '--entrypoint', 'bash',
                '--name', self.name,
                self.image]
@@ -153,6 +155,7 @@ class HostingContainer(Container):
                '-v', '{}:/opt/ml'.format(self.opt_ml),
                '-e', 'AWS_ACCESS_KEY_ID',
                '-e', 'AWS_SECRET_ACCESS_KEY',
+               '-e', 'AWS_SESSION_TOKEN',
                '-e', 'SAGEMAKER_CONTAINER_LOG_LEVEL=20',
                '-e', 'SAGEMAKER_PROGRAM={}'.format(self.script_name),
                '-e', 'SAGEMAKER_REQUIREMENTS={}'.format(self.requirements_file),
