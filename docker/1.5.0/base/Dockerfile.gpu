@@ -38,7 +38,8 @@ RUN pip --no-cache-dir install \
         numpy \
         scipy \
         sklearn \
-        pandas
+        pandas \
+        h5py
 
 # Set up grpc
 
