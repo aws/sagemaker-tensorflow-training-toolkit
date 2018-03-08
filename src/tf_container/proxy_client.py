@@ -1,8 +1,7 @@
-import logging
-
 import numpy as np
 from google.protobuf import json_format
 from grpc.beta import implementations
+from run import logger as _logger
 from tensorflow import make_tensor_proto
 from tensorflow.core.example import example_pb2, feature_pb2
 from tensorflow.core.framework import tensor_pb2
@@ -11,7 +10,6 @@ from tensorflow_serving.apis import get_model_metadata_pb2
 from tensorflow_serving.apis import predict_pb2, classification_pb2, inference_pb2, regression_pb2
 from tensorflow_serving.apis import prediction_service_pb2
 
-_logger = logging.getLogger(__name__)
 
 REGRESSION = 'tensorflow/serving/regression'
 CLASSIFY = 'tensorflow/serving/classify'
@@ -129,15 +127,15 @@ class GRPCProxyClient(object):
         request.model_spec.name = self.model_name
         request.model_spec.signature_name = self.signature_name
 
-        feature_dict_list = self._create_feature_dict_list(data)
+        features_map_list = self._create_features_map_list(data)
 
-        examples = [_create_tf_example(feature_dict) for feature_dict in feature_dict_list]
+        examples = [_create_tf_example(features_map) for features_map in features_map_list]
 
         request.input.example_list.examples.extend(examples)
 
         return request
 
-    def _create_feature_dict_list(self, data):
+    def _create_features_map_list(self, data):
         """
         Parses the input data and returns a [dict<string, iterable>] which will be used to create the tf examples.
         If the input data is not a dict, a dictionary will be created with the default predict key PREDICT_INPUTS
@@ -212,13 +210,12 @@ Valid formats: tensor_pb2.TensorProto, dict<string,  tensor_pb2.TensorProto> and
             raise ValueError(msg.format(data))
 
 
-def _create_tf_example(feature_dict):
+def _create_tf_example(feature_map):
     """
-    Creates a tf example protobuf message given a feature dict. The protobuf message is defined here
+    Creates a tf example protobuf message given a feature map. The protobuf message is defined here
         https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/input.proto#L19
     Args:
-        feature_dict (dict of str -> feature): feature can be any of the following:
-          int, strings, unicode object, float, or list of any of the previous types.
+        feature_map: a feature maps
 
     Returns:
         a tf.train.Example including the features
@@ -245,5 +242,5 @@ def _create_tf_example(feature_dict):
                                            or classification_pb2.ClassificationRequest"""
             raise ValueError(message.format(feature, type(feature)))
 
-    features = {k: _create_feature(v) for k, v in feature_dict.items()}
+    features = {k: _create_feature(v) for k, v in feature_map.items()}
     return example_pb2.Example(features=feature_pb2.Features(feature=features))

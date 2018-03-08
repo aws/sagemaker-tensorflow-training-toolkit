@@ -1,14 +1,11 @@
-import logging
-
 import boto3
 import os
 import tensorflow as tf
 from container_support import parse_s3_url
+from run import logger
 from tensorflow.contrib.learn import RunConfig, Experiment
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
-
-logger = logging.getLogger(__name__)
 
 
 class Trainer(object):
@@ -112,6 +109,9 @@ class Trainer(object):
         experiment_fn = self._generate_experiment_fn()
         learn_runner.run(experiment_fn, self.training_path)
 
+    def saves_training(self):
+        return hasattr(self.customer_script, "serving_input_fn")
+
     def _generate_experiment_fn(self):
         estimator = self._build_estimator()
 
@@ -122,8 +122,8 @@ class Trainer(object):
 
             experiment_params = {k: v for k, v in self.customer_params.items() if k in valid_experiment_keys}
 
-            logging.info("creating Experiment:")
-            logging.info(experiment_params)
+            logger.info("creating Experiment:")
+            logger.info(experiment_params)
 
             '''
             TensorFlow input functions (train_input_fn, and eval_input_fn) can return features and
@@ -160,14 +160,20 @@ class Trainer(object):
             def _serving_input_fn():
                 return _function(self.customer_script.serving_input_fn(self.customer_params))()
 
+            def _export_strategy():
+                if self.saves_training():
+                    return [saved_model_export_utils.make_export_strategy(
+                        serving_input_fn=_serving_input_fn,
+                        default_output_alternative_key=None,
+                        exports_to_keep=1)]
+                logger.warn("serving_input_fn not specified, model NOT saved, use checkpoints to reconstruct")
+                return None
+
             return Experiment(
                 estimator=estimator,
                 train_input_fn=_train_input_fn,
                 eval_input_fn=_eval_input_fn,
-                export_strategies=[saved_model_export_utils.make_export_strategy(
-                    serving_input_fn=_serving_input_fn,
-                    default_output_alternative_key=None,
-                    exports_to_keep=1)],
+                export_strategies=_export_strategy(),
                 train_steps=self.train_steps,
                 eval_steps=self.eval_steps,
                 **experiment_params
@@ -181,8 +187,8 @@ class Trainer(object):
 
         runconfig_params = {k: v for k, v in self.customer_params.items() if k in valid_runconfig_keys}
 
-        logging.info("creating RunConfig:")
-        logging.info(runconfig_params)
+        logger.info("creating RunConfig:")
+        logger.info(runconfig_params)
 
         run_config = RunConfig(
             model_dir=self.model_path,
@@ -190,14 +196,14 @@ class Trainer(object):
         )
 
         if hasattr(self.customer_script, 'estimator_fn'):
-            logging.info("invoking estimator_fn")
+            logger.info("invoking estimator_fn")
             return self.customer_script.estimator_fn(run_config, self.customer_params)
         elif hasattr(self.customer_script, 'keras_model_fn'):
-            logging.info("involing keras_model_fn")
+            logger.info("involing keras_model_fn")
             model = self.customer_script.keras_model_fn(self.customer_params)
             return tf.keras.estimator.model_to_estimator(keras_model=model, config=run_config)
         else:
-            logging.info("creating the estimator")
+            logger.info("creating the estimator")
 
             # transforming hyperparameters arg to params, which is required by tensorflow
             def _model_fn(features, labels, mode, params):

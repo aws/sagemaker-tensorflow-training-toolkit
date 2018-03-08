@@ -107,16 +107,11 @@ def train():
 
     save_tf_config_env_var(tf_config)
 
-    try:
-        run.train_and_log_exceptions(train_wrapper, env.output_dir)
+    train_wrapper.train()
 
-        # only the master should export the model at the end of the execution
-        if checkpoint_dir != env.model_dir and train_wrapper.task_type == 'master':
-            serve.export_saved_model(checkpoint_dir, env.model_dir)
+    # only the master should export the model at the end of the execution
+    if checkpoint_dir != env.model_dir and train_wrapper.task_type == 'master' and train_wrapper.saves_training():
+        serve.export_saved_model(checkpoint_dir, env.model_dir)
 
-        if train_wrapper.task_type != 'master':
-            _wait_until_master_is_down(_get_master(tf_config))
-    finally:
-        # Since threads in Python cannot be stopped, this is the only way to stop the application
-        # https://stackoverflow.com/questions/9591350/what-is-difference-between-sys-exit0-and-os-exit0
-        os._exit(0)
+    if train_wrapper.task_type != 'master':
+        _wait_until_master_is_down(_get_master(tf_config))
