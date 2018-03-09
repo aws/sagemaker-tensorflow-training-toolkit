@@ -127,15 +127,15 @@ class GRPCProxyClient(object):
         request.model_spec.name = self.model_name
         request.model_spec.signature_name = self.signature_name
 
-        features_map_list = self._create_features_map_list(data)
+        feature_dict_list = self._create_feature_dict_list(data)
 
-        examples = [_create_tf_example(features_map) for features_map in features_map_list]
+        examples = [_create_tf_example(feature_dict) for feature_dict in feature_dict_list]
 
         request.input.example_list.examples.extend(examples)
 
         return request
 
-    def _create_features_map_list(self, data):
+    def _create_feature_dict_list(self, data):
         """
         Parses the input data and returns a [dict<string, iterable>] which will be used to create the tf examples.
         If the input data is not a dict, a dictionary will be created with the default predict key PREDICT_INPUTS
@@ -210,12 +210,13 @@ Valid formats: tensor_pb2.TensorProto, dict<string,  tensor_pb2.TensorProto> and
             raise ValueError(msg.format(data))
 
 
-def _create_tf_example(feature_map):
+def _create_tf_example(feature_dict):
     """
-    Creates a tf example protobuf message given a feature map. The protobuf message is defined here
+    Creates a tf example protobuf message given a feature dict. The protobuf message is defined here
         https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/input.proto#L19
     Args:
-        feature_map: a feature maps
+        feature_dict (dict of str -> feature): feature can be any of the following:
+          int, strings, unicode object, float, or list of any of the previous types.
 
     Returns:
         a tf.train.Example including the features
@@ -242,5 +243,5 @@ def _create_tf_example(feature_map):
                                            or classification_pb2.ClassificationRequest"""
             raise ValueError(message.format(feature, type(feature)))
 
-    features = {k: _create_feature(v) for k, v in feature_map.items()}
+    features = {k: _create_feature(v) for k, v in feature_dict.items()}
     return example_pb2.Example(features=feature_pb2.Features(feature=features))
