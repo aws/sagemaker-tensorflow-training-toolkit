@@ -7,7 +7,7 @@ from test.integ.utils import copy_resource, create_config_files, file_exists
 from test.integ.conftest import SCRIPT_PATH
 
 
-def test_estimator_classification(docker_image, sagemaker_session, opt_ml):
+def test_estimator_classification(docker_image, sagemaker_session, opt_ml, processor):
     resource_path = os.path.join(SCRIPT_PATH, '../resources/iris')
 
     copy_resource(resource_path, opt_ml, 'code')
@@ -24,15 +24,15 @@ def test_estimator_classification(docker_image, sagemaker_session, opt_ml):
                           additional_hyperparameters)
     os.makedirs(os.path.join(opt_ml, 'model'))
 
-    train(docker_image, opt_ml)
+    train(docker_image, opt_ml, processor)
 
     assert file_exists(opt_ml, 'model/export/Servo'), 'model was not exported'
     assert file_exists(opt_ml, 'model/checkpoint'), 'checkpoint was not created'
     assert file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
-    with HostingContainer(opt_ml=opt_ml, image=docker_image,
-                            script_name='iris.py', requirements_file='requirements.txt') as c:
+    with HostingContainer(opt_ml=opt_ml, image=docker_image, script_name='iris.py',
+                          processor=processor, requirements_file='requirements.txt') as c:
         c.execute_pytest('test/integ/container_tests/estimator_classification.py')
 
         modules = c.execute_command(['pip', 'freeze'])
