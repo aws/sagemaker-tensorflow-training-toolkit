@@ -21,9 +21,10 @@ SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default='preprod-tensorflow')
-    parser.addoption('--tag')
+    parser.addoption('--tag', required=True)
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--tf-version')
+    parser.addoption('--framework-version', required=True)
+    parser.addoption('--processor', required=True, choices=['gpu','cpu'])
 
 
 @pytest.fixture(scope='session')
@@ -37,13 +38,18 @@ def tag(request):
 
 
 @pytest.fixture(scope='session')
+def processor(request):
+    return request.config.getoption('--processor')
+
+
+@pytest.fixture(scope='session')
 def region(request):
     return request.config.getoption('--region')
 
 
 @pytest.fixture(scope='session')
-def tf_version(request):
-    return request.config.getoption('--tf-version')
+def framework_version(request):
+    return request.config.getoption('--framework-version')
 
 
 @pytest.fixture(scope='session')

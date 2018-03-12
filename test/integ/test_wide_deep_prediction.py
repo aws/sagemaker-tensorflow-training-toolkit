@@ -7,7 +7,7 @@ from test.integ.conftest import SCRIPT_PATH
 from test.integ.docker_utils import HostingContainer, train
 
 
-def test_wide_deep(docker_image, sagemaker_session, opt_ml):
+def test_wide_deep(docker_image, sagemaker_session, opt_ml, processor):
     resource_path = os.path.join(SCRIPT_PATH, '../resources/wide_deep')
 
     copy_resource(resource_path, opt_ml, 'code')
@@ -24,12 +24,13 @@ def test_wide_deep(docker_image, sagemaker_session, opt_ml):
 
     os.makedirs(os.path.join(opt_ml, 'model'))
 
-    train(docker_image, opt_ml)
+    train(docker_image, opt_ml, processor)
 
     assert file_exists(opt_ml, 'model/export/Servo'), 'model was not exported'
     assert file_exists(opt_ml, 'model/checkpoint'), 'checkpoint was not created'
     assert file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
-    with HostingContainer(image=docker_image, opt_ml=opt_ml, script_name='wide_deep.py') as c:
+    with HostingContainer(image=docker_image, opt_ml=opt_ml, script_name='wide_deep.py',
+                          processor=processor) as c:
         c.execute_pytest('test/integ/container_tests/wide_deep_prediction.py')
