@@ -9,7 +9,7 @@ from test.integ.conftest import SCRIPT_PATH
 
 
 # https://github.com/tensorflow/tensorflow/issues/15868
-def test_s3_checkpoint_save_timeout(docker_image, opt_ml, sagemaker_session):
+def test_s3_checkpoint_save_timeout(docker_image, opt_ml, sagemaker_session, processor):
     resource_path = os.path.join(SCRIPT_PATH, '../resources/python_sdk')
 
     default_bucket = sagemaker_session.default_bucket()
@@ -29,7 +29,7 @@ def test_s3_checkpoint_save_timeout(docker_image, opt_ml, sagemaker_session):
     )
     create_config_files('rand_model_emb.py', s3_source_archive.s3_prefix, opt_ml, hyperparameters)
 
-    train(docker_image, opt_ml)
+    train(docker_image, opt_ml, processor)
 
     assert file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not file_exists(opt_ml, 'output/failure'), 'Failure happened'

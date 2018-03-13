@@ -18,8 +18,10 @@ def registry(aws_id, region):
     return '{}.dkr.ecr.{}.amazonaws.com'.format(aws_id, region)
 
 
-def train(image_name, resource_folder):
-    cmd = ['docker',
+def train(image_name, resource_folder, processor):
+    docker = 'docker' if processor == 'cpu' else 'nvidia-docker'
+
+    cmd = [docker,
            'run',
            '--rm',
            '-h', 'algo-1',
@@ -44,17 +46,18 @@ def _print_cmd(cmd):
 
 
 class Container(object):
-    def __init__(self, image, startup_delay=1):
+    def __init__(self, image, processor, startup_delay=1):
         self.temp_dir = tempfile.gettempdir()
         self.image = image
         self.name = str(uuid.uuid4())
         self.startup_delay = startup_delay
+        self.docker = 'docker' if processor == 'cpu' else 'nvidia-docker'
 
     def __enter__(self):
         print('in container.enter for container ' + self.image + ',' + self.name)
         self.remove_container()
 
-        cmd = ['docker',
+        cmd = [self.docker,
                'run',
                '-d',
                '-t',
@@ -78,7 +81,7 @@ class Container(object):
         self.remove_container()
 
     def remove_container(self):
-        cmd = ['docker',
+        cmd = [self.docker,
                'rm',
                '-f',
                self.name]
@@ -89,7 +92,7 @@ class Container(object):
             pass
 
     def copy(self, src, dst):
-        cmd = ['docker',
+        cmd = [self.docker,
                'cp',
                src,
                '{}:{}'.format(self.name, dst)]
@@ -98,7 +101,7 @@ class Container(object):
 
     def execute_command(self, cmd):
 
-        docker_cmd = ['docker', 'exec', '-t', self.name]
+        docker_cmd = [self.docker, 'exec', '-t', self.name]
         docker_cmd.extend(cmd)
 
         _print_cmd(docker_cmd)
@@ -139,8 +142,10 @@ class Container(object):
 
 
 class HostingContainer(Container):
-    def __init__(self, image, opt_ml, script_name, requirements_file=None, startup_delay=5):
+    def __init__(self, image, opt_ml, script_name, processor, requirements_file=None,
+                 startup_delay=5):
         super(HostingContainer, self).__init__(image=image,
+                                               processor=processor,
                                                startup_delay=startup_delay)
         self.opt_ml = opt_ml
         self.script_name = script_name
@@ -148,7 +153,7 @@ class HostingContainer(Container):
         self.requirements_file = requirements_file
 
     def __enter__(self):
-        cmd = ['docker',
+        cmd = [self.docker,
                'run',
                '-d',
                '-h', 'algo-1',
