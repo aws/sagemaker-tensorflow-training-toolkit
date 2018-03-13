@@ -7,7 +7,7 @@ from test.integ.utils import copy_resource, create_config_files, file_exists
 from test.integ.conftest import SCRIPT_PATH
 
 
-def test_no_serving_input_fn(docker_image, sagemaker_session, opt_ml):
+def test_no_serving_input_fn(docker_image, sagemaker_session, opt_ml, processor):
     resource_path = os.path.join(SCRIPT_PATH, '../resources/iris')
 
     copy_resource(resource_path, opt_ml, 'code')
@@ -24,7 +24,7 @@ def test_no_serving_input_fn(docker_image, sagemaker_session, opt_ml):
 
     os.makedirs(os.path.join(opt_ml, 'model'))
 
-    train(docker_image, opt_ml)
+    train(docker_image, opt_ml, processor)
 
     # model is not saved so do not expect it there
     assert not file_exists(opt_ml, 'model/export/Servo'), 'model was not exported'
