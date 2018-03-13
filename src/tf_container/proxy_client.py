@@ -1,8 +1,7 @@
-import logging
-
 import numpy as np
 from google.protobuf import json_format
 from grpc.beta import implementations
+from run import logger as _logger
 from tensorflow import make_tensor_proto
 from tensorflow.core.example import example_pb2, feature_pb2
 from tensorflow.core.framework import tensor_pb2
@@ -11,7 +10,6 @@ from tensorflow_serving.apis import get_model_metadata_pb2
 from tensorflow_serving.apis import predict_pb2, classification_pb2, inference_pb2, regression_pb2
 from tensorflow_serving.apis import prediction_service_pb2
 
-_logger = logging.getLogger(__name__)
 
 REGRESSION = 'tensorflow/serving/regression'
 CLASSIFY = 'tensorflow/serving/classify'

@@ -1,5 +1,4 @@
 import json
-import logging
 import shutil
 import subprocess
 import boto3
@@ -14,9 +13,9 @@ from tf_container import proxy_client
 from six import StringIO
 import csv
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, OCTET_STREAM_CONTENT_TYPE, ANY_CONTENT_TYPE
+from run import logger
 import time
 
-logger = logging.getLogger(__name__)
 
 TF_SERVING_PORT = 9000
 GENERIC_MODEL_NAME = "generic_model"
