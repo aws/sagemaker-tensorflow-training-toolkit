@@ -8,6 +8,13 @@ current_host = ['algo-1']
 model_path = "a/mock/path"
 
 
+class InspectInputFn2Params(object):
+    args = ['training_dir', 'hyperparameters']
+
+
+inspect_train_input_fn = InspectInputFn2Params()
+
+
 @pytest.fixture(scope="module")
 def modules():
     modules_to_mock = [
@@ -20,6 +27,7 @@ def modules():
         'tensorflow_serving.apis',
         'tensorflow.python.saved_model.signature_constants',
         'tensorflow.contrib.learn',
+        'tensorflow.contrib.training.HParams',
         'google.protobuf.json_format',
         'tensorflow.python.estimator',
         'tensorflow.core.example',
@@ -109,21 +117,23 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer):
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-def test_trainer_keras_model_fn(os_environ, botocore, boto3, trainer, modules):
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+def test_trainer_keras_model_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
     being invoked with the right params
     '''
     customer_script = MagicMock(spec=['keras_model_fn', 'train_input_fn', 'eval_input_fn', 'serving_input_fn'])
 
+    training_dir_path = 'mytrainingpath'
     _trainer = trainer.Trainer(customer_script=customer_script,
                                current_host=current_host,
                                hosts=hosts,
                                model_path='s3://my/s3/path',
                                customer_params={'training_steps': 10, 'num_gpu': 20},
-                               training_path='mytrainingpath')
+                               input_channels={'training': training_dir_path})
 
-    modules.learn_runner.run.side_effect = lambda experiment_fn, training_path: experiment_fn(training_path)
+    modules.learn_runner.run.side_effect = lambda experiment_fn, run_config, hparams: experiment_fn(run_config, hparams)
     modules.Experiment.side_effect = execute_input_functions
     modules.saved_model_export_utils.make_export_strategy.side_effect = make_export_strategy_fn
 
@@ -139,29 +149,31 @@ def test_trainer_keras_model_fn(os_environ, botocore, boto3, trainer, modules):
     modules.learn_runner.run.assert_called()
     modules.Experiment.assert_called()
 
-    customer_script.train_input_fn.assert_called_with('mytrainingpath', expected_params)
-    customer_script.eval_input_fn.assert_called_with('mytrainingpath', expected_params)
+    customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-def test_trainer_model_fn(os_environ, botocore, boto3, trainer, modules):
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+def test_trainer_model_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
     being invoked with the right params
     '''
     customer_script = MagicMock(spec=['model_fn', 'train_input_fn', 'eval_input_fn', 'serving_input_fn'])
 
+    training_dir_path = 'mytrainingpath'
     _trainer = trainer.Trainer(customer_script=customer_script,
                                current_host=current_host,
                                hosts=hosts,
                                model_path='s3://my/s3/path',
                                customer_params={'training_steps': 10, 'num_gpu': 20},
-                               training_path='mytrainingpath')
+                               input_channels={'training': training_dir_path})
 
-    modules.learn_runner.run.side_effect = lambda experiment_fn, training_path: experiment_fn(training_path)
+    modules.learn_runner.run.side_effect = lambda experiment_fn, run_config, hparams: experiment_fn(run_config, hparams)
     modules.Experiment.side_effect = execute_input_functions
     modules.saved_model_export_utils.make_export_strategy.side_effect = make_export_strategy_fn
 
@@ -172,21 +184,22 @@ def test_trainer_model_fn(os_environ, botocore, boto3, trainer, modules):
     modules.estimator.Estimator.assert_called_with(
         config=modules.RunConfig(),
         model_fn=ANY,
-        params=expected_params
+        params=modules.HParams().values()
     )
 
     modules.learn_runner.run.assert_called()
     modules.Experiment.assert_called()
 
-    customer_script.train_input_fn.assert_called_with('mytrainingpath', expected_params)
-    customer_script.eval_input_fn.assert_called_with('mytrainingpath', expected_params)
+    customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-def test_trainer_experiment_params(os_environ, botocore, boto3, trainer, modules):
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+def test_trainer_experiment_params(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
     being invoked with the right params
@@ -203,9 +216,9 @@ def test_trainer_experiment_params(os_environ, botocore, boto3, trainer, modules
                                                 'eval_delay_secs': 7,
                                                 'continuous_eval_throttle_secs': 25,
                                                 'train_steps_per_iteration': 13},
-                               training_path='mytrainingpath')
+                               input_channels={'training': 'mytrainingpath'})
 
-    modules.learn_runner.run.side_effect = lambda experiment_fn, training_path: experiment_fn(training_path)
+    modules.learn_runner.run.side_effect = lambda experiment_fn, run_config, hparams: experiment_fn(run_config, hparams)
 
     _trainer.train()
 
@@ -227,7 +240,8 @@ def test_trainer_experiment_params(os_environ, botocore, boto3, trainer, modules
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-def test_trainer_run_config_params(os_environ, botocore, boto3, trainer, modules):
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+def test_trainer_run_config_params(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
     being invoked with the right params
@@ -245,8 +259,8 @@ def test_trainer_run_config_params(os_environ, botocore, boto3, trainer, modules
                                                 'keep_checkpoint_max': 4,
                                                 'keep_checkpoint_every_n_hours': 5,
                                                 'log_step_count_steps': 6},
-                               training_path='mytrainingpath')
-    modules.learn_runner.run.side_effect = lambda experiment_fn, training_path: experiment_fn(training_path)
+                               input_channels={'training': 'mytrainingpath'})
+    modules.learn_runner.run.side_effect = lambda experiment_fn, run_config, hparams: experiment_fn(run_config, hparams)
 
     _trainer.train()
 
@@ -264,21 +278,23 @@ def test_trainer_run_config_params(os_environ, botocore, boto3, trainer, modules
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-def test_train_estimator_fn(os_environ, botocore, boto3, trainer, modules):
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+def test_train_estimator_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
     being invoked with the right params
     '''
     customer_script = MagicMock(spec=['estimator_fn', 'train_input_fn', 'eval_input_fn', 'serving_input_fn'])
 
+    training_dir_path = 'mytrainingpath'
     _trainer = trainer.Trainer(customer_script=customer_script,
                                current_host=current_host,
                                hosts=hosts,
                                model_path='s3://my/s3/path',
                                customer_params={'training_steps': 10, 'num_gpu': 20},
-                               training_path='mytrainingpath')
+                               input_channels={'training': training_dir_path})
 
-    modules.learn_runner.run.side_effect = lambda experiment_fn, training_path: experiment_fn(training_path)
+    modules.learn_runner.run.side_effect = lambda experiment_fn, run_config, hparams: experiment_fn(run_config, hparams)
     modules.Experiment.side_effect = execute_input_functions
     modules.saved_model_export_utils.make_export_strategy.side_effect = make_export_strategy_fn
 
@@ -288,9 +304,104 @@ def test_train_estimator_fn(os_environ, botocore, boto3, trainer, modules):
     modules.Experiment.assert_called()
 
     expected_params = {'num_gpu': 20, 'min_eval_frequency': 1000, 'training_steps': 10, 'save_checkpoints_secs': 300}
-    customer_script.estimator_fn.assert_called_with(modules.RunConfig(), expected_params)
-    customer_script.train_input_fn.assert_called_with('mytrainingpath', expected_params)
-    customer_script.eval_input_fn.assert_called_with('mytrainingpath', expected_params)
+    customer_script.estimator_fn.assert_called_with(modules.RunConfig(), modules.HParams().values())
+    customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
+    customer_script.serving_input_fn.assert_called_with(expected_params)
+
+
+class InspectInputFn3Params(object):
+    args = ['training_dir', 'hyperparameters', 'input_channels']
+
+
+inspect_train_input_fn_3 = InspectInputFn3Params()
+
+
+@patch('boto3.client')
+@patch('botocore.session.get_session')
+@patch('os.environ')
+@patch('inspect.getargspec', return_value=inspect_train_input_fn_3)
+def test_train_input_fn_with_channels(os_environ, botocore, boto3, inspect_args, trainer, modules):
+    '''
+    this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
+    being invoked with the right params
+    '''
+    customer_script = MagicMock(spec=['estimator_fn', 'train_input_fn', 'eval_input_fn', 'serving_input_fn'])
+
+    training_dir_path = 'mytrainingpath'
+    training_input_channels = {'training': training_dir_path,
+                               'verification': 'some_other'}
+
+    _trainer = trainer.Trainer(customer_script=customer_script,
+                               current_host=current_host,
+                               hosts=hosts,
+                               model_path='s3://my/s3/path',
+                               customer_params={'training_steps': 10, 'num_gpu': 20},
+                               input_channels=training_input_channels)
+
+    modules.learn_runner.run.side_effect = lambda experiment_fn, run_config, hparams: experiment_fn(run_config, hparams)
+    modules.Experiment.side_effect = execute_input_functions
+    modules.saved_model_export_utils.make_export_strategy.side_effect = make_export_strategy_fn
+
+    _trainer.train()
+
+    modules.learn_runner.run.assert_called()
+    modules.Experiment.assert_called()
+
+    expected_params = {'num_gpu': 20, 'min_eval_frequency': 1000, 'training_steps': 10, 'save_checkpoints_secs': 300}
+    customer_script.estimator_fn.assert_called_with(modules.RunConfig(), modules.HParams().values())
+    customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path,
+                                                      hyperparameters=expected_params,
+                                                      input_channels=training_input_channels)
+    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
+    customer_script.serving_input_fn.assert_called_with(expected_params)
+
+
+class InspectInputFnExtraParams(object):
+    args = ['training_dir', 'hyperparameters', 'input_channels', 'customer_defined']
+
+
+inspect_train_input_fn_extra = InspectInputFnExtraParams()
+
+
+@patch('boto3.client')
+@patch('botocore.session.get_session')
+@patch('os.environ')
+@patch('inspect.getargspec', return_value=inspect_train_input_fn_extra)
+def test_train_input_fn_with_unsupported_parameters(os_environ, botocore, boto3, inspect_args, trainer, modules):
+    '''
+    this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
+    being invoked with the right params
+    '''
+    customer_script = MagicMock(spec=['estimator_fn', 'train_input_fn', 'eval_input_fn', 'serving_input_fn'])
+
+    training_dir_path = 'mytrainingpath'
+    training_input_channels = {'training': training_dir_path,
+                               'verification': 'some_other'}
+
+    _trainer = trainer.Trainer(customer_script=customer_script,
+                               current_host=current_host,
+                               hosts=hosts,
+                               model_path='s3://my/s3/path',
+                               customer_params={'training_steps': 10, 'num_gpu': 20},
+                               input_channels=training_input_channels)
+
+    modules.learn_runner.run.side_effect = lambda experiment_fn, run_config, hparams: experiment_fn(run_config, hparams)
+    modules.Experiment.side_effect = execute_input_functions
+    modules.saved_model_export_utils.make_export_strategy.side_effect = make_export_strategy_fn
+
+    _trainer.train()
+
+    modules.learn_runner.run.assert_called()
+    modules.Experiment.assert_called()
+
+    expected_params = {'num_gpu': 20, 'min_eval_frequency': 1000, 'training_steps': 10, 'save_checkpoints_secs': 300}
+    customer_script.estimator_fn.assert_called_with(modules.RunConfig(), modules.HParams().values())
+    customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path,
+                                                      hyperparameters=expected_params,
+                                                      input_channels=training_input_channels,
+                                                      customer_defined=None)
+    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 
