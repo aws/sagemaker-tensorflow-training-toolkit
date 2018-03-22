@@ -21,6 +21,7 @@ def set_up():
         'tensorflow.python.saved_model.signature_constants',
         'google.protobuf.json_format',
         'tensorflow.contrib.learn.python.learn.utils',
+        'tensorflow.contrib.training.HParams',
         'tensorflow.python.estimator',
         'tensorflow.core.example',
         'grpc.framework.interfaces.face.face'

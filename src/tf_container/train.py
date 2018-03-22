@@ -10,8 +10,6 @@ import serve
 from tf_container.trainer import Trainer
 import time
 
-CHANNEL_DIR = "training"
-
 _logger = run.get_logger()
 
 
@@ -93,7 +91,7 @@ def train():
                             hosts=env.hosts,
                             train_steps=train_steps,
                             eval_steps=eval_steps,
-                            training_path=env.channel_dirs[CHANNEL_DIR],
+                            input_channels=env.channel_dirs,
                             model_path=checkpoint_dir,
                             output_path=env.output_dir,
                             customer_params=env.hyperparameters)

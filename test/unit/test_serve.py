@@ -20,6 +20,7 @@ def modules():
         'google.protobuf.json_format',
         'tensorflow.core.example',
         'tensorflow.contrib.learn.python.learn.utils',
+        'tensorflow.contrib.training.HParams',
         'tensorflow.python.estimator',
         'grpc.framework.interfaces.face.face'
     ]
