@@ -21,7 +21,7 @@ def serving_input_fn(params):
     return tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)
 
 
-def train_input_fn(training_dir, params, input_channels):
+def train_input_fn(params, input_channels):
     """Returns input function that would feed the model during training"""
     return _generate_input_fn(input_channels['training'], 'iris_training.csv')
 

@@ -230,14 +230,14 @@ class Trainer(object):
 
     def _build_estimator(self, run_config, hparams):
         # hparams is of type HParams at this point but all the interface functions are assuming dict
-        interface_hparmas = hparams.values()
+        hyperparameters = hparams.values()
 
         if hasattr(self.customer_script, 'estimator_fn'):
             logger.info("invoking estimator_fn")
-            return self.customer_script.estimator_fn(run_config, interface_hparmas)
+            return self.customer_script.estimator_fn(run_config, hyperparameters)
         elif hasattr(self.customer_script, 'keras_model_fn'):
             logger.info("involing keras_model_fn")
-            model = self.customer_script.keras_model_fn(interface_hparmas)
+            model = self.customer_script.keras_model_fn(hyperparameters)
             return tf.keras.estimator.model_to_estimator(keras_model=model, config=run_config)
         else:
             logger.info("creating the estimator")
@@ -247,7 +247,7 @@ class Trainer(object):
 
             return tf.estimator.Estimator(
                 model_fn=_model_fn,
-                params=interface_hparmas,
+                params=hyperparameters,
                 config=run_config)
 
     def _configure_s3_file_system(self):
