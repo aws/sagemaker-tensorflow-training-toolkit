@@ -8,7 +8,7 @@ from test.integ.conftest import SCRIPT_PATH
 
 
 def test_train_input_fn_with_input_channels(docker_image, sagemaker_session, opt_ml, processor):
-    resource_path = os.path.join(SCRIPT_PATH, 'resources/iris')
+    resource_path = os.path.join(SCRIPT_PATH, '../resources/iris')
 
     copy_resource(resource_path, opt_ml, 'code')
     copy_resource(resource_path, opt_ml, 'data', 'input/data')
