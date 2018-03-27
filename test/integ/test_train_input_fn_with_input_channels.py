@@ -20,7 +20,8 @@ def test_train_input_fn_with_input_channels(docker_image, sagemaker_session, opt
                                                     directory=os.path.join(resource_path, 'code'))
 
     additional_hyperparameters = dict(training_steps=1, evaluation_steps=1)
-    create_config_files('iris_train_input_fn_with_channels.py', s3_source_archive, opt_ml, additional_hyperparameters)
+    create_config_files('iris_train_input_fn_with_channels.py', s3_source_archive.s3_prefix,
+                        opt_ml, additional_hyperparameters)
     os.makedirs(os.path.join(opt_ml, 'model'))
 
     train(docker_image, opt_ml, processor)
