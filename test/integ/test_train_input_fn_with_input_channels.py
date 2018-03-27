@@ -33,4 +33,4 @@ def test_train_input_fn_with_input_channels(docker_image, sagemaker_session, opt
 
     with HostingContainer(image=docker_image, opt_ml=opt_ml,
                           script_name='iris_train_input_fn_with_channels.py', processor=processor) as c:
-        c.execute_pytest('integration-test/container_tests/estimator_classification.py')
+        c.execute_pytest('test/integ/container_tests/estimator_classification.py')
