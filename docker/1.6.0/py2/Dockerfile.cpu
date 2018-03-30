@@ -45,11 +45,11 @@ RUN pip --no-cache-dir install \
 
 WORKDIR /root
 
-RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==1.6 gevent gunicorn
+RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==1.5 gevent gunicorn
 
-# install tensorflow-model-server 1.6.
-RUN wget 'http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_1.6.0_all.deb' && \
-    dpkg -i tensorflow-model-server_1.6.0_all.deb
+# install tensorflow-model-server 1.5. 1.6 is not working as of 3/29/2018 for unknown reasons.
+RUN wget 'http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_1.5.0_all.deb' && \
+    dpkg -i tensorflow-model-server_1.5.0_all.deb
 
 # Will install from pypi once packages are released there. For now, copy from local file system.
 COPY $framework_installable .
