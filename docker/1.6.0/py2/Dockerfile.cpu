@@ -1,0 +1,71 @@
+FROM ubuntu:16.04
+
+ARG framework_installable
+ARG framework_support_installable=sagemaker_tensorflow_container-1.0.tar.gz
+ARG container_support_installable=sagemaker_container_support-1.0.tar.gz
+
+# Validate that arguments are specified
+RUN test $framework_installable || exit 1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+        libcurl3-dev \
+        libfreetype6-dev \
+        libpng12-dev \
+        libzmq3-dev \
+        pkg-config \
+        python-dev \
+        rsync \
+        software-properties-common \
+        unzip \
+        zip \
+        zlib1g-dev \
+        openjdk-8-jdk \
+        openjdk-8-jre-headless \
+        wget \
+        vim \
+        iputils-ping \
+        nginx \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py && \
+    rm get-pip.py
+
+RUN pip --no-cache-dir install \
+        numpy \
+        scipy \
+        sklearn \
+        pandas \
+        h5py
+
+WORKDIR /root
+
+RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==1.6 gevent gunicorn
+
+# install tensorflow-model-server 1.6.
+RUN wget 'http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_1.6.0_all.deb' && \
+    dpkg -i tensorflow-model-server_1.6.0_all.deb
+
+# Will install from pypi once packages are released there. For now, copy from local file system.
+COPY $framework_installable .
+COPY $framework_support_installable .
+COPY $container_support_installable .
+
+RUN framework_installable_local=$(basename $framework_installable) && \
+    framework_support_installable_local=$(basename $framework_support_installable) && \
+    container_support_installable_local=$(basename $container_support_installable) && \
+    \
+    pip install $framework_installable_local && \
+    pip install $container_support_installable_local && \
+    pip install $framework_support_installable_local && \
+    \
+    rm $framework_installable_local && \
+    rm $container_support_installable_local && \
+    rm $framework_support_installable_local
+
+ENTRYPOINT ["entry.py"]
