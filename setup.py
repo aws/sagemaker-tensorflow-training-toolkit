@@ -34,8 +34,9 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    install_requires=['sagemaker-container-support', 'tensorflow'],
+    install_requires=['sagemaker-container-support'],
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'run', 'sagemaker']
+        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'run',
+                 'sagemaker', 'tensorflow']
     },
 )
