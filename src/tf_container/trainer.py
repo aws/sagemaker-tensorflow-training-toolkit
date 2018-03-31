@@ -17,10 +17,10 @@ import os
 import tensorflow as tf
 from container_support import parse_s3_url
 from run import logger
-from tensorflow.contrib.learn import RunConfig, Experiment
-from tensorflow.contrib.learn.python.learn import learn_runner
-from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
-from tensorflow.contrib.training import HParams
+#from tensorflow.contrib.learn import RunConfig, Experiment
+#from tensorflow.contrib.learn.python.learn import learn_runner
+#from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
+#from tensorflow.contrib.training import HParams
 
 
 class Trainer(object):
@@ -123,15 +123,79 @@ class Trainer(object):
         return tf_config
 
     def train(self):
+        run_config = self._build_run_config()
+        estimator = self._build_estimator(run_config=run_config)
+        train_spec = self._build_train_spec()
+        eval_spec = self._build_eval_spec()
+
+        tf.estimator.train_and_evaluate(estimator=estimator, train_spec=train_spec, eval_spec=eval_spec)
+        """
         experiment_fn = self._generate_experiment_fn()
         hparams = HParams(**self.customer_params)
 
         learn_runner.run(experiment_fn,
                          run_config=self._build_run_config(),
                          hparams=hparams)
+        """
 
-    def saves_training(self):
-        return hasattr(self.customer_script, "serving_input_fn")
+    def _build_run_config(self):
+        valid_runconfig_keys = ['save_summary_steps', 'save_checkpoints_secs', 'save_checkpoints_steps',
+                                'keep_checkpoint_max', 'keep_checkpoint_every_n_hours', 'log_step_count_steps']
+
+        runconfig_params = {k: v for k, v in self.customer_params.items() if k in valid_runconfig_keys}
+
+        logger.info("creating RunConfig:")
+        logger.info(runconfig_params)
+
+        run_config = tf.estimator.RunConfig(model_dir=self.model_path, **runconfig_params)
+        return run_config
+
+    def _build_estimator(self, run_config):
+        hyperparameters = self.customer_params
+
+        if hasattr(self.customer_script, 'estimator_fn'):
+            logger.info("invoking estimator_fn")
+            return self.customer_script.estimator_fn(run_config, hyperparameters)
+        elif hasattr(self.customer_script, 'keras_model_fn'):
+            logger.info("invoking keras_model_fn")
+            model = self.customer_script.keras_model_fn(hyperparameters)
+            return tf.keras.estimator.model_to_estimator(keras_model=model, config=run_config)
+        else:
+            logger.info("creating the estimator")
+
+            def _model_fn(features, labels, mode, params):
+                return self.customer_script.model_fn(features, labels, mode, params)
+
+            return tf.estimator.Estimator(
+                model_fn=_model_fn,
+                params=hyperparameters,
+                config=run_config)
+
+    def _build_train_spec(self):
+        declared_args = inspect.getargspec(self.customer_script.train_input_fn)
+        invoke_args = {arg: self._resolve_value_for_training_input_fn_parameter(arg)
+                       for arg in declared_args.args}
+        train_input_fn = _function(self.customer_script.train_input_fn(**invoke_args))
+
+        return tf.estimator.TrainSpec(train_input_fn, max_steps=self.train_steps)
+
+    def _build_eval_spec(self):
+        # TODO: why is this different from the train_input_fn? investigate
+        eval_input_fn = _function(self.customer_script.eval_input_fn(
+                self.input_channels.get(self.DEFAULT_TRAINING_CHANNEL, None),
+                self.customer_params))
+
+        serving_input_receiver_fn = _function(self.customer_script.serving_input_fn(self.customer_params))
+
+        if hasattr(self.customer_script, 'serving_input_fn'):
+            exporter = tf.estimator.LatestExporter('placeholder-exporter',
+                                                   serving_input_receiver_fn=serving_input_receiver_fn)
+        else:
+            logger.warn("serving_input_fn not specified, model NOT saved, use checkpoints to reconstruct")
+            exporter = None
+
+        return tf.estimator.EvalSpec(eval_input_fn, steps=self.eval_steps, exporters=exporter,
+                                     name='placeholder-exporter-name')
 
     def _resolve_value_for_training_input_fn_parameter(self, alias_key):
         """
@@ -153,6 +217,19 @@ class Trainer(object):
                             'input_channels': self.input_channels}
         return parameter_values[resolved_key] if resolved_key else None
 
+    def _configure_s3_file_system(self):
+        # loads S3 filesystem plugin
+        s3 = boto3.client('s3')
+
+        bucket_name, key = parse_s3_url(self.model_path)
+
+        bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
+
+        if bucket_location:
+            os.environ['S3_REGION'] = bucket_location
+        os.environ['S3_USE_HTTPS'] = "1"
+
+    """
     def _generate_experiment_fn(self):
         def _experiment_fn(run_config, hparams):
             valid_experiment_keys = ['eval_metrics', 'train_monitors', 'eval_hooks', 'local_eval_frequency',
@@ -178,7 +255,7 @@ class Trainer(object):
                     return features, labels
             '''
             def _train_input_fn():
-                """Prepare parameters for the train_input_fn and invoke it"""
+                #Prepare parameters for the train_input_fn and invoke it
                 declared_args = inspect.getargspec(self.customer_script.train_input_fn)
                 invoke_args = {arg: self._resolve_value_for_training_input_fn_parameter(arg)
                                for arg in declared_args.args}
@@ -225,55 +302,7 @@ class Trainer(object):
             )
 
         return _experiment_fn
-
-    def _build_run_config(self):
-        valid_runconfig_keys = ['save_summary_steps', 'save_checkpoints_secs', 'save_checkpoints_steps',
-                                'keep_checkpoint_max', 'keep_checkpoint_every_n_hours', 'log_step_count_steps']
-
-        runconfig_params = {k: v for k, v in self.customer_params.items() if k in valid_runconfig_keys}
-
-        logger.info("creating RunConfig:")
-        logger.info(runconfig_params)
-
-        run_config = RunConfig(
-            model_dir=self.model_path,
-            **runconfig_params
-        )
-        return run_config
-
-    def _build_estimator(self, run_config, hparams):
-        # hparams is of type HParams at this point but all the interface functions are assuming dict
-        hyperparameters = hparams.values()
-
-        if hasattr(self.customer_script, 'estimator_fn'):
-            logger.info("invoking estimator_fn")
-            return self.customer_script.estimator_fn(run_config, hyperparameters)
-        elif hasattr(self.customer_script, 'keras_model_fn'):
-            logger.info("involing keras_model_fn")
-            model = self.customer_script.keras_model_fn(hyperparameters)
-            return tf.keras.estimator.model_to_estimator(keras_model=model, config=run_config)
-        else:
-            logger.info("creating the estimator")
-
-            def _model_fn(features, labels, mode, params):
-                return self.customer_script.model_fn(features, labels, mode, params)
-
-            return tf.estimator.Estimator(
-                model_fn=_model_fn,
-                params=hyperparameters,
-                config=run_config)
-
-    def _configure_s3_file_system(self):
-        # loads S3 filesystem plugin
-        s3 = boto3.client('s3')
-
-        bucket_name, key = parse_s3_url(self.model_path)
-
-        bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
-
-        if bucket_location:
-            os.environ['S3_REGION'] = bucket_location
-        os.environ['S3_USE_HTTPS'] = "1"
+        """
 
 
 def _function(object):
