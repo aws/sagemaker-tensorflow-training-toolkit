@@ -185,17 +185,15 @@ class Trainer(object):
                 self.input_channels.get(self.DEFAULT_TRAINING_CHANNEL, None),
                 self.customer_params))
 
-        serving_input_receiver_fn = _function(self.customer_script.serving_input_fn(self.customer_params))
-
         if hasattr(self.customer_script, 'serving_input_fn'):
-            exporter = tf.estimator.LatestExporter('placeholder-exporter',
+            serving_input_receiver_fn = _function(self.customer_script.serving_input_fn(self.customer_params))
+            exporter = tf.estimator.LatestExporter('Servo',
                                                    serving_input_receiver_fn=serving_input_receiver_fn)
         else:
             logger.warn("serving_input_fn not specified, model NOT saved, use checkpoints to reconstruct")
             exporter = None
 
-        return tf.estimator.EvalSpec(eval_input_fn, steps=self.eval_steps, exporters=exporter,
-                                     name='placeholder-exporter-name')
+        return tf.estimator.EvalSpec(eval_input_fn, steps=self.eval_steps, exporters=exporter)
 
     def _resolve_value_for_training_input_fn_parameter(self, alias_key):
         """
