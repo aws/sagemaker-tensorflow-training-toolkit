@@ -36,8 +36,8 @@ def test_s3_checkpoint_save_timeout(docker_image, opt_ml, sagemaker_session, pro
     checkpoint_s3_path = 's3://{}/integ-s3-timeout/checkpoints-{}'.format(default_bucket,
                                                                           uuid.uuid4())
     hyperparameters = dict(
-        training_steps=10,
-        evaluation_steps=10,
+        training_steps=3,
+        evaluation_steps=3,
         checkpoint_path=checkpoint_s3_path
     )
     create_config_files('rand_model_emb.py', s3_source_archive.s3_prefix, opt_ml, hyperparameters)

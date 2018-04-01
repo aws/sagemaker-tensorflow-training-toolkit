@@ -124,13 +124,16 @@ class Trainer(object):
 
         return tf.estimator.TrainSpec(train_input_fn, max_steps=self.train_steps)
 
+    def saves_training(self):
+        return hasattr(self.customer_script, 'serving_input_fn')
+
     def _build_eval_spec(self):
         # TODO: why is this different from the train_input_fn? investigate
         input_dir = self.input_channels.get(self.DEFAULT_TRAINING_CHANNEL, None)
         params = self.customer_params
         eval_input_fn = lambda: self.customer_script.eval_input_fn(input_dir, params)
 
-        if hasattr(self.customer_script, 'serving_input_fn'):
+        if self.saves_training():
             serving_input_receiver_fn = lambda: self.customer_script.serving_input_fn(self.customer_params)
             exporter = tf.estimator.LatestExporter('Servo',
                                                    serving_input_receiver_fn=serving_input_receiver_fn)
