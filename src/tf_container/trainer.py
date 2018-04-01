@@ -88,20 +88,17 @@ class Trainer(object):
         hyperparameters = self.customer_params
 
         if hasattr(self.customer_script, 'estimator_fn'):
-            logger.info('invoking estimator_fn')
+            logger.info('invoking the user-provided estimator_fn')
             return self.customer_script.estimator_fn(run_config, hyperparameters)
         elif hasattr(self.customer_script, 'keras_model_fn'):
-            logger.info('invoking keras_model_fn')
+            logger.info('invoking the user-provided keras_model_fn')
             model = self.customer_script.keras_model_fn(hyperparameters)
             return tf.keras.estimator.model_to_estimator(keras_model=model, config=run_config)
         else:
-            logger.info('creating the estimator')
-
-            def _model_fn(features, labels, mode, params):
-                return self.customer_script.model_fn(features, labels, mode, params)
+            logger.info('creating an estimator from the user-provided model_fn')
 
             return tf.estimator.Estimator(
-                model_fn=_model_fn,
+                model_fn=self.customer_script.model_fn,
                 params=hyperparameters,
                 config=run_config)
 
@@ -123,7 +120,7 @@ class Trainer(object):
         eval_input_fn = lambda: self.customer_script.eval_input_fn(input_dir, params)
 
         if self.saves_training():
-            serving_input_receiver_fn = lambda: self.customer_script.serving_input_fn(self.customer_params)
+            serving_input_receiver_fn = lambda: self.customer_script.serving_input_fn(params)
             exporter = tf.estimator.LatestExporter('Servo',
                                                    serving_input_receiver_fn=serving_input_receiver_fn)
         else:

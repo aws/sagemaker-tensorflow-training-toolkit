@@ -16,6 +16,7 @@ from mock import patch, call, MagicMock, ANY
 from test.unit.utils import mock_import_modules
 
 
+# Mock out tensorflow modules.
 @pytest.fixture(scope='module')
 def modules():
     modules_to_mock = [
@@ -83,6 +84,60 @@ def test_build_run_config(modules, trainer):
     assert modules.estimator.RunConfig.return_value == conf
 
 
+def test_user_estimator_fn(trainer):
+    fake_run_config = 'fakerunconfig'
+    fake_estimator = 'fakeestimator'
+    expected_hps = trainer.customer_params.copy()
+    # Set up "customer script".
+    def customer_estimator_fn(run_config, hyperparameters):
+        assert run_config == fake_run_config
+        assert hyperparameters == expected_hps
+        return fake_estimator
+
+    customer_script = EmptyModule()
+    customer_script.estimator_fn = customer_estimator_fn
+    trainer.customer_script = customer_script
+
+    estimator = trainer._build_estimator(fake_run_config)
+
+    assert estimator == fake_estimator
+
+
+def test_user_keras_model_fn(modules, trainer):
+    fake_run_config = 'fakerunconfig'
+    fake_keras_model = 'fakekerasmodel'
+    expected_hps = trainer.customer_params.copy()
+    # Set up "customer script".
+    def customer_keras_model_fn(hyperparameters):
+        assert hyperparameters == expected_hps
+        return fake_keras_model
+
+    customer_script = EmptyModule()
+    customer_script.keras_model_fn = customer_keras_model_fn
+    trainer.customer_script = customer_script
+
+    estimator = trainer._build_estimator(fake_run_config)
+
+    model_to_estimator = modules.keras.estimator.model_to_estimator
+    model_to_estimator.assert_called_with(keras_model=fake_keras_model, config=fake_run_config)
+    assert estimator == model_to_estimator.return_value
+
+
+def test_user_model_fn(modules, trainer):
+    fake_run_config = 'fakerunconfig'
+    fake_model_fn = 'fakemodelfn'
+    expected_hps = trainer.customer_params.copy()
+    customer_script = EmptyModule()
+    customer_script.model_fn = fake_model_fn
+    trainer.customer_script = customer_script
+
+    estimator = trainer._build_estimator(fake_run_config)
+
+    estimator_mock = modules.estimator.Estimator
+    estimator_mock.assert_called_with(model_fn=fake_model_fn, params=expected_hps, config=fake_run_config)
+    assert estimator == estimator_mock.return_value
+
+
 def test_build_train_spec(modules, trainer):
     tensor_dict = {'inputs': ['faketensor']}
     labels = ['fakelabels']
@@ -109,6 +164,79 @@ def test_build_train_spec(modules, trainer):
     # Invokes the customer's train_input_fn with the correct training_dir and hyperparameters.
     train_input_fn = modules.estimator.TrainSpec.call_args[0][0]
     returned_dict, returned_labels = train_input_fn()
+    assert (tensor_dict, labels) == (returned_dict, returned_labels)
+
+
+def test_build_eval_spec_with_serving(modules, trainer):
+    # Special hyperparameters passed in by customer should be passed to EvalSpec
+    eval_params = {'throttle_secs': 13,
+                   'start_delay_secs': 56}
+    trainer.customer_params.update(eval_params)
+    expected_hps = trainer.customer_params.copy()
+
+    # Set up "customer script".
+    tensor_dict = {'inputs': ['faketensor']}
+    labels = ['fakelabels']
+    def customer_eval_input_fn(training_dir, params):
+        assert training_dir == TRAIN_DIR
+        assert params == expected_hps
+        return tensor_dict, labels
+    input_receiver = 'fakeservinginputreceiver'
+    def customer_serving_input_fn(params):
+        assert params == expected_hps
+        return input_receiver
+    customer_script = EmptyModule()
+    customer_script.eval_input_fn = customer_eval_input_fn
+    customer_script.serving_input_fn = customer_serving_input_fn
+    trainer.customer_script = customer_script
+    # Set a non-default eval_steps, which should be propaated through to the EvalSpec
+    trainer.eval_steps = 567
+
+    spec = trainer._build_eval_spec()
+
+    exporter_mock = modules.estimator.LatestExporter
+    exporter_mock.assert_called_with('Servo', serving_input_receiver_fn=ANY)
+    _, kwargs = exporter_mock.call_args
+    serving_input_fn = kwargs['serving_input_receiver_fn']
+    returned_input_receiver = serving_input_fn()
+    assert input_receiver == returned_input_receiver
+
+    evalspec_mock = modules.estimator.EvalSpec
+    evalspec_mock.assert_called_with(ANY, steps=567, exporters=ANY, throttle_secs=13, start_delay_secs=56)
+    args, kwargs = evalspec_mock.call_args
+    # Assert the customer's eval_input_fn is used correctly
+    eval_input_fn = args[0]
+    returned_dict, returned_labels = eval_input_fn()
+    assert (tensor_dict, labels) == (returned_dict, returned_labels)
+    # Assert the created LatestExporter is passed correctly to the EvalSpec
+    assert exporter_mock.return_value == kwargs['exporters']
+    # Assert the created EvalSpec is returned from _build_eval_spec
+    assert evalspec_mock.return_value == spec
+
+
+def test_build_eval_spec_no_serving(modules, trainer):
+    # Set up "customer script".
+    tensor_dict = {'inputs': ['faketensor']}
+    labels = ['fakelabels']
+    expected_hps = trainer.customer_params.copy()
+    def customer_eval_input_fn(training_dir, params):
+        assert training_dir == TRAIN_DIR
+        assert params == expected_hps
+        return tensor_dict, labels
+    customer_script = EmptyModule()
+    customer_script.eval_input_fn = customer_eval_input_fn
+    trainer.customer_script = customer_script
+
+    spec = trainer._build_eval_spec()
+
+    evalspec_mock = modules.estimator.EvalSpec
+    # eval_steps not specified by customer, use default of 100.
+    # serving_input_fn not specified by customer, don't provide an exporter.
+    evalspec_mock.assert_called_with(ANY, steps=100, exporters=None)
+    args, _ = evalspec_mock.call_args
+    # Assert the customer's eval_input_fn is used correctly
+    eval_input_fn = args[0]
+    returned_dict, returned_labels = eval_input_fn()
     assert (tensor_dict, labels) == (returned_dict, returned_labels)
 
 
