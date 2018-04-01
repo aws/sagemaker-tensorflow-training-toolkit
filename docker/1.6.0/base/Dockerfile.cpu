@@ -1,8 +1,5 @@
 FROM ubuntu:16.04
 
-ARG framework_installable
-ARG framework_support_installable=sagemaker_tensorflow_container-1.0.0.tar.gz
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         curl \
@@ -47,18 +44,3 @@ RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-servin
 RUN wget 'http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_1.5.0_all.deb' && \
     dpkg -i tensorflow-model-server_1.5.0_all.deb
 
-# Will install from pypi once packages are released there. For now, copy from local file system.
-COPY $framework_installable .
-COPY $framework_support_installable .
-
-RUN framework_installable_local=$(basename $framework_installable) && \
-    framework_support_installable_local=$(basename $framework_support_installable) && \
-    \
-    pip install $framework_installable_local && \
-    pip install $framework_support_installable_local && \
-    \
-    rm $framework_installable_local && \
-    rm $framework_support_installable_local
-
-# entry.py comes from sagemaker-container-support
-ENTRYPOINT ["entry.py"]
