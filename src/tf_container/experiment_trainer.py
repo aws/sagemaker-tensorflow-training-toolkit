@@ -16,7 +16,7 @@ import inspect
 import os
 import tensorflow as tf
 from container_support import parse_s3_url
-from run import logger
+from tf_container.run import logger
 from tensorflow.contrib.learn import RunConfig, Experiment
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils

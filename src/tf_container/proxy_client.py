@@ -14,7 +14,7 @@
 import numpy as np
 from google.protobuf import json_format
 from grpc.beta import implementations
-from run import logger as _logger
+from tf_container.run import logger as _logger
 from tensorflow import make_tensor_proto
 from tensorflow.core.example import example_pb2, feature_pb2
 from tensorflow.core.framework import tensor_pb2

@@ -18,11 +18,11 @@ from threading import Thread
 import container_support as cs
 import os
 import tensorflow as tf
-import run
-import serve
+import tf_container.run
+import tf_container.serve as serve
 import time
 
-_logger = run.get_logger()
+_logger = tf_container.run.get_logger()
 
 
 def _wait_until_master_is_down(master):

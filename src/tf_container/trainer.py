@@ -16,11 +16,7 @@ import inspect
 import os
 import tensorflow as tf
 from container_support import parse_s3_url
-from run import logger
-#from tensorflow.contrib.learn import RunConfig, Experiment
-#from tensorflow.contrib.learn.python.learn import learn_runner
-#from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
-#from tensorflow.contrib.training import HParams
+from tf_container.run import logger
 
 
 class Trainer(object):
@@ -35,7 +31,6 @@ class Trainer(object):
                  input_channels=None,
                  model_path=None,
                  output_path=None,
-                 min_eval_frequency=1000,
                  customer_params={},
                  save_checkpoints_secs=300):
         """
@@ -51,11 +46,6 @@ class Trainer(object):
             input_channels: (dict) Dictionary with input channels
             model_path: (str) Directory where checkpoints will be saved. Can be a S3 bucket
             output_path: (str) Local directory where the model will be saved
-            min_eval_frequency: (int) Applies only to master container. the minimum
-                number of steps between evaluations. Of course, evaluation does not
-                occur if no new snapshot is available, hence, this is the minimum.
-                If 0, the evaluation will only happen after training.
-                Defaults to 1000.
         """
         self.customer_script = customer_script
         self.current_host = current_host
@@ -67,7 +57,6 @@ class Trainer(object):
         self.ouput_path = output_path
         self.task_type = None
 
-        customer_params['min_eval_frequency'] = customer_params.get('min_eval_frequency', min_eval_frequency)
         customer_params['save_checkpoints_secs'] = customer_params.get('save_checkpoints_secs', save_checkpoints_secs)
 
         self.customer_params = customer_params
@@ -89,7 +78,7 @@ class Trainer(object):
 
         runconfig_params = {k: v for k, v in self.customer_params.items() if k in valid_runconfig_keys}
 
-        logger.info("creating RunConfig:")
+        logger.info('creating RunConfig:')
         logger.info(runconfig_params)
 
         run_config = tf.estimator.RunConfig(model_dir=self.model_path, **runconfig_params)
@@ -99,14 +88,14 @@ class Trainer(object):
         hyperparameters = self.customer_params
 
         if hasattr(self.customer_script, 'estimator_fn'):
-            logger.info("invoking estimator_fn")
+            logger.info('invoking estimator_fn')
             return self.customer_script.estimator_fn(run_config, hyperparameters)
         elif hasattr(self.customer_script, 'keras_model_fn'):
-            logger.info("invoking keras_model_fn")
+            logger.info('invoking keras_model_fn')
             model = self.customer_script.keras_model_fn(hyperparameters)
             return tf.keras.estimator.model_to_estimator(keras_model=model, config=run_config)
         else:
-            logger.info("creating the estimator")
+            logger.info('creating the estimator')
 
             def _model_fn(features, labels, mode, params):
                 return self.customer_script.model_fn(features, labels, mode, params)
@@ -138,10 +127,13 @@ class Trainer(object):
             exporter = tf.estimator.LatestExporter('Servo',
                                                    serving_input_receiver_fn=serving_input_receiver_fn)
         else:
-            logger.warn("serving_input_fn not specified, model NOT saved, use checkpoints to reconstruct")
+            logger.warn('serving_input_fn not specified, model NOT saved, use checkpoints to reconstruct')
             exporter = None
 
-        return tf.estimator.EvalSpec(eval_input_fn, steps=self.eval_steps, exporters=exporter)
+        valid_eval_keys = ['start_delay_secs', 'throttle_secs']
+        eval_params = {k: v for k, v in self.customer_params.items() if k in valid_eval_keys}
+
+        return tf.estimator.EvalSpec(eval_input_fn, steps=self.eval_steps, exporters=exporter, **eval_params)
 
     def _resolve_value_for_training_input_fn_parameter(self, alias_key):
         """
@@ -187,14 +179,14 @@ class Trainer(object):
             return ['{}:{}'.format(host, port) for host in my_hosts]
 
         tf_config = {
-            "cluster": {
-                "master": build_host_addresses(masters),
+            'cluster': {
+                'master': build_host_addresses(masters),
             },
-            "task": {
-                "index": task_id,
-                "type": self.task_type
+            'task': {
+                'index': task_id,
+                'type': self.task_type
             },
-            "environment": 'cloud'
+            'environment': 'cloud'
         }
 
         if ps:
@@ -220,4 +212,4 @@ class Trainer(object):
 
         if bucket_location:
             os.environ['S3_REGION'] = bucket_location
-        os.environ['S3_USE_HTTPS'] = "1"
+        os.environ['S3_USE_HTTPS'] = '1'
