@@ -31,7 +31,7 @@ def estimator_fn(run_config, params):
 
 def serving_input_fn(params):
     feature_spec = {INPUT_TENSOR_NAME: tf.FixedLenFeature(dtype=tf.float32, shape=[4])}
-    return tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)
+    return tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)()
 
 
 def train_input_fn(params, input_channels):
@@ -55,4 +55,4 @@ def _generate_input_fn(training_dir, training_filename):
         x={INPUT_TENSOR_NAME: np.array(training_set.data)},
         y=np.array(training_set.target),
         num_epochs=None,
-        shuffle=True)
+        shuffle=True)()
