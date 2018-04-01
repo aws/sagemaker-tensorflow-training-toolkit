@@ -1,6 +1,10 @@
 ## SageMaker TensorFlow Containers
 
-This support code is used for making the TensorFlow framework run on Amazon SageMaker.
+SageMaker Tensorflow Containers is an open source library for making the TensorFlow framework run on Amazon SageMaker.
+
+For information on running Tensorflow jobs on SageMaker: [Python SDK](https://github.com/aws/sagemaker-python-sdk).
+
+For notebook examples: [SageMaker Notebook Examples](https://github.com/awslabs/amazon-sagemaker-examples).
 
 ## Getting Started
 
@@ -13,17 +17,20 @@ Make sure you have installed all of the following prerequisites on your developm
 * [Nvidia-Docker](https://github.com/NVIDIA/nvidia-docker)
 
 #### Recommended
-* [PyEnv](https://github.com/pyenv/pyenv)
+* A python environment management tool. (e.g. [PyEnv](https://github.com/pyenv/pyenv), [VirtualEnv](https://virtualenv.pypa.io/en/stable/))
 
 ## Running the tests
+Tests are defined in tests/ and include unit, integration and functional tests.
 
-Tests are defined in tests/ and include unit, integration and functional tests. If you want to run unit tests, then use:
+### Unit Tests
+If you want to run unit tests, then use:
 ```
 # All test instructions should be run from the top level directory
 
 pytest tests/unit
 ```
 
+### Integration Tests
 > Running integration & functional tests require [docker](https://www.docker.com/) and [AWS credentials](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html), as the integration tests make calls to a couple AWS services.
 The integration and functional tests require configurations specified within their respective [conftest.py](https://github.com/aws/sagemaker-tensorflow-containers/blob/master/test/integ/conftest.py).
 
@@ -35,14 +42,17 @@ pytest tests/integ --docker-base-name <your_docker_image> \
                    --tag <your_docker_image_tag> \
                    --framework-version <tensorflow_version> \
                    --processor <cpu_or_gpu>
+```
 
-
+```
 # Example
 pytest tests/integ --docker-base-name preprod-tensorflow \
                    --tag 1.0 \
                    --framework-version 1.4.1 \
                    --processor cpu
 ```
+
+### Functional Tests
 If you want to run a functional end to end test on [Amazon SageMaker](https://aws.amazon.com/sagemaker/), then use:
 
 > * Functional tests require your docker image to be within an [Amazon ECR repository]().
@@ -56,8 +66,9 @@ pytest tests/functional --aws-id <your_aws_id> \
                    --docker-base-name <your_docker_image> \
                    --instance-type <amazon_sagemaker_instance_type> \
                    --tag <your_docker_image_tag> \
+```
 
-
+```
 # Example
 pytest tests/functional --aws-id 12345678910 \
                    --docker-base-name preprod-tensorflow \
