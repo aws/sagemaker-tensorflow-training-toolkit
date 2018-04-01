@@ -20,7 +20,6 @@ import os
 import tensorflow as tf
 import run
 import serve
-from tf_container.trainer import Trainer
 import time
 
 _logger = run.get_logger()
@@ -83,6 +82,25 @@ def _get_master(tf_config):
     return tf_config['cluster']['master'][0][:-5]
 
 
+def _get_trainer_class():
+    # We used the Experiment API in tf.contrib.learn initially. It's not
+    # officially supported, and it's not working properly with TF 1.6, so
+    # we've switched to using tf.estimator.train_and_evaluate instead for
+    # versions 1.6 and up. However, we still want to use the old API for
+    # 1.4 and 1.5, since the new API isn't fully backwards compatible. 
+    
+    major, minor, patch = tf.__version__.split('.')
+    if major != '1':
+        raise ValueError('We only support TensorFlow 1.x.y currently.')
+
+    if minor in ['4', '5']:
+        import tf_container.experiment_trainer
+        return tf_container.experiment_trainer.Trainer
+
+    import tf_container.trainer
+    return tf_container.trainer.Trainer
+
+
 def train():
     env = cs.TrainingEnvironment()
 
@@ -99,15 +117,16 @@ def train():
 
     customer_script = env.import_user_module()
 
-    train_wrapper = Trainer(customer_script=customer_script,
-                            current_host=env.current_host,
-                            hosts=env.hosts,
-                            train_steps=train_steps,
-                            eval_steps=eval_steps,
-                            input_channels=env.channel_dirs,
-                            model_path=checkpoint_dir,
-                            output_path=env.output_dir,
-                            customer_params=env.hyperparameters)
+    trainer_class = _get_trainer_class()
+    train_wrapper = trainer_class(customer_script=customer_script,
+                                  current_host=env.current_host,
+                                  hosts=env.hosts,
+                                  train_steps=train_steps,
+                                  eval_steps=eval_steps,
+                                  input_channels=env.channel_dirs,
+                                  model_path=checkpoint_dir,
+                                  output_path=env.output_dir,
+                                  customer_params=env.hyperparameters)
 
     tf_config = train_wrapper.build_tf_config()
 
