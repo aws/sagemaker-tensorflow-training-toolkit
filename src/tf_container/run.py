@@ -15,7 +15,7 @@ import logging
 import tensorflow as tf
 
 
-tf.logging.set_verbosity(tf.logging.DEBUG)
+tf.logging.set_verbosity(tf.logging.INFO)
 
 
 def get_logger():
