@@ -50,4 +50,4 @@ def _generate_input_fn(training_dir, training_filename):
         x={INPUT_TENSOR_NAME: np.array(training_set.data)},
         y=np.array(training_set.target),
         num_epochs=None,
-        shuffle=True)
+        shuffle=True)()

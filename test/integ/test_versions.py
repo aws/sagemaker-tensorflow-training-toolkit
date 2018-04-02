@@ -19,12 +19,13 @@ from test.integ.docker_utils import Container
 def required_versions(framework_version):
     if framework_version == '1.4.1':
         return ['tensorflow-serving-api==1.4.0',
-                'tensorflow-tensorboard==0.4.0',
                 'tensorflow==1.4.1']
     elif framework_version == '1.5.0':
         return ['tensorflow-serving-api==1.5.0',
-                'tensorflow-tensorboard==1.5.1',
                 'tensorflow==1.5.0']
+    elif framework_version == '1.6.0':
+        return ['tensorflow-serving-api==1.5.0',
+                'tensorflow==1.6.0']
     else:
         raise ValueError("invalid internal test config")
 

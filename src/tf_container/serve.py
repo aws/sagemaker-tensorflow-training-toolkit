@@ -26,7 +26,7 @@ from tf_container import proxy_client
 from six import StringIO
 import csv
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, OCTET_STREAM_CONTENT_TYPE, ANY_CONTENT_TYPE
-from run import logger
+from tf_container.run import logger
 import time
 
 

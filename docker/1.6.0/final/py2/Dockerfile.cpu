@@ -1,0 +1,24 @@
+# Use local version of image built from Dockerfile.cpu in /docker/1.6.0/base
+FROM tensorflow-base:1.6.0-cpu-py2
+MAINTAINER Amazon AI
+
+ARG framework_installable
+ARG framework_support_installable=sagemaker_tensorflow_container-1.0.0.tar.gz
+
+WORKDIR /root
+
+# Will install from pypi once packages are released there. For now, copy from local file system.
+COPY $framework_installable .
+COPY $framework_support_installable .
+
+RUN framework_installable_local=$(basename $framework_installable) && \
+    framework_support_installable_local=$(basename $framework_support_installable) && \
+    \
+    pip install $framework_installable_local && \
+    pip install $framework_support_installable_local && \
+    \
+    rm $framework_installable_local && \
+    rm $framework_support_installable_local
+
+# entry.py comes from sagemaker-container-support
+ENTRYPOINT ["entry.py"]
