@@ -146,24 +146,18 @@ If you want to run unit tests, then use:
 Integration Tests
 ~~~~~~~~~~~~~~~~~
 
-    Running integration tests require
-    `Docker <https://www.docker.com/>`__ and `AWS
-    credentials <https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html>`__,
-    as the integration tests make calls to a couple AWS services. The
-    integration and functional tests require configurations specified
-    within their respective
-    `conftest.py <https://github.com/aws/sagemaker-tensorflow-containers/blob/master/test/integ/conftest.py>`__.
+Running integration tests require `Docker <https://www.docker.com/>`__ and `AWS
+credentials <https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html>`__,
+as the integration tests make calls to a couple AWS services. The integration and functional
+tests require configurations specified within their respective
+`conftest.py <https://github.com/aws/sagemaker-tensorflow-containers/blob/master/test/integ/conftest.py>`__.
 
-..
+Integration tests on GPU require `Nvidia-Docker <https://github.com/NVIDIA/nvidia-docker>`__.
 
-    Integration tests on GPU require
-    `Nvidia-Docker <https://github.com/NVIDIA/nvidia-docker>`__.
+Before running integration tests:
 
-..
-
-    Before running integration tests: 1. Build your Docker image. 2.
-    Pass in the correct pytest arguments to run tests against your
-    Docker image.
+#. Build your Docker image.
+#. Pass in the correct pytest arguments to run tests against your Docker image.
 
 If you want to run local integration tests, then use:
 
@@ -187,25 +181,24 @@ If you want to run local integration tests, then use:
 Functional Tests
 ~~~~~~~~~~~~~~~~
 
+Functional tests require your Docker image to be within an `Amazon ECR repository <https://docs
+.aws.amazon.com/AmazonECS/latest/developerguide/ECS_Console_Repositories.html>`__.
+
+The Docker-base-name is your `ECR repository namespace <https://docs.aws.amazon
+.com/AmazonECR/latest/userguide/Repositories.html>`__.
+
+The instance-type is your specified `Amazon SageMaker Instance Type
+<https://aws.amazon.com/sagemaker/pricing/instance-types/>`__ that the functional test will run on.
+
+
+Before running functional tests:
+
+#. Build your Docker image.
+#. Push the image to your ECR repository.
+#. Pass in the correct pytest arguments to run tests on SageMaker against the image within your ECR repository.
+
 If you want to run a functional end to end test on `Amazon
 SageMaker <https://aws.amazon.com/sagemaker/>`__, then use:
-
-    -  Functional tests require your Docker image to be within an
-       `Amazon ECR
-       repository <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_Console_Repositories.html>`__.
-    -  The Docker-base-name is your `ECR repository
-       namespace <https://docs.aws.amazon.com/AmazonECR/latest/userguide/Repositories.html>`__.
-    -  The instance-type is your specified `Amazon SageMaker Instance
-       Type <https://aws.amazon.com/sagemaker/pricing/instance-types/>`__
-       that the functional test will run on.
-
-..
-
-    Before running functional tests:
-
-    #. Build your Docker image.
-    #. Push the image to your ECR repository.
-    #. Pass in the correct pytest arguments to run tests on SageMaker against the image within your ECR repository.
 
 ::
 
@@ -235,4 +228,6 @@ requests to us.
 License
 -------
 
-This library is licensed under the Apache 2.0 License.
+SageMaker TensorFlow Containers is licensed under the Apache 2.0 License. It is copyright 2018
+Amazon.com, Inc. or its affiliates. All Rights Reserved. The license is available at:
+http://aws.amazon.com/apache2.0/
