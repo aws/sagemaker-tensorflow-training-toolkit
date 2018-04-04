@@ -19,7 +19,7 @@ setup(
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
 
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     author='Amazon Web Services',
     url='https://github.com/aws/sagemaker-tensorflow-containers',
     license='Apache License 2.0',
