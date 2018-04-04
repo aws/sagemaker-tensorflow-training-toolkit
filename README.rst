@@ -5,11 +5,21 @@ SageMaker TensorFlow Containers
 SageMaker TensorFlow Containers is an open source library for making the
 TensorFlow framework run on `Amazon SageMaker <https://aws.amazon.com/documentation/sagemaker/>`__.
 
+This repository also contains dockerfiles which install this library, TensorFlow, and dependencies
+for building SageMaker TensorFlow images.
+
 For information on running TensorFlow jobs on SageMaker: `Python
 SDK <https://github.com/aws/sagemaker-python-sdk>`__.
 
 For notebook examples: `SageMaker Notebook
 Examples <https://github.com/awslabs/amazon-sagemaker-examples>`__.
+
+Table of Contents
+-----------------
+
+#. `Getting Started <#getting-started>`__
+#. `Building your Image <#building-your-image>`__
+#. `Running the tests <#running-the-tests>`__
 
 Getting Started
 ---------------
@@ -38,7 +48,7 @@ Building your Image
 -------------------
 
 `Amazon SageMaker <https://aws.amazon.com/documentation/sagemaker/>`__
-utilizes Docker containers to run all training & inference jobs.
+utilizes Docker containers to run all training jobs & inference endpoints.
 
 The Docker images are built from the Dockerfiles specified in
 `Docker/ <https://github.com/aws/sagemaker-tensorflow-containers/tree/master/docker>`__.
@@ -51,6 +61,9 @@ both corresponding “base” and “final” Dockerfiles.
 
 Base Images
 ~~~~~~~~~~~
+
+The "base" Dockerfile encompass the installation of the framework and all of the dependencies
+needed.
 
 Tagging scheme is based on <tensorflow_version>-<processor>-<python_version>. (e.g. 1.4
 .1-cpu-py2)
@@ -82,6 +95,8 @@ If you want to build your "base" Docker image, then use:
 
 Final Images
 ~~~~~~~~~~~~
+
+The "final" Dockerfiles encompass the installation of the SageMaker specific support code.
 
 All “final” Dockerfiles use `base images for building <https://github
 .com/aws/sagemaker-tensorflow-containers/blob/master/docker/1.4.1/final/py2/Dockerfile.cpu#L2>`__.
@@ -128,12 +143,22 @@ If you want to build "final" Docker images, then use:
 Running the tests
 -----------------
 
+Running the tests requires installation of the SageMaker TensorFlow Container code and its test
+dependencies.
+
+::
+
+    git clone https://github.com/aws/sagemaker-tensorflow-containers.git
+    cd sagemaker-tensorflow-containers
+    pip install -e .[test]
+
 Tests are defined in
 `test/ <https://github.com/aws/sagemaker-tensorflow-containers/tree/master/test>`__
 and include unit, integration and functional tests.
 
 Unit Tests
 ~~~~~~~~~~
+
 
 If you want to run unit tests, then use:
 
