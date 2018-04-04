@@ -5,7 +5,7 @@ SageMaker TensorFlow Containers
 SageMaker TensorFlow Containers is an open source library for making the
 TensorFlow framework run on `Amazon SageMaker <https://aws.amazon.com/documentation/sagemaker/>`__.
 
-This repository also contains dockerfiles which install this library, TensorFlow, and dependencies
+This repository also contains Dockerfiles which install this library, TensorFlow, and dependencies
 for building SageMaker TensorFlow images.
 
 For information on running TensorFlow jobs on SageMaker: `Python
