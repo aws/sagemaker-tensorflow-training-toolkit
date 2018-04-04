@@ -78,20 +78,20 @@ If you want to build your "base" Docker image, then use:
     # All build instructions assume you're building from the same directory as the Dockerfile.
 
     # CPU
-    docker build -t tensorflow-base:<tensorflow_version>-cpu-<python_version> Dockerfile.cpu .
+    docker build -t tensorflow-base:<tensorflow_version>-cpu-<python_version> -f Dockerfile.cpu .
 
     # GPU
-    docker build -t tensorflow-base:<tensorflow_version>-gpu-<python_version> Dockerfile.gpu .
+    docker build -t tensorflow-base:<tensorflow_version>-gpu-<python_version> -f Dockerfile.gpu .
 
 ::
 
     # Example
 
     # CPU
-    docker build -t tensorflow-base:1.4.1-cpu-py2 Dockerfile.cpu .
+    docker build -t tensorflow-base:1.4.1-cpu-py2 -f Dockerfile.cpu .
 
     # GPU
-    docker build -t tensorflow-base:1.4.1-gpu-py2 Dockerfile.gpu .
+    docker build -t tensorflow-base:1.4.1-gpu-py2 -f Dockerfile.gpu .
 
 Final Images
 ~~~~~~~~~~~~
@@ -125,20 +125,24 @@ If you want to build "final" Docker images, then use:
     # All build instructions assumes you're building from the same directory as the Dockerfile.
 
     # CPU
-    docker build -t <image_name>:<tag> Dockerfile.cpu .
+    docker build -t <image_name>:<tag> -f Dockerfile.cpu .
 
     # GPU
-    docker build -t <image_name>:<tag> Dockerfile.gpu .
+    docker build -t <image_name>:<tag> -f Dockerfile.gpu .
 
 ::
 
     # Example
 
     # CPU
-    docker build -t preprod-tensorflow:1.4.1-cpu-py2 Dockerfile.cpu .
+    docker build -t preprod-tensorflow:1.4.1-cpu-py2 -f Dockerfile.cpu .
 
     # GPU
-    docker build -t preprod-tensorflow:1.4.1-gpu-py2 Dockerfile.gpu .
+    docker build -t preprod-tensorflow:1.4.1-gpu-py2 -f Dockerfile.gpu .
+
+    # For building images of TensorFlow versions 1.6 and above
+    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2
+    --build-arg framework_installable=tensorflow-1.6.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
 
 Running the tests
 -----------------
@@ -158,7 +162,6 @@ and include unit, integration and functional tests.
 
 Unit Tests
 ~~~~~~~~~~
-
 
 If you want to run unit tests, then use:
 
