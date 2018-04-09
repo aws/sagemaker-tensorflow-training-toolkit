@@ -62,7 +62,6 @@ std::size_t PipeReader::Read(void* buffer, std::size_t size) {
     if(nbytes < 0) {
         throw std::system_error(errno, std::system_category());
     }
-    std::cout << "nbytes"<< nbytes << std::endl;
     return static_cast<size_t>(nbytes);
 }
 

@@ -38,8 +38,6 @@ namespace tensorflow {
         */
         ~PipeReader();
 
-        //TODO: 
-
         /**
            Reads up-to size bytes from the current pipe into buffer. Returns the number of bytes read. Will 
            return 0 if there is no data left to read or size was 0.
