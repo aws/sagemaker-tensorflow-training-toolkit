@@ -41,3 +41,4 @@ include_directories("${source_dir}/googletest/include"
                     "${source_dir}/googlemock/include")
 
 add_subdirectory(testPipeReader)
+add_subdirectory(testRecordIOReader)
