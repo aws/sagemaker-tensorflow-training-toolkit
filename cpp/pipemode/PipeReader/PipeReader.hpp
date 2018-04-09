@@ -1,11 +1,13 @@
-#ifndef PIPE_READER_H
-#define PIPE_READER_H
+#ifndef SAGEMAKER_PIPE_READER_H
+#define SAGEMAKER_PIPE_READER_H
 
 #include <cstdio>
 #include <string>
 #include <unistd.h>
 
-namespace sagemaker {
+namespace sagemaker { 
+namespace tensorflow {
+
     class PipeReader {
     public:
         /**
@@ -24,19 +26,26 @@ namespace sagemaker {
                                        are created.
            @param[in] channelName The name of the channel to read.
         */
-        PipeReader(const std::string & channelDirectory, const std::string & channelName); 
+        PipeReader(const std::string & channel_directory, const std::string & channel_name); 
         
+        PipeReader(const PipeReader& other) = delete;
+        PipeReader& operator=(const PipeReader&) = delete;
+        PipeReader(PipeReader&& other);
+        PipeReader& operator=(PipeReader&& other);
+
         /**
            Destructs a PipeReader. Invokes Close.
         */
         ~PipeReader();
+
+        //TODO: 
 
         /**
            Reads up-to size bytes from the current pipe into buffer. Returns the number of bytes read. Will 
            return 0 if there is no data left to read or size was 0.
 
            Raises system_error with errno set on read error.
-           
+
            @param[out] buffer The buffer to read data into.
            @param[in]  size The desired number of bytes to be read.
            @return The number of bytes read.
@@ -59,20 +68,25 @@ namespace sagemaker {
            Returns the directory where channel pipes are read.
         */
         std::string GetChannelDirectory() const {
-            return channelDirectory;
+            return channel_directory_;
         }
+
+        /**
+           Returns the SageMaker Pipe Mode channel name that is being read by this PipeReader.
+          */
         std::string GetChannelName() const {
-            return channelName;
+            return channel_name_;
         }
 
     private:
         std::string BuildCurrentPipeName() const;
         void Open();
-        unsigned int currentPipeIndex;
-        int currentPipe;
-        const std::string channelDirectory;
-        const std::string channelName;
+        std::uint32_t current_pipe_index_;
+        int current_pipe_;
+        std::string channel_directory_;
+        std::string channel_name_;
     };
-};
+} // tensorflow
+} // sagemaker
 
 #endif

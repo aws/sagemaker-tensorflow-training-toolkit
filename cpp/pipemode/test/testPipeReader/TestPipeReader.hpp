@@ -1,5 +1,9 @@
+#ifndef SAGEMAKER_TENSORFLOW_PIPE_READER_TEST_H
+#define SAGEMAKER_TENSORFLOW_PIPE_READER_TEST_H
 #include "gtest/gtest.h"
 
+namespace sagemaker {
+namespace tensorflow {
 class PipeReaderTest : public ::testing::Test {
 
 protected:
@@ -22,3 +26,6 @@ protected:
     virtual void TearDown();
 
 };
+} // tensorflow
+} // sagemaker
+#endif

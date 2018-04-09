@@ -20,6 +20,7 @@ Table of Contents
 #. `Getting Started <#getting-started>`__
 #. `Building your Image <#building-your-image>`__
 #. `Running the tests <#running-the-tests>`__
+#. `The sagemaker_tensorflow_containers Python package <#python package>`__
 
 Getting Started
 ---------------
@@ -244,6 +245,15 @@ SageMaker <https://aws.amazon.com/sagemaker/>`__, then use:
                            --docker-base-name preprod-tensorflow \
                            --instance-type ml.m4.xlarge \
                            --tag 1.0
+
+The sagemaker_tensorflow_containers Python package
+--------------------------------------------------
+
+Building
+~~~~~~~~
+This is a standard Python package with a Python C extension module, built using CMake, stored in the "cpp" subdirectory. 
+This module has a series of tests which are run during a setuptools build of hte package. The tests may be explicitly run by invoking
+the executables built in each test directory.
 
 Contributing
 ------------
