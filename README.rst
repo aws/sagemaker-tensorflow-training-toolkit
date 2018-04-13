@@ -116,7 +116,7 @@ Dockerfile.
     python setup.py sdist
 
     #. Copy your Python package to “final” Dockerfile directory that you are building.
-    cp dist/sagemaker_tensorflow_container-<package_version>.tar.gz docker/<tensorflow_version>/final
+    cp dist/sagemaker_tensorflow_container-<package_version>.tar.gz docker/<tensorflow_version>/final/py2
 
 If you want to build "final" Docker images, then use:
 
