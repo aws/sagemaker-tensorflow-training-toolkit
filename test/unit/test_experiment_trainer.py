@@ -130,7 +130,7 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer):
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
 def test_trainer_keras_model_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -163,14 +163,14 @@ def test_trainer_keras_model_fn(os_environ, botocore, boto3, inspect_args, train
     modules.Experiment.assert_called()
 
     customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
-    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
 def test_trainer_model_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     """
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -204,14 +204,14 @@ def test_trainer_model_fn(os_environ, botocore, boto3, inspect_args, trainer, mo
     modules.Experiment.assert_called()
 
     customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
-    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
 def test_trainer_experiment_params(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -253,7 +253,7 @@ def test_trainer_experiment_params(os_environ, botocore, boto3, inspect_args, tr
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
 def test_trainer_run_config_params(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -291,7 +291,7 @@ def test_trainer_run_config_params(os_environ, botocore, boto3, inspect_args, tr
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
 def test_train_estimator_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -319,7 +319,7 @@ def test_train_estimator_fn(os_environ, botocore, boto3, inspect_args, trainer, 
     expected_params = {'num_gpu': 20, 'min_eval_frequency': 1000, 'training_steps': 10, 'save_checkpoints_secs': 300}
     customer_script.estimator_fn.assert_called_with(modules.RunConfig(), modules.HParams().values())
     customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
-    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir=training_dir_path, hyperparameters=expected_params)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 
@@ -333,7 +333,7 @@ inspect_train_input_fn_3 = InspectInputFn3Params()
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getargspec', return_value=inspect_train_input_fn_3)
+@patch('inspect.getfullargspec', return_value=inspect_train_input_fn_3)
 def test_train_input_fn_with_channels(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -366,7 +366,9 @@ def test_train_input_fn_with_channels(os_environ, botocore, boto3, inspect_args,
     customer_script.train_input_fn.assert_called_with(training_dir=training_dir_path,
                                                       hyperparameters=expected_params,
                                                       input_channels=training_input_channels)
-    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir=training_dir_path,
+                                                     hyperparameters=expected_params,
+                                                     input_channels=training_input_channels)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 
@@ -380,7 +382,7 @@ inspect_train_input_fn_extra = InspectInputFnExtraParams()
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getargspec', return_value=inspect_train_input_fn_extra)
+@patch('inspect.getfullargspec', return_value=inspect_train_input_fn_extra)
 def test_train_input_fn_with_unsupported_parameters(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -414,7 +416,10 @@ def test_train_input_fn_with_unsupported_parameters(os_environ, botocore, boto3,
                                                       hyperparameters=expected_params,
                                                       input_channels=training_input_channels,
                                                       customer_defined=None)
-    customer_script.eval_input_fn.assert_called_with(training_dir_path, expected_params)
+    customer_script.eval_input_fn.assert_called_with(training_dir=training_dir_path,
+                                                      hyperparameters=expected_params,
+                                                      input_channels=training_input_channels,
+                                                      customer_defined=None)
     customer_script.serving_input_fn.assert_called_with(expected_params)
 
 

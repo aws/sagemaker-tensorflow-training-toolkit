@@ -103,9 +103,7 @@ class Trainer(object):
                 config=run_config)
 
     def _build_train_spec(self):
-        declared_args = inspect.getargspec(self.customer_script.train_input_fn)
-        invoke_args = {arg: self._resolve_value_for_training_input_fn_parameter(arg)
-                       for arg in declared_args.args}
+        invoke_args = self._resolve_input_fn_args(self.customer_script.train_input_fn)
         train_input_fn = lambda: self.customer_script.train_input_fn(**invoke_args)
 
         return tf.estimator.TrainSpec(train_input_fn, max_steps=self.train_steps)
@@ -114,13 +112,11 @@ class Trainer(object):
         return hasattr(self.customer_script, 'serving_input_fn')
 
     def _build_eval_spec(self):
-        # TODO: why is this different from the train_input_fn? investigate
-        input_dir = self.input_channels.get(self.DEFAULT_TRAINING_CHANNEL, None)
-        params = self.customer_params
-        eval_input_fn = lambda: self.customer_script.eval_input_fn(input_dir, params)
+        invoke_args = self._resolve_input_fn_args(self.customer_script.eval_input_fn)
+        eval_input_fn = lambda: self.customer_script.eval_input_fn(**invoke_args)
 
         if self.saves_training():
-            serving_input_receiver_fn = lambda: self.customer_script.serving_input_fn(params)
+            serving_input_receiver_fn = lambda: self.customer_script.serving_input_fn(self.customer_params)
             exporter = tf.estimator.LatestExporter('Servo',
                                                    serving_input_receiver_fn=serving_input_receiver_fn)
         else:
@@ -132,7 +128,11 @@ class Trainer(object):
 
         return tf.estimator.EvalSpec(eval_input_fn, steps=self.eval_steps, exporters=exporter, **eval_params)
 
-    def _resolve_value_for_training_input_fn_parameter(self, alias_key):
+    def _resolve_input_fn_args(self, customer_fn):
+        declared_args = inspect.getfullargspec(customer_fn)
+        return {arg: self._resolve_input_fn_param_value(arg) for arg in declared_args.args}
+
+    def _resolve_input_fn_param_value(self, alias_key):
         """
         Handle potentially aliased key name and return value for valid one.
 

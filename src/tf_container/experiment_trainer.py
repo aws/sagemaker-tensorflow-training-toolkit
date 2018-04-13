@@ -179,15 +179,16 @@ class Trainer(object):
             '''
             def _train_input_fn():
                 """Prepare parameters for the train_input_fn and invoke it"""
-                declared_args = inspect.getargspec(self.customer_script.train_input_fn)
+                declared_args = inspect.getfullargspec(self.customer_script.train_input_fn)
                 invoke_args = {arg: self._resolve_value_for_training_input_fn_parameter(arg)
                                for arg in declared_args.args}
                 return _function(self.customer_script.train_input_fn(**invoke_args))()
 
             def _eval_input_fn():
-                return _function(self.customer_script.eval_input_fn(
-                    self.input_channels.get(self.DEFAULT_TRAINING_CHANNEL, None),
-                    self.customer_params))()
+                declared_args = inspect.getfullargspec(self.customer_script.eval_input_fn)
+                invoke_args = {arg: self._resolve_value_for_training_input_fn_parameter(arg)
+                               for arg in declared_args.args}
+                return _function(self.customer_script.eval_input_fn(**invoke_args))()
 
             '''
             TensorFlow serving input functions (serving_input_fn) can return a ServingInputReceiver object or a
