@@ -130,7 +130,7 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer):
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
 def test_trainer_keras_model_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -170,7 +170,7 @@ def test_trainer_keras_model_fn(os_environ, botocore, boto3, inspect_args, train
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
 def test_trainer_model_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     """
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -211,7 +211,7 @@ def test_trainer_model_fn(os_environ, botocore, boto3, inspect_args, trainer, mo
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
 def test_trainer_experiment_params(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -253,7 +253,7 @@ def test_trainer_experiment_params(os_environ, botocore, boto3, inspect_args, tr
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
 def test_trainer_run_config_params(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions model_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -291,7 +291,7 @@ def test_trainer_run_config_params(os_environ, botocore, boto3, inspect_args, tr
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getfullargspec', return_value=inspect_train_input_fn)
+@patch('inspect.getargspec', return_value=inspect_train_input_fn)
 def test_train_estimator_fn(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -333,7 +333,7 @@ inspect_train_input_fn_3 = InspectInputFn3Params()
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getfullargspec', return_value=inspect_train_input_fn_3)
+@patch('inspect.getargspec', return_value=inspect_train_input_fn_3)
 def test_train_input_fn_with_channels(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are
@@ -382,7 +382,7 @@ inspect_train_input_fn_extra = InspectInputFnExtraParams()
 @patch('boto3.client')
 @patch('botocore.session.get_session')
 @patch('os.environ')
-@patch('inspect.getfullargspec', return_value=inspect_train_input_fn_extra)
+@patch('inspect.getargspec', return_value=inspect_train_input_fn_extra)
 def test_train_input_fn_with_unsupported_parameters(os_environ, botocore, boto3, inspect_args, trainer, modules):
     '''
     this test ensures that customers functions estimator_fn, train_input_fn, eval_input_fn, and serving_input_fn are

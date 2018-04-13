@@ -129,7 +129,7 @@ class Trainer(object):
         return tf.estimator.EvalSpec(eval_input_fn, steps=self.eval_steps, exporters=exporter, **eval_params)
 
     def _resolve_input_fn_args(self, customer_fn):
-        declared_args = inspect.getfullargspec(customer_fn)
+        declared_args = inspect.getargspec(customer_fn)
         return {arg: self._resolve_input_fn_param_value(arg) for arg in declared_args.args}
 
     def _resolve_input_fn_param_value(self, alias_key):
