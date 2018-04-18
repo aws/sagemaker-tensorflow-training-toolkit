@@ -39,9 +39,9 @@ def train_input_fn(params, input_channels):
     return _generate_input_fn(input_channels['training'], 'iris_training.csv')
 
 
-def eval_input_fn(training_dir, params):
+def eval_input_fn(input_channels, params):
     """Returns input function that would feed the model during evaluation"""
-    return _generate_input_fn(training_dir, 'iris_test.csv')
+    return _generate_input_fn(input_channels['evaluation'], 'iris_eval.csv')
 
 
 def _generate_input_fn(training_dir, training_filename):
