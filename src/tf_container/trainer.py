@@ -15,8 +15,8 @@ import boto3
 import inspect
 import os
 import tensorflow as tf
-from container_support import parse_s3_url
 from tf_container.run import logger
+import tf_container.s3_fs as s3_fs
 
 
 class Trainer(object):
@@ -62,7 +62,7 @@ class Trainer(object):
         self.customer_params = customer_params
 
         if model_path.startswith('s3://'):
-            self._configure_s3_file_system()
+            s3_fs.configure_s3_fs(model_path)
 
     def train(self):
         run_config = self._build_run_config()
@@ -198,15 +198,3 @@ class Trainer(object):
         if self.current_host in masters:
             return 'master'
         return 'worker'
-
-    def _configure_s3_file_system(self):
-        # loads S3 filesystem plugin
-        s3 = boto3.client('s3')
-
-        bucket_name, key = parse_s3_url(self.model_path)
-
-        bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
-
-        if bucket_location:
-            os.environ['S3_REGION'] = bucket_location
-        os.environ['S3_USE_HTTPS'] = '1'
