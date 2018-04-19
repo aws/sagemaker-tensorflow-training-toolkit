@@ -95,6 +95,7 @@ def test_trainer_params_passing(trainer_module):
     assert test_trainer.customer_params == HYPERPARAMETERS_WITH_SAVE_CHECKPOINTS_SECS
 
 
+# Save_checkpoint_secs should be set to a default value when not specified by the customer.
 def test_special_params_defaulting(trainer_module):
     test_trainer = trainer_module.Trainer(customer_script=MOCK_SCRIPT,
                                      current_host=CURRENT_HOST,
@@ -112,6 +113,7 @@ def test_special_params_passing(trainer_module):
     assert test_trainer.customer_params['save_checkpoints_secs'] == SAVE_CHECKPOINTS_SECS
 
 
+# RunConfig should be created with the correct parameters.
 def test_build_run_config(modules, trainer):
     trainer.customer_params['save_summary_steps'] = 123
     trainer.customer_params['save_checkpoints_secs'] = 124
@@ -130,6 +132,7 @@ def test_build_run_config(modules, trainer):
     assert modules.estimator.RunConfig.return_value == conf
 
 
+# If user defines an estimator_fn, it should be called to create the Estimator.
 def test_user_estimator_fn(trainer):
     fake_run_config = 'fakerunconfig'
     fake_estimator = 'fakeestimator'
@@ -149,6 +152,7 @@ def test_user_estimator_fn(trainer):
     assert estimator == fake_estimator
 
 
+# If user defines a keras_model_fn, it should be called to create the Estimator.
 def test_user_keras_model_fn(modules, trainer):
     fake_run_config = 'fakerunconfig'
     fake_keras_model = 'fakekerasmodel'
@@ -169,6 +173,8 @@ def test_user_keras_model_fn(modules, trainer):
     assert estimator == model_to_estimator.return_value
 
 
+# If user defines a model_fn, it should be called to create the model_fn, which will be used to
+# create the Estimator.
 def test_user_model_fn(modules, trainer):
     fake_run_config = 'fakerunconfig'
     fake_model_fn = 'fakemodelfn'
@@ -184,18 +190,7 @@ def test_user_model_fn(modules, trainer):
     assert estimator == estimator_mock.return_value
 
 
-def test_resolve_value_for_training_input_fn_parameter(trainer):
-    parameter_values = {'training_dir': trainer.input_channels.get(trainer.DEFAULT_TRAINING_CHANNEL, None),
-                        'hyperparameters': trainer.customer_params,
-                        'input_channels': trainer.input_channels,
-                        'dir': trainer.input_channels.get(trainer.DEFAULT_TRAINING_CHANNEL, None),
-                        'params': trainer.customer_params,
-                        'channels': trainer.input_channels,
-                        'invalid': None}
-    for k,v in parameter_values.items():
-        assert trainer._resolve_value_for_training_input_fn_parameter(k) == v
-
-
+# The user's train_input_fn should be used to construct the train_input_fn used to create the TrainSpec.
 def test_build_train_spec(modules, trainer):
     tensor_dict = {'inputs': ['faketensor']}
     labels = ['fakelabels']
@@ -225,6 +220,33 @@ def test_build_train_spec(modules, trainer):
     assert (tensor_dict, labels) == (returned_dict, returned_labels)
 
 
+# When customer defines train_input_fn with the input_channels param, we pass that in.
+def test_build_train_spec_input_channels(modules, trainer):
+    tensor_dict = {'inputs': ['faketensor']}
+    labels = ['fakelabels']
+    # We add some defaulted hyperparameters into the customer params.
+    expected_hps = HYPERPARAMETERS.copy()
+    expected_hps['save_checkpoints_secs'] = 300
+
+    # Set up "customer script".
+    def customer_train_input_fn(input_channels, hyperparameters):
+        assert input_channels == INPUT_CHANNELS
+        assert hyperparameters == expected_hps
+        return tensor_dict, labels
+    customer_script = EmptyModule()
+    customer_script.train_input_fn = customer_train_input_fn
+
+    trainer.customer_script = customer_script
+
+    spec = trainer._build_train_spec()
+
+    train_input_fn = modules.estimator.TrainSpec.call_args[0][0]
+    returned_dict, returned_labels = train_input_fn()
+    assert (tensor_dict, labels) == (returned_dict, returned_labels)
+
+
+# The user's eval_input_fn should be used to construct the eval_input_fn used to create the EvalSpec.
+# When defined by the user, the serving_input_fn is used to create an Exporter used in the EvalSpec.
 def test_build_eval_spec_with_serving(modules, trainer):
     # Special hyperparameters passed in by customer should be passed to EvalSpec
     eval_params = {'throttle_secs': 13,
@@ -272,6 +294,7 @@ def test_build_eval_spec_with_serving(modules, trainer):
     assert evalspec_mock.return_value == spec
 
 
+# When no serving_input_fn is defined by the user, no Exporter is used in the EvalSpec.
 def test_build_eval_spec_no_serving(modules, trainer):
     # Set up "customer script".
     tensor_dict = {'inputs': ['faketensor']}
@@ -291,6 +314,30 @@ def test_build_eval_spec_no_serving(modules, trainer):
     # eval_steps not specified by customer, use default of 100.
     # serving_input_fn not specified by customer, don't provide an exporter.
     evalspec_mock.assert_called_with(ANY, steps=100, exporters=None)
+    args, _ = evalspec_mock.call_args
+    # Assert the customer's eval_input_fn is used correctly
+    eval_input_fn = args[0]
+    returned_dict, returned_labels = eval_input_fn()
+    assert (tensor_dict, labels) == (returned_dict, returned_labels)
+
+
+# When customer defines eval_input_fn with the input_channels param, we pass that in.
+def test_build_eval_spec_input_channels(modules, trainer):
+    # Set up "customer script".
+    tensor_dict = {'inputs': ['faketensor']}
+    labels = ['fakelabels']
+    expected_hps = trainer.customer_params.copy()
+    def customer_eval_input_fn(input_channels, params):
+        assert input_channels == INPUT_CHANNELS
+        assert params == expected_hps
+        return tensor_dict, labels
+    customer_script = EmptyModule()
+    customer_script.eval_input_fn = customer_eval_input_fn
+    trainer.customer_script = customer_script
+
+    spec = trainer._build_eval_spec()
+
+    evalspec_mock = modules.estimator.EvalSpec
     args, _ = evalspec_mock.call_args
     # Assert the customer's eval_input_fn is used correctly
     eval_input_fn = args[0]
@@ -340,12 +387,15 @@ def test_build_tf_config_with_multiple_hosts(trainer):
 @patch('botocore.session.get_session')
 @patch('os.environ')
 def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module):
+    region = os_env.get('AWS_REGION')
+
     trainer_module.Trainer(customer_script=MOCK_SCRIPT,
                            current_host=CURRENT_HOST,
                            hosts=HOSTS,
                            model_path='s3://my/s3/path')
 
-    boto_client('s3').get_bucket_location.assert_called_once_with(Bucket='my')
+    boto_client.assert_called_once_with('s3', region_name=region)
+    boto_client('s3', region_name=region).get_bucket_location.assert_called_once_with(Bucket='my')
 
     calls = [
         call('S3_REGION', boto_client('s3').get_bucket_location()['LocationConstraint']),
@@ -353,3 +403,22 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module)
     ]
 
     os_env.__setitem__.assert_has_calls(calls, any_order=False)
+
+
+CUSTOMER_PARAMS = HYPERPARAMETERS.copy()
+CUSTOMER_PARAMS['save_checkpoints_secs'] = 300
+
+resolve_input_fn_param_cases = [
+    ('training_dir', TRAIN_DIR),
+    ('dir', TRAIN_DIR),
+    ('hyperparameters', CUSTOMER_PARAMS),
+    ('params', CUSTOMER_PARAMS),
+    ('input_channels', INPUT_CHANNELS),
+    ('channels', INPUT_CHANNELS),
+    ('unknown_param_name', None)
+]
+
+
+@pytest.mark.parametrize('param,expected_resolved_param', resolve_input_fn_param_cases)
+def test_resolve_input_fn_param_value(trainer, param, expected_resolved_param):
+    assert trainer._resolve_input_fn_param_value(param) == expected_resolved_param

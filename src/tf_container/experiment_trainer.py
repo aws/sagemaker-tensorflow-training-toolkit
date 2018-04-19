@@ -15,7 +15,7 @@ import boto3
 import inspect
 import os
 import tensorflow as tf
-from container_support import parse_s3_url
+import tf_container.s3_fs as s3_fs
 from tf_container.run import logger
 from tensorflow.contrib.learn import RunConfig, Experiment
 from tensorflow.contrib.learn.python.learn import learn_runner
@@ -73,7 +73,7 @@ class Trainer(object):
         self.customer_params = customer_params
 
         if model_path.startswith('s3://'):
-            self._configure_s3_file_system()
+            s3_fs.configure_s3_fs(model_path)
 
     def _get_task_type(self, masters):
         if self.current_host in masters:
@@ -185,9 +185,10 @@ class Trainer(object):
                 return _function(self.customer_script.train_input_fn(**invoke_args))()
 
             def _eval_input_fn():
-                return _function(self.customer_script.eval_input_fn(
-                    self.input_channels.get(self.DEFAULT_TRAINING_CHANNEL, None),
-                    self.customer_params))()
+                declared_args = inspect.getargspec(self.customer_script.eval_input_fn)
+                invoke_args = {arg: self._resolve_value_for_training_input_fn_parameter(arg)
+                               for arg in declared_args.args}
+                return _function(self.customer_script.eval_input_fn(**invoke_args))()
 
             '''
             TensorFlow serving input functions (serving_input_fn) can return a ServingInputReceiver object or a
@@ -262,18 +263,6 @@ class Trainer(object):
                 model_fn=_model_fn,
                 params=hyperparameters,
                 config=run_config)
-
-    def _configure_s3_file_system(self):
-        # loads S3 filesystem plugin
-        s3 = boto3.client('s3')
-
-        bucket_name, key = parse_s3_url(self.model_path)
-
-        bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
-
-        if bucket_location:
-            os.environ['S3_REGION'] = bucket_location
-        os.environ['S3_USE_HTTPS'] = "1"
 
 
 def _function(object):
