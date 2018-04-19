@@ -112,12 +112,15 @@ def test_build_tf_config_with_multiple_hosts(trainer):
 @patch('botocore.session.get_session')
 @patch('os.environ')
 def test_configure_s3_file_system(os_env, botocore, boto_client, trainer):
+    region = os_env.get('AWS_REGION')
+
     trainer.Trainer(customer_script=mock_script,
                     current_host=current_host,
                     hosts=hosts,
                     model_path='s3://my/s3/path')
 
-    boto_client('s3').get_bucket_location.assert_called_once_with(Bucket='my')
+    boto_client.assert_called_once_with('s3', region_name=region)
+    boto_client('s3', region_name=region).get_bucket_location.assert_called_once_with(Bucket='my')
 
     calls = [
         call('S3_USE_HTTPS', '1'),
