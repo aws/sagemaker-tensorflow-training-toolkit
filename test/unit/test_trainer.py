@@ -1,14 +1,14 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the 'License').
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the 'license' file accompanying this file. This file is distributed 
-#  on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the 'license' file accompanying this file. This file is distributed
+#  on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import pytest
@@ -42,10 +42,17 @@ def modules():
 MOCK_SCRIPT = {}
 HOSTS = ['algo-1', 'algo-2', 'algo-3']
 CURRENT_HOST = ['algo-1']
+TRAIN_STEPS = 123
+EVAL_STEPS = 123
 MODEL_PATH = 'a/mock/path'
+OUTPUT_PATH = 'output/mock/path'
 TRAIN_DIR = 'another/mock/path'
 INPUT_CHANNELS = {'training': TRAIN_DIR}
 HYPERPARAMETERS = {'strparam': 'strval', 'intparam': 789}
+SAVE_CHECKPOINTS_SECS = 789
+HYPERPARAMETERS_WITH_SAVE_CHECKPOINTS_SECS = HYPERPARAMETERS.copy()
+HYPERPARAMETERS_WITH_SAVE_CHECKPOINTS_SECS.update({'save_checkpoints_secs': SAVE_CHECKPOINTS_SECS})
+
 
 class EmptyModule(object):
     pass
@@ -67,22 +74,61 @@ def trainer(trainer_module):
                                  customer_params=HYPERPARAMETERS.copy())
 
 
+def test_trainer_params_passing(trainer_module):
+    test_trainer = trainer_module.Trainer(customer_script=MOCK_SCRIPT,
+                                     current_host=CURRENT_HOST,
+                                     hosts=HOSTS,
+                                     train_steps=TRAIN_STEPS,
+                                     eval_steps=EVAL_STEPS,
+                                     model_path=MODEL_PATH,
+                                     output_path=OUTPUT_PATH,
+                                     input_channels=INPUT_CHANNELS.copy(),
+                                     customer_params=HYPERPARAMETERS.copy(),
+                                     save_checkpoints_secs=SAVE_CHECKPOINTS_SECS)
+    assert test_trainer.customer_script == MOCK_SCRIPT
+    assert test_trainer.current_host == CURRENT_HOST
+    assert test_trainer.hosts == HOSTS
+    assert test_trainer.train_steps == TRAIN_STEPS
+    assert test_trainer.eval_steps == EVAL_STEPS
+    assert test_trainer.model_path == MODEL_PATH
+    assert test_trainer.input_channels == INPUT_CHANNELS
+    assert test_trainer.customer_params == HYPERPARAMETERS_WITH_SAVE_CHECKPOINTS_SECS
+
+
 # Save_checkpoint_secs should be set to a default value when not specified by the customer.
 def test_special_params_defaulting(trainer_module):
-    trainer = trainer_module.Trainer(customer_script=MOCK_SCRIPT,
+    test_trainer = trainer_module.Trainer(customer_script=MOCK_SCRIPT,
                                      current_host=CURRENT_HOST,
                                      hosts=HOSTS,
                                      model_path=MODEL_PATH)
-    assert trainer.customer_params['save_checkpoints_secs'] == 300
+    assert test_trainer.customer_params['save_checkpoints_secs'] == 300
+
+
+def test_special_params_passing(trainer_module):
+    test_trainer = trainer_module.Trainer(customer_script=MOCK_SCRIPT,
+                                     current_host=CURRENT_HOST,
+                                     hosts=HOSTS,
+                                     model_path=MODEL_PATH,
+                                     customer_params=HYPERPARAMETERS_WITH_SAVE_CHECKPOINTS_SECS.copy())
+    assert test_trainer.customer_params['save_checkpoints_secs'] == SAVE_CHECKPOINTS_SECS
 
 
 # RunConfig should be created with the correct parameters.
 def test_build_run_config(modules, trainer):
-    trainer.customer_params['save_checkpoints_secs'] = 123
+    trainer.customer_params['save_summary_steps'] = 123
+    trainer.customer_params['save_checkpoints_secs'] = 124
+    trainer.customer_params['save_checkpoints_steps'] = 125
+    trainer.customer_params['keep_checkpoint_max'] = 126
+    trainer.customer_params['keep_checkpoint_every_n_hours'] = 127
+    trainer.customer_params['log_step_count_steps'] = 128
+    trainer.customer_params['invalid_key'] = -1
 
     conf = trainer._build_run_config()
 
-    modules.estimator.RunConfig.assert_called_with(model_dir=MODEL_PATH, save_checkpoints_secs=123)
+    modules.estimator.RunConfig.assert_called_with(model_dir=MODEL_PATH, save_summary_steps=123,
+                                                   save_checkpoints_secs=124, save_checkpoints_steps=125,
+                                                   keep_checkpoint_max=126, keep_checkpoint_every_n_hours=127,
+                                                   log_step_count_steps=128)
     assert modules.estimator.RunConfig.return_value == conf
 
 
@@ -352,11 +398,11 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module)
     boto_client('s3', region_name=region).get_bucket_location.assert_called_once_with(Bucket='my')
 
     calls = [
-        call('S3_USE_HTTPS', '1'),
-        call('S3_REGION', boto_client('s3').get_bucket_location()['LocationConstraint'])
+        call('S3_REGION', boto_client('s3').get_bucket_location()['LocationConstraint']),
+        call('S3_USE_HTTPS', '1')
     ]
 
-    os_env.__setitem__.assert_has_calls(calls, any_order=True)
+    os_env.__setitem__.assert_has_calls(calls, any_order=False)
 
 
 CUSTOMER_PARAMS = HYPERPARAMETERS.copy()

@@ -11,8 +11,8 @@
 #  express or implied. See the License for the specific language governing 
 #  permissions and limitations under the License.
 
-from tf_container.train import train
+from tf_container.train_entry_point import train
 from tf_container.serve import load_dependencies, transformer
 import tf_container.serve as serve
 
-__all__ = [train, transformer, serve, load_dependencies]
+__all__ = ['train', 'transformer', 'serve', 'load_dependencies']
