@@ -74,7 +74,7 @@ def trainer(trainer_module):
                                  customer_params=HYPERPARAMETERS.copy())
 
 
-def test_test_trainer_params_passing(trainer_module):
+def test_trainer_params_passing(trainer_module):
     test_trainer = trainer_module.Trainer(customer_script=MOCK_SCRIPT,
                                      current_host=CURRENT_HOST,
                                      hosts=HOSTS,
@@ -182,6 +182,18 @@ def test_user_model_fn(modules, trainer):
     estimator_mock = modules.estimator.Estimator
     estimator_mock.assert_called_with(model_fn=fake_model_fn, params=expected_hps, config=fake_run_config)
     assert estimator == estimator_mock.return_value
+
+
+def test_resolve_value_for_training_input_fn_parameter(trainer):
+    parameter_values = {'training_dir': trainer.input_channels.get(trainer.DEFAULT_TRAINING_CHANNEL, None),
+                        'hyperparameters': trainer.customer_params,
+                        'input_channels': trainer.input_channels,
+                        'dir': trainer.input_channels.get(trainer.DEFAULT_TRAINING_CHANNEL, None),
+                        'params': trainer.customer_params,
+                        'channels': trainer.input_channels,
+                        'invalid': None}
+    for k,v in parameter_values.items():
+        assert trainer._resolve_value_for_training_input_fn_parameter(k) == v
 
 
 def test_build_train_spec(modules, trainer):
@@ -336,8 +348,8 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module)
     boto_client('s3').get_bucket_location.assert_called_once_with(Bucket='my')
 
     calls = [
-        call('S3_USE_HTTPS', '1'),
-        call('S3_REGION', boto_client('s3').get_bucket_location()['LocationConstraint'])
+        call('S3_REGION', boto_client('s3').get_bucket_location()['LocationConstraint']),
+        call('S3_USE_HTTPS', '1')
     ]
 
-    os_env.__setitem__.assert_has_calls(calls, any_order=True)
+    os_env.__setitem__.assert_has_calls(calls, any_order=False)
