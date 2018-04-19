@@ -1,5 +1,5 @@
-import boto3
 import os
+import boto3
 import container_support as cs
 
 
@@ -8,7 +8,7 @@ def configure_s3_fs(checkpoint_path):
     region_name = os.environ.get('AWS_REGION')
     s3 = boto3.client('s3', region_name=region_name)
 
-    # We get the aws region of the checkpoint bucket, which may be different from
+    # We get the AWS region of the checkpoint bucket, which may be different from
     # the region this container is currently running in.
     bucket_name, key = cs.parse_s3_url(checkpoint_path)
     bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
