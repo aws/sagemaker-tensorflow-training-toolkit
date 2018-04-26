@@ -11,6 +11,8 @@ RUN apt-get -y update && \
     apt-get -y install iputils-ping && \
     apt-get -y install nginx
 
+RUN pip install --upgrade pip
+
 RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==1.5 gevent gunicorn
 
 # install tensorflow-model-server 1.5.
@@ -23,10 +25,13 @@ RUN cd /tmp && \
     dpkg -i telegraf_1.4.2-1_amd64.deb && \
     cd -
 
+COPY sagemaker_container_support-1.0.1.tar.gz .
 COPY sagemaker_tensorflow_container-1.0.0.tar.gz .
 
-RUN pip install sagemaker_tensorflow_container-1.0.0.tar.gz
+RUN pip install sagemaker_container_support-1.0.1.tar.gz && \
+    pip install sagemaker_tensorflow_container-1.0.0.tar.gz
 
-RUN rm sagemaker_tensorflow_container-1.0.0.tar.gz
+RUN rm sagemaker_container_support-1.0.1.tar.gz && \
+    rm sagemaker_tensorflow_container-1.0.0.tar.gz
 
 ENTRYPOINT ["entry.py"]

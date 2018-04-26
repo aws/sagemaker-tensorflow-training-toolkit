@@ -110,7 +110,7 @@ def _get_checkpoint_dir(env):
 
     checkpoint_path = env.hyperparameters['checkpoint_path']
     job_name = env.job_name
-    if checkpoint_path.ends_with((job_name, os.path.join(job_name, 'checkpoints'))):
+    if job_name is None or checkpoint_path.endswith((job_name, os.path.join(job_name, 'checkpoints'))):
         return checkpoint_path
 
     return os.path.join(checkpoint_path, job_name, 'checkpoints')
