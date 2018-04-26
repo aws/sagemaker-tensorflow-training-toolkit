@@ -105,13 +105,15 @@ def _get_trainer_class():
 
 
 def _get_checkpoint_dir(env):
-    if 'checkpoint_path' in env.hyperparameters:
-        return env.hyperparameters['checkpoint_path']
-    elif env.training_job_name:
-        bucket = s3_fs.get_default_bucket(env.sagemaker_region)
-        return os.path.join(bucket, env.training_job_name, 'checkpoints')
-    else:
+    if 'checkpoint_path' not in env.hyperparameters:
         return env.model_dir
+
+    checkpoint_path = env.hyperparameters['checkpoint_path']
+    job_name = env.job_name
+    if checkpoint_path.ends_with((job_name, os.path.join(job_name, 'checkpoints'))):
+        return checkpoint_path
+
+    return os.path.join(checkpoint_path, job_name, 'checkpoints')
 
 
 def train():
