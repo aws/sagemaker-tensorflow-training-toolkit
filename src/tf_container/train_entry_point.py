@@ -110,6 +110,9 @@ def _get_checkpoint_dir(env):
 
     checkpoint_path = env.hyperparameters['checkpoint_path']
     job_name = env.job_name
+
+    # If the checkpoint path already matches the format 'job_name/checkpoints', then we don't
+    # need to worry about checkpoints from multiple training jobs being saved in the same location
     if job_name is None or checkpoint_path.endswith(os.path.join(job_name, 'checkpoints')):
         return checkpoint_path
 
