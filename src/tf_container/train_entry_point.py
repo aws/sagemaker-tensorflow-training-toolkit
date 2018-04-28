@@ -109,14 +109,19 @@ def _get_checkpoint_dir(env):
         return env.model_dir
 
     checkpoint_path = env.hyperparameters['checkpoint_path']
+
+    # If this is not part of a tuning job, then we can just use the specified checkpoint path
+    if 'algorithms_tuning_objective_metric' not in env.hyperparameters:
+        return checkpoint_path
+
     job_name = env.job_name
 
     # If the checkpoint path already matches the format 'job_name/checkpoints', then we don't
     # need to worry about checkpoints from multiple training jobs being saved in the same location
     if job_name is None or checkpoint_path.endswith(os.path.join(job_name, 'checkpoints')):
         return checkpoint_path
-
-    return os.path.join(checkpoint_path, job_name, 'checkpoints')
+    else:
+        return os.path.join(checkpoint_path, job_name, 'checkpoints')
 
 
 def train():

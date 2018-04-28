@@ -20,6 +20,7 @@ from test.unit.utils import mock_import_modules
 
 CHECKPOINT_PATH = 'customer/checkpoint/path'
 JOB_NAME = 'test-1234'
+TUNING_METRIC = 'some-metric'
 
 
 # Mock out tensorflow modules.
@@ -58,22 +59,42 @@ def test_get_checkpoint_dir_without_checkpoint_path(train_entry_point_module):
     assert checkpoint_dir == 'model/output'
 
 
+def test_get_checkpoint_dir_without_tuning(train_entry_point_module):
+    env = Mock(name='env', hyperparameters={'checkpoint_path': CHECKPOINT_PATH}, job_name=None)
+    checkpoint_dir = train_entry_point_module._get_checkpoint_dir(env)
+
+    assert checkpoint_dir == CHECKPOINT_PATH
+
+
 def test_get_checkpoint_dir_with_job_name_in_path(train_entry_point_module):
     checkpoint_path_with_job_name = '{}/checkpoints'.format(JOB_NAME)
-    env = Mock(name='env', hyperparameters={'checkpoint_path': checkpoint_path_with_job_name}, job_name=JOB_NAME)
+    hyperparameters = {
+        'checkpoint_path': checkpoint_path_with_job_name,
+        'algorithms_tuning_objective_metric': TUNING_METRIC,
+    }
+    env = Mock(name='env', hyperparameters=hyperparameters, job_name=JOB_NAME)
     checkpoint_dir = train_entry_point_module._get_checkpoint_dir(env)
 
     assert checkpoint_dir == checkpoint_path_with_job_name
 
 
 def test_get_checkpoint_dir_without_job_name_env(train_entry_point_module):
-    env = Mock(name='env', hyperparameters={'checkpoint_path': CHECKPOINT_PATH}, job_name=None)
+    hyperparameters = {
+        'checkpoint_path': CHECKPOINT_PATH,
+        'algorithms_tuning_objective_metric': TUNING_METRIC,
+    }
+    env = Mock(name='env', hyperparameters=hyperparameters, job_name=None)
     checkpoint_dir = train_entry_point_module._get_checkpoint_dir(env)
 
     assert checkpoint_dir == CHECKPOINT_PATH
 
+
 def test_get_checkpoint_dir_appending_job_name(train_entry_point_module):
-    env = Mock(name='env', hyperparameters={'checkpoint_path': CHECKPOINT_PATH}, job_name=JOB_NAME)
+    hyperparameters = {
+        'checkpoint_path': CHECKPOINT_PATH,
+        'algorithms_tuning_objective_metric': TUNING_METRIC,
+    }
+    env = Mock(name='env', hyperparameters=hyperparameters, job_name=JOB_NAME)
     checkpoint_dir = train_entry_point_module._get_checkpoint_dir(env)
 
     assert checkpoint_dir == os.path.join(CHECKPOINT_PATH, JOB_NAME, 'checkpoints')
