@@ -177,7 +177,7 @@ def test_user_keras_model_fn(modules, trainer):
 # create the Estimator.
 def test_user_model_fn(modules, trainer):
     fake_run_config = 'fakerunconfig'
-    fake_model_fn = 'fakemodelfn'
+    fake_model_fn = MagicMock(name='fake_model_fn')
     expected_hps = trainer.customer_params.copy()
     customer_script = EmptyModule()
     customer_script.model_fn = fake_model_fn
@@ -186,7 +186,12 @@ def test_user_model_fn(modules, trainer):
     estimator = trainer._build_estimator(fake_run_config)
 
     estimator_mock = modules.estimator.Estimator
-    estimator_mock.assert_called_with(model_fn=fake_model_fn, params=expected_hps, config=fake_run_config)
+    # Verify that _model_fn passed to Estimator correctly passes args through to user script model_fn 
+    estimator_mock.assert_called_with(model_fn=ANY, params=expected_hps, config=fake_run_config)
+    _, kwargs, = estimator_mock.call_args
+    kwargs['model_fn'](1, 2, 3, 4)
+    fake_model_fn.assert_called_with(1, 2, 3, 4)
+    # Verify that the created Estimator object is returned from _build_estimator
     assert estimator == estimator_mock.return_value
 
 

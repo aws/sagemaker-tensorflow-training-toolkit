@@ -97,8 +97,18 @@ class Trainer(object):
         else:
             logger.info('creating an estimator from the user-provided model_fn')
 
+            # We must wrap the model_fn from customer_script like this to maintain compatibility with our
+            # existing behavior, which passes arguments to the customer model_fn positionally, not by name.
+            # The TensorFlow Estimator checks the signature of the given model_fn for a parameter named "params":
+            # https://github.com/tensorflow/tensorflow/blob/2c9a67ffb384a13cd533a0e89a96211058fa2631/tensorflow/python/estimator/estimator.py#L1215
+            # Wrapping it in _model_fn allows the customer to use whatever parameter names they want. It's unclear whether
+            # this behavior is desirable theoretically, but we shouldn't break existing behavior.
+
+            def _model_fn(features, labels, mode, params):
+                return self.customer_script.model_fn(features, labels, mode, params)
+
             return tf.estimator.Estimator(
-                model_fn=self.customer_script.model_fn,
+                model_fn=_model_fn,
                 params=hyperparameters,
                 config=run_config)
 
