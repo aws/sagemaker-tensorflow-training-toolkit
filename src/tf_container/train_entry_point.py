@@ -1,26 +1,29 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import argparse
 import json
-import subprocess
-from threading import Thread
-import container_support as cs
 import os
-import tensorflow as tf
-import tf_container.run
-import tf_container.serve as serve
+import subprocess
 import time
+from threading import Thread
+
+import tensorflow as tf
+
+import container_support as cs
+import tf_container.run
+import tf_container.s3_fs as s3_fs
+import tf_container.serve as serve
 
 _logger = tf_container.run.get_logger()
 
@@ -87,8 +90,8 @@ def _get_trainer_class():
     # officially supported, and it's not working properly with TF 1.6, so
     # we've switched to using tf.estimator.train_and_evaluate instead for
     # versions 1.6 and up. However, we still want to use the old API for
-    # 1.4 and 1.5, since the new API isn't fully backwards compatible. 
-    
+    # 1.4 and 1.5, since the new API isn't fully backwards compatible.
+
     major, minor, patch = tf.__version__.split('.')
     if major != '1':
         raise ValueError('We only support TensorFlow 1.x.y currently.')
@@ -101,10 +104,30 @@ def _get_trainer_class():
     return tf_container.trainer.Trainer
 
 
+def _get_checkpoint_dir(env):
+    if 'checkpoint_path' not in env.hyperparameters:
+        return env.model_dir
+
+    checkpoint_path = env.hyperparameters['checkpoint_path']
+
+    # If this is not part of a tuning job, then we can just use the specified checkpoint path
+    if 'algorithms_tuning_objective_metric' not in env.hyperparameters:
+        return checkpoint_path
+
+    job_name = env.job_name
+
+    # If the checkpoint path already matches the format 'job_name/checkpoints', then we don't
+    # need to worry about checkpoints from multiple training jobs being saved in the same location
+    if job_name is None or checkpoint_path.endswith(os.path.join(job_name, 'checkpoints')):
+        return checkpoint_path
+    else:
+        return os.path.join(checkpoint_path, job_name, 'checkpoints')
+
+
 def train():
     env = cs.TrainingEnvironment()
 
-    checkpoint_dir = env.hyperparameters.get("checkpoint_path", env.model_dir)
+    checkpoint_dir = _get_checkpoint_dir(env)
     train_steps = env.hyperparameters.get('training_steps', 1000)
     eval_steps = env.hyperparameters.get('evaluation_steps', 100)
 
