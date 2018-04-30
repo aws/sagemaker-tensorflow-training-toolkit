@@ -21,7 +21,7 @@ SIGNATURE_NAME = 'predictions'
 LEARNING_RATE = 0.001
 
 
-def model_fn(features, labels, mode, params):
+def model_fn(features, labels, mode, hyperparameters):
     # Input Layer
     input_layer = tf.reshape(features[INPUT_TENSOR_NAME], [-1, 28, 28, 1])
 
