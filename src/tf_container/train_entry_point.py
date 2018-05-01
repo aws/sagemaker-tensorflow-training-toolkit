@@ -114,6 +114,7 @@ def train():
     os.environ['S3_REQUEST_TIMEOUT_MSEC'] = str(env.hyperparameters.get('s3_checkpoint_save_timeout', 60000))
 
     env.download_user_module()
+    env.pip_install_requirements()
 
     customer_script = env.import_user_module()
 
