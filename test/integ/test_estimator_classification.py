@@ -23,7 +23,6 @@ from test.integ.conftest import SCRIPT_PATH
 def test_estimator_classification(docker_image, sagemaker_session, opt_ml, processor):
     resource_path = os.path.join(SCRIPT_PATH, '../resources/iris')
 
-    copy_resource(resource_path, opt_ml, 'code')
     copy_resource(resource_path, opt_ml, 'data', 'input/data')
 
     s3_source_archive = fw_utils.tar_and_upload_dir(session=sagemaker_session.boto_session,
