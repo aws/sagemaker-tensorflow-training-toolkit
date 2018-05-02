@@ -19,8 +19,10 @@ import boto3
 import pytest
 import shutil
 import tempfile
+import uuid
 
 from sagemaker import Session
+from sagemaker.tensorflow import TensorFlow
 
 logger = logging.getLogger(__name__)
 logging.getLogger('boto').setLevel(logging.INFO)
@@ -73,6 +75,30 @@ def sagemaker_session(region):
 @pytest.fixture(scope='session')
 def docker_image(docker_base_name, tag):
     return '{}:{}'.format(docker_base_name, tag)
+
+
+@pytest.fixture(scope='session')
+def sdk_estimator_class(docker_image):
+    class TestEstimator(TensorFlow):
+    
+        def train_image(self):
+            return docker_image
+        
+        def create_model(self, model_server_workers=None):
+            model = super(TestEstimator, self).create_model(model_server_workers)
+            model.image = docker_image
+            return model
+    return TestEstimator
+
+
+@pytest.fixture(scope='session')
+def local_instance_type(processor):
+    return 'local' if processor == 'cpu' else 'local_gpu'
+
+
+@pytest.fixture(scope='session')
+def run_id():
+    return str(uuid.uuid4()).split('-')[0]
 
 
 @pytest.fixture

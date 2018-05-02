@@ -125,12 +125,18 @@ class Trainer(object):
         invoke_args = self._resolve_input_fn_args(self.customer_script.eval_input_fn)
         eval_input_fn = lambda: self.customer_script.eval_input_fn(**invoke_args)
 
-        if self.saves_training():
+        if hasattr(self.customer_script, 'exporter_fn'):
+            # We may want to add the ability for the user to customize their exporter name in the future.
+            # Should only be relevant for use cases outside of SageMaker Hosting,
+            # or if we add support for multiple models.
+            exporter = self.customer_script.exporter_fn('Servo', self.customer_params)
+        elif self.saves_training():
             serving_input_receiver_fn = lambda: self.customer_script.serving_input_fn(self.customer_params)
             exporter = tf.estimator.LatestExporter('Servo',
                                                    serving_input_receiver_fn=serving_input_receiver_fn)
         else:
-            logger.warn('serving_input_fn not specified, model NOT saved, use checkpoints to reconstruct')
+            logger.warn('Neither exporter_fn nor serving_input_fn specified, model NOT saved, ' + 
+                        'use checkpoints to reconstruct')
             exporter = None
 
         valid_eval_keys = ['start_delay_secs', 'throttle_secs']
