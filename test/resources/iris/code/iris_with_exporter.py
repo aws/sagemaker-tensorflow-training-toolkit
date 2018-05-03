@@ -34,15 +34,8 @@ def exporter_fn(name, params):
     feature_spec = {INPUT_TENSOR_NAME: tf.FixedLenFeature(dtype=tf.float32, shape=[4])}
     serving_input_receiver_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)
     
-    #return tf.estimator.LatestExporter(name, serving_input_receiver_fn=serving_input_receiver_fn)
     return tf.estimator.FinalExporter(name, serving_input_receiver_fn=serving_input_receiver_fn)
 
-
-"""
-def serving_input_fn(params):
-    feature_spec = {INPUT_TENSOR_NAME: tf.FixedLenFeature(dtype=tf.float32, shape=[4])}
-    return tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)()
-"""
 
 def train_input_fn(training_dir, params):
     """Returns input function that would feed the model during training"""
