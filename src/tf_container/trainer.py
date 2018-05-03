@@ -119,7 +119,8 @@ class Trainer(object):
         return tf.estimator.TrainSpec(train_input_fn, max_steps=self.train_steps)
 
     def saves_training(self):
-        return hasattr(self.customer_script, 'serving_input_fn')
+        return hasattr(self.customer_script, 'serving_input_fn') or \
+               hasattr(self.customer_script, 'exporter_fn')
 
     def _build_eval_spec(self):
         invoke_args = self._resolve_input_fn_args(self.customer_script.eval_input_fn)
