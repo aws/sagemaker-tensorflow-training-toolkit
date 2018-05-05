@@ -50,7 +50,7 @@ def test_distributed(instance_type, sagemaker_session, docker_image_uri):
         estimator = MyEstimator(entry_point='resnet_cifar_10.py',
                                 source_dir=script_path,
                                 role='SageMakerRole',
-                                training_steps=2,
+                                training_steps=500,
                                 evaluation_steps=1,
                                 train_instance_count=2,
                                 train_instance_type=instance_type,
