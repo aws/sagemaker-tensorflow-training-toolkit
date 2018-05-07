@@ -111,7 +111,7 @@ def _get_checkpoint_dir(env):
     checkpoint_path = env.hyperparameters['checkpoint_path']
 
     # If this is not part of a tuning job, then we can just use the specified checkpoint path
-    if 'algorithms_tuning_objective_metric' not in env.hyperparameters:
+    if '_tuning_objective_metric' not in env.hyperparameters:
         return checkpoint_path
 
     job_name = env.job_name
