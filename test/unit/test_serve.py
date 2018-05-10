@@ -80,7 +80,7 @@ def test_export_saved_model_from_filesystem(mock_exists, mock_makedirs, serve):
     checkpoint_dir = 'a/dir'
     model_path = 'possible/another/dir'
 
-    with patch('shutil.copy2') as mock_copy:
+    with patch('tf_container.serve._recursive_copy') as mock_copy:
         serve.export_saved_model(checkpoint_dir, model_path)
         mock_copy.assert_called_once_with(checkpoint_dir, model_path)
 
