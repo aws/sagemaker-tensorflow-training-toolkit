@@ -118,7 +118,32 @@ Dockerfile.
     #. Copy your Python package to “final” Dockerfile directory that you are building.
     cp dist/sagemaker_tensorflow_container-<package_version>.tar.gz docker/<tensorflow_version>/final/py2
 
-If you want to build "final" Docker images, then use:
+If you want to build "final" Docker images, for versions 1.6 and above, you will first need to download the appropriate tensorflow pip wheel, then pass in its location as a build argument. These can be obtained from pypi. For example, the files for 1.6.0 are here:
+
+https://pypi.org/project/tensorflow/1.6.0/#files
+https://pypi.org/project/tensorflow-gpu/1.6.0/#files
+
+Note that you need to use the tensorflow-gpu wheel when building the GPU image.
+
+Then run:
+
+::
+
+    # All build instructions assumes you're building from the same directory as the Dockerfile.
+
+    # CPU
+    docker build -t <image_name>:<tag> --build-arg py_version=<py_version> --build-arg framework_installable=<path to tensorflow binary> -f Dockerfile.cpu .
+
+    # GPU
+    docker build -t <image_name>:<tag> --build-arg py_version=<py_version> --build-arg framework_installable=<path to tensorflow binary> -f Dockerfile.gpu .
+
+::
+
+    # Example
+    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2
+    --build-arg framework_installable=tensorflow-1.6.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
+
+The dockerfiles for 1.4 and 1.5 build from source instead, so when building those, you don't need to download the wheel beforehand:
 
 ::
 
@@ -140,9 +165,6 @@ If you want to build "final" Docker images, then use:
     # GPU
     docker build -t preprod-tensorflow:1.4.1-gpu-py2 -f Dockerfile.gpu .
 
-    # For building images of TensorFlow versions 1.6 and above
-    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2
-    --build-arg framework_installable=tensorflow-1.6.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
 
 Running the tests
 -----------------
