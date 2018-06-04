@@ -111,7 +111,7 @@ def _get_checkpoint_dir(env):
     checkpoint_path = env.hyperparameters['checkpoint_path']
 
     # If this is not part of a tuning job, then we can just use the specified checkpoint path
-    if 'algorithms_tuning_objective_metric' not in env.hyperparameters:
+    if '_tuning_objective_metric' not in env.hyperparameters:
         return checkpoint_path
 
     job_name = env.job_name
@@ -136,7 +136,8 @@ def train():
     # saving checkpoints of larger sizes.
     os.environ['S3_REQUEST_TIMEOUT_MSEC'] = str(env.hyperparameters.get('s3_checkpoint_save_timeout', 60000))
 
-    env.download_user_module()
+    if env.user_script_archive.lower().startswith('s3://'):
+        env.download_user_module()
     env.pip_install_requirements()
 
     customer_script = env.import_user_module()
