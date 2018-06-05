@@ -27,7 +27,7 @@ def required_versions(framework_version):
         return ['tensorflow-serving-api==1.5.0',
                 'tensorflow==1.6.0']
     elif framework_version == '1.7.0':
-        return ['tensorflow-serving-api==1.5.0',
+        return ['tensorflow-serving-api==1.7.0',
                 'tensorflow==1.7.0']
     else:
         raise ValueError("invalid internal test config")
