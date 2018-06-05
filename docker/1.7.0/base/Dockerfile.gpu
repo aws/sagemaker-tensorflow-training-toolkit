@@ -108,7 +108,7 @@ RUN bazel build -c opt --config=cuda \
 # Update libstdc++6, as required by tensorflow-serving >= 1.6: https://github.com/tensorflow/serving/issues/819
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
     apt-get update && \
-    apt-get install libstdc++6
+    apt-get install -y libstdc++6
 
 # cleaning up the container
 RUN rm -rf /serving && \
