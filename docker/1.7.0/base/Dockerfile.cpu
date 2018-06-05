@@ -45,3 +45,7 @@ RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-servin
 RUN wget "http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_${TF_SERVING_VERSION}_all.deb" && \
     dpkg -i tensorflow-model-server_${TF_SERVING_VERSION}_all.deb
 
+# Update libstdc++6, as required by tensorflow-serving >= 1.6: https://github.com/tensorflow/serving/issues/819
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
+    apt-get update && \
+    apt-get install libstdc++6
