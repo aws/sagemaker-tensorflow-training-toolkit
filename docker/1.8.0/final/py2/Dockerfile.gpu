@@ -1,5 +1,5 @@
-# Use local version of image built from Dockerfile.gpu in /docker/1.6.0/base
-FROM tensorflow-base:1.7.0-gpu-py2
+# Use local version of image built from Dockerfile.gpu in /docker/1.8.0/base
+FROM tensorflow-base:1.8.0-gpu-py2
 MAINTAINER Amazon AI
 
 ARG framework_installable
