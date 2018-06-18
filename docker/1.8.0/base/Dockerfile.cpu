@@ -38,6 +38,8 @@ RUN pip --no-cache-dir install \
 
 WORKDIR /root
 
+# TODO: upgrade to tf serving 1.8, which requires more work with updating
+# dependencies. See current work in progress in tfserving-1.8 branch.
 ENV TF_SERVING_VERSION=1.7.0
 
 RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-serving-api==$TF_SERVING_VERSION gevent gunicorn
