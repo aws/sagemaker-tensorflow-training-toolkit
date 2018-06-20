@@ -28,7 +28,10 @@ def required_versions(framework_version):
     elif framework_version == '1.6.0':
         return ['tensorflow-serving-api==1.5.0',
                 'tensorflow==1.6.0']
-    # TF serving 1.8.0 not released yet as of 6/5/2018
+    elif framework_version == '1.7.0':
+        return ['tensorflow-serving-api==1.7.0',
+                'tensorflow==1.7.0']
+    # TODO: upgrade to serving 1.8.0 (see tfserving-1.8 branch)
     elif framework_version == '1.8.0':
         return ['tensorflow-serving-api==1.7.0',
                 'tensorflow==1.8.0']
