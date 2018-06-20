@@ -42,6 +42,7 @@ RUN pip --no-cache-dir install \
         scipy \
         sklearn \
         pandas \
+        Pillow \
         h5py
 
 RUN pip install numpy tensorflow-serving-api==1.5
@@ -108,4 +109,3 @@ RUN bazel build -c opt --config=cuda \
 # cleaning up the container
 RUN rm -rf /serving && \
     rm -rf /bazel
-

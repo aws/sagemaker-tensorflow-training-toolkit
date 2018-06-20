@@ -34,6 +34,7 @@ RUN pip --no-cache-dir install \
         scipy \
         sklearn \
         pandas \
+        Pillow \
         h5py
 
 WORKDIR /root
@@ -43,4 +44,3 @@ RUN pip install numpy boto3 six awscli flask==0.11 Jinja2==2.9 tensorflow-servin
 # install tensorflow-model-server 1.5. 1.6 is not working as of 3/29/2018 for unknown reasons.
 RUN wget 'http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server/t/tensorflow-model-server/tensorflow-model-server_1.5.0_all.deb' && \
     dpkg -i tensorflow-model-server_1.5.0_all.deb
-

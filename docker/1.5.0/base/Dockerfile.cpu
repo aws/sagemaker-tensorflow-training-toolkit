@@ -30,6 +30,7 @@ RUN pip --no-cache-dir install \
         scipy \
         sklearn \
         pandas \
+        Pillow \
         h5py
 
 # Set up Bazel.
