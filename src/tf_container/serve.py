@@ -75,9 +75,23 @@ def export_saved_model(checkpoint_dir, model_path, s3=boto3.client('s3')):
             s3.download_file(bucket_name, key, target)
     else:
         if os.path.exists(checkpoint_dir):
-            shutil.copy2(checkpoint_dir, model_path)
+            _recursive_copy(checkpoint_dir, model_path)
         else:
             logger.error("Failed to copy saved model. File does not exist in {}".format(checkpoint_dir))
+
+
+def _recursive_copy(src, dst):
+    for root, dirs, files in os.walk(src):
+        root = os.path.relpath(root, src)
+        current_path = os.path.join(src, root)
+        target_path = os.path.join(dst, root)
+
+        for file in files:
+            shutil.copy(os.path.join(current_path, file), os.path.join(target_path, file))
+        for dir in dirs:
+            new_dir = os.path.join(target_path, dir)
+            if not os.path.exists(new_dir):
+                os.mkdir(os.path.join(target_path, dir))
 
 
 def transformer(user_module):
