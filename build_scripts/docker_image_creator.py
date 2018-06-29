@@ -1,35 +1,40 @@
 """
-Implements the parent function for docker image creation during single instance configuration
+Script to run docker image creation
+Run the command:
+    python docker_image_creator.py docker_file_github_link optimized_binary_link gpu|cpu tensorflow_version python_version
 """
 import argparse
 import os
 
-def create_docker_image(dockerfile_github_link, optbin_link, processor_type, framework_version, python_version):
+def create_docker_image(dockerfile_github_link, optbin_link, processor, framework_version, python_version):
     """
     Function builds a docker image with the TF optimized binary
 
     :param dockerfile_github_link: link to docker file repo
     :param optbin_link: link to where the optimized binary is
-    :param gpu: True for gpu false for cpu
+    :param processor: gpu or cpu
     :param framework_version: deep learning framework version i.e 1.6.0
     :param python_version: version of python to build container with i.e. 3.6.5 or 2.7.4
     :return: final built imageid
     """
     # 0.) Initialize some commonly used variables
-    processor = processor_type
     dockerfile_repo_name = dockerfile_github_link.split('/')[-1].split('.')[0]
     pyV = "py{}".format(python_version.split('.')[0]) # i.e. py2
     framework = "tensorflow"
     # 1.) Clone dockerfile repo from Github
+    print("Cloning dockerfile repo...")
     os.system("git clone {}".format(dockerfile_github_link))
-    # 2.) Get optimized binary - probably need to better parametrize the name
+    # 2.) Get optimized binary - need to better parametrize the name
+    print("Getting optimized binary...")
     optbin_filename = "{}-{}-cp27-cp27mu-manylinux1_x86_64.whl".format(framework, framework_version) # just a tmp file name
     os.system("curl {} > {}".format(optbin_link, optbin_filename))
     # 3.) Build base image
+    print("Building base image...")
     image_name = "{}-base:{}-{}-{}".format(framework, framework_version, processor,  pyV)
     base_docker_path = "docker/{}/base/Dockerfile.{}".format(framework_version, processor)
     os.system("sudo nvidia-docker build -t {} -f {}/{} .".format(image_name, dockerfile_repo_name, base_docker_path))
     # 4.) Build final image
+    print("Building final image...")
     os.chdir("{}".format(dockerfile_repo_name))
     os.system("python setup.py sdist")
     os.system("cp dist/sagemaker_tensorflow_container-1.0.0.tar.gz docker/{}/final/{}".format(framework_version, pyV))
