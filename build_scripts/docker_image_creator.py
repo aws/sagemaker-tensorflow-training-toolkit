@@ -51,7 +51,7 @@ if __name__ == "__main__":
     # Parse command line options
     parser = argparse.ArgumentParser()
     parser.add_argument("docker_file_github_link", help="link to github containing docker files")
-    parser.add_argument("optimized_binary_link", "link to place with optimized binary")
+    parser.add_argument("optimized_binary_link", help="link to place with optimized binary")
     parser.add_argument("processor_type", help="'gpu' if you would like to use GPUs or 'cpu'")
     parser.add_argument("framework_version", help="Tensorflow framework version (i.e. 1.8.0)")
     parser.add_argument("python_version", help="Python version to be used (i.e. 2.7.0)")
