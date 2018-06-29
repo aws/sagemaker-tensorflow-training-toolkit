@@ -50,11 +50,12 @@ def tensorflow_create_docker(dockerfile_github_link, optbin_link, gpu, framework
 if __name__ == "__main__":
     # Parse command line options
     parser = argparse.ArgumentParser()
-    parser.add_argument("docker_file_github_link", help="link to github containing docker files")
+    parser.add_argument("dockerfile_github_link", help="link to github containing docker files")
     parser.add_argument("optimized_binary_link", help="link to place with optimized binary")
     parser.add_argument("processor_type", help="'gpu' if you would like to use GPUs or 'cpu'")
     parser.add_argument("framework_version", help="Tensorflow framework version (i.e. 1.8.0)")
     parser.add_argument("python_version", help="Python version to be used (i.e. 2.7.0)")
     args = parser.parse_args()
+    gpu = True if args.processor_type == "gpu" else False
     # Build image
-    tensorflow_create_docker(args.dockerfile_github_link, args.optimized_binary, args.gpu, args.framework_version, args.python_version)
+    tensorflow_create_docker(args.dockerfile_github_link, args.optimized_binary, gpu, args.framework_version, args.python_version)
