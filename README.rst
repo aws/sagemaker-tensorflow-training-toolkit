@@ -165,6 +165,16 @@ The dockerfiles for 1.4 and 1.5 build from source instead, so when building thos
     # GPU
     docker build -t preprod-tensorflow:1.4.1-gpu-py2 -f Dockerfile.gpu .
 
+Build scripts
+~~~~~~~~~~~~~
+
+To use the build script, you need to have nvidia-docker installed.
+
+To build the docker images you can also use the build script in the folder build_scripts. To run this program, execute the command in the build scripts directory:
+
+::
+    python docker_image_creator.py link_to_dockerfile_github link_to_optimized_binary 'gpu'|'cpu' framework_version python_version
+::
 
 Running the tests
 -----------------

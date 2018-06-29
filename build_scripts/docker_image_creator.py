@@ -13,7 +13,7 @@ def create_docker_image(dockerfile_github_link, optbin_link, processor, framewor
     :param dockerfile_github_link: link to docker file repo
     :param optbin_link: link to where the optimized binary is
     :param processor: gpu or cpu
-    :param framework_version: deep learning framework version i.e 1.6.0
+    :param framework_version: tensorflow version i.e 1.6.0
     :param python_version: version of python to build container with i.e. 3.6.5 or 2.7.4
     :return: final built imageid
     """
