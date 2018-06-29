@@ -4,7 +4,7 @@ Implements the parent function for docker image creation during single instance 
 import argparse
 import os
 
-def tensorflow_create_docker(dockerfile_github_link, optbin_link, gpu, framework_version, python_version):
+def create_docker_image(dockerfile_github_link, optbin_link, processor_type, framework_version, python_version):
     """
     Function builds a docker image with the TF optimized binary
 
@@ -16,7 +16,7 @@ def tensorflow_create_docker(dockerfile_github_link, optbin_link, gpu, framework
     :return: final built imageid
     """
     # 0.) Initialize some commonly used variables
-    processor = "gpu" if gpu else "cpu"
+    processor = processor_type
     dockerfile_repo_name = dockerfile_github_link.split('/')[-1].split('.')[0]
     pyV = "py{}".format(python_version.split('.')[0]) # i.e. py2
     framework = "tensorflow"
@@ -52,10 +52,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("dockerfile_github_link", help="link to github containing docker files")
     parser.add_argument("optimized_binary_link", help="link to place with optimized binary")
-    parser.add_argument("processor_type", help="'gpu' if you would like to use GPUs or 'cpu'")
+    parser.add_argument("processor_type", help="gpu if you would like to use GPUs or cpu")
     parser.add_argument("framework_version", help="Tensorflow framework version (i.e. 1.8.0)")
     parser.add_argument("python_version", help="Python version to be used (i.e. 2.7.0)")
     args = parser.parse_args()
-    gpu = True if args.processor_type == "gpu" else False
     # Build image
-    tensorflow_create_docker(args.dockerfile_github_link, args.optimized_binary, gpu, args.framework_version, args.python_version)
+    create_docker_image(args.dockerfile_github_link, args.optimized_binary_link, args.processor_type, args.framework_version, args.python_version)
