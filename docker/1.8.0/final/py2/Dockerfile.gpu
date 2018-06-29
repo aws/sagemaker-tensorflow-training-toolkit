@@ -14,7 +14,7 @@ COPY $framework_support_installable .
 RUN framework_installable_local=$(basename $framework_installable) && \
     framework_support_installable_local=$(basename $framework_support_installable) && \
     \
-    pip install $framework_installable_local && \
+    pip install --no-cache --upgrade $framework_installable_local && \
     pip install $framework_support_installable_local && \
     \
     rm $framework_installable_local && \
