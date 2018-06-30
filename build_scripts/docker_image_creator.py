@@ -1,7 +1,7 @@
 """
 Script to run docker image creation
 Run the command:
-    python docker_image_creator.py docker_file_github_link optimized_binary_link gpu|cpu tensorflow_version python_version
+    python docker_image_creator.py optimized_binary_link gpu|cpu tensorflow_version python_version
 """
 import argparse
 import os
@@ -39,6 +39,8 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     os.system \
         ("sudo nvidia-docker build -t preprod-{}:{}-{}-{} --build-arg py_version={} --build-arg framework_installable={}  -f Dockerfile.{} .".format
             (framework, framework_version, processor, pyV, pyV[-1], optbin_filename, processor))
+    # 5.) Return to build_scripts directory
+    os.chdir("../../../../build_scripts")
 
 if __name__ == "__main__":
     # Parse command line options
