@@ -30,7 +30,7 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     # 3.) Build base image
     print("Building base image...")
     image_name = "{}-base:{}-{}-{}".format(framework, framework_version, processor,  pyV)
-    base_docker_path = "{}/../docker/{}/base/Dockerfile.{}".format(framework_version, processor)
+    base_docker_path = "{}/../docker/{}/base/Dockerfile.{}".format(BASE_PATH, framework_version, processor)
     os.system("sudo nvidia-docker build -t {} -f {} .".format(image_name, base_docker_path))
     # 4.) Build final image
     print("Building final image...")
