@@ -172,7 +172,7 @@ To build the docker images you can also use the build script in the folder build
 
 ::
 
-    python docker_image_creator.py link_to_dockerfile_github link_to_optimized_binary 'gpu'|'cpu' framework_version python_version
+    python docker_image_creator.py link_to_optimized_binary 'gpu'|'cpu' framework_version python_version
 
 ::
 
