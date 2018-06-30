@@ -26,15 +26,15 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     # 2.) Get optimized binary - and put in final docker image repo
     print("Getting optimized binary...")
     optbin_filename = "{}-{}-cp27-cp27mu-manylinux1_x86_64.whl".format(framework, framework_version)
-    os.system("curl {} > {}/../docker/{}/final/{}/{}".format(BASE_PATH, optbin_link, framework_version, pyV, optbin_filename)) # ADDED BASE_PATH
+    os.system("curl {} > {}/../docker/{}/final/{}/{}".format(BASE_PATH, optbin_link, framework_version, pyV, optbin_filename))
     # 3.) Build base image
     print("Building base image...")
     image_name = "{}-base:{}-{}-{}".format(framework, framework_version, processor,  pyV)
-    base_docker_path = "{}/../docker/{}/base/Dockerfile.{}".format(framework_version, processor)  # ADDED BASE_PATH
+    base_docker_path = "{}/../docker/{}/base/Dockerfile.{}".format(framework_version, processor)
     os.system("sudo nvidia-docker build -t {} -f {} .".format(image_name, base_docker_path))
     # 4.) Build final image
     print("Building final image...")
-    os.chdir("{}/..".format(BASE_PATH)) # ADDED BASE_PATH
+    os.chdir("{}/..".format(BASE_PATH))
     os.system("python setup.py sdist")
     os.system("cp dist/sagemaker_tensorflow_container-*.tar.gz docker/{}/final/{}".format(framework_version, pyV))
     os.chdir("docker/{}/final/{}".format(framework_version, pyV))
@@ -42,7 +42,7 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
         ("sudo nvidia-docker build -t preprod-{}:{}-{}-{} --build-arg py_version={} --build-arg framework_installable={}  -f Dockerfile.{} .".format
             (framework, framework_version, processor, pyV, pyV[-1], optbin_filename, processor))
     # 5.) Return to build_scripts directory
-    os.chdir("{}".format(BASE_PATH)) # ADDED BASE_PATH
+    os.chdir("{}".format(BASE_PATH))
 
 if __name__ == "__main__":
     # Parse command line options
