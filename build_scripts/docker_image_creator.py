@@ -15,9 +15,6 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     """
     Function builds a docker image with the TF optimized binary
 
-    Assumptions:
-        1. Script needs to be run inside of the build_scripts files
-
     :param optbin_link: link to where the optimized binary is
     :param processor: gpu or cpu
     :param framework_version: tensorflow version i.e 1.6.0
