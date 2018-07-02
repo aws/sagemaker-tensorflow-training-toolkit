@@ -168,15 +168,19 @@ The dockerfiles for 1.4 and 1.5 build from source instead, so when building thos
 Build scripts
 ~~~~~~~~~~~~~
 
-To build the docker images you can also use the build script in the folder build_scripts. To run this program, execute the command in the build scripts directory:
+You can also use the build script in the folder build_scripts to build the Docker images. To run this program, execute the command:
 
 ::
 
-    python docker_image_creator.py link_to_optimized_binary 'gpu'|'cpu' framework_version python_version
+    python docker_image_creator.py link_to_optimized_binary gpu|cpu framework_version python_version
 
 ::
 
-To use the build script, you need to have nvidia-docker installed.
+To use nvidia-docker instead of docker to build the image, run the command:
+
+::
+
+    python docker_image_creator.py link_to_optimized_binary gpu|cpu framework_version python_version --nvidia-docker
 
 Running the tests
 -----------------
