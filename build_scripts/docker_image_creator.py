@@ -1,9 +1,8 @@
-""" Script to create Sagemaker TensorFlow Docker image
-    Run the command:
+""" Script to create Sagemaker TensorFlow Docker images
+
+    Usage:
         python docker_image_creator.py optimized_binary_link gpu|cpu tensorflow_version python_version
-
 """
-
 import argparse
 import glob
 import subprocess
@@ -17,11 +16,10 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     """ Function builds a docker image with the TF optimized binary
 
     Args:
-        param1 (str): optbin_link - link to where the optimized binary is
-        param2 (str): processor - gpu or cpu
-        param3 (str): framework_version - tensorflow version i.e 1.6.0
-        param4 (str): python_version (i.e. 3.6.5 or 2.7.4)
-
+        optbin_link (str): link to where the optimized binary is
+        processor (str): gpu or cpu
+        framework_version (str): tensorflow version i.e 1.6.0
+        python_version (str): (i.e. 3.6.5 or 2.7.4)
     """
     # 1.) Initialize commonly used variables
     py_v = 'py{}'.format(python_version.split('.')[0]) # i.e. py2
