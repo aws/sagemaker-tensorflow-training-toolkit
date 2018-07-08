@@ -42,7 +42,7 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     print('Building final image...')
     subprocess.call(['python', 'setup.py', 'sdist'], cwd='{}/..'.format(PATH_TO_SCRIPT))
     output_file = glob.glob('{}/../dist/sagemaker_tensorflow_container-*.tar.gz'.format(PATH_TO_SCRIPT))[0] # use glob to use regex
-    shutil.copyfile(output_file, '{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v))
+    shutil.copyfile(output_file, '{}/../docker/{}/final/{}/'.format(PATH_TO_SCRIPT, framework_version, py_v))
     subprocess.call([DOCKER, 'build', '-t', 'preprod-tensorflow:{}-{}-{}'.format(framework_version, processor, py_v), \
                     '--build-arg', 'py_version={}'.format(py_v[-1]), '--build-arg', 'framework_installable={}'.format(optbin_filename), \
                     '-f', 'Dockerfile.{}'.format(processor), '.'], cwd='{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v))
