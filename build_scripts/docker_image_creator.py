@@ -4,6 +4,7 @@
         python docker_image_creator.py optimized_binary_link gpu|cpu tensorflow_version python_version
 """
 import argparse
+import glob
 import os
 import shutil
 import subprocess
@@ -37,11 +38,11 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     base_docker_path = '{}/../docker/{}/base/Dockerfile.{}'.format(PATH_TO_SCRIPT, framework_version, processor)
     subprocess.call([DOCKER, 'build', '-t', image_name, '-f', base_docker_path, '.'])
 
-    # Build final image
+    #  Build final image
     print('Building final image...')
     subprocess.call(['python', 'setup.py', 'sdist'], cwd='{}/..'.format(PATH_TO_SCRIPT))
-    shutil.copyfile('{}/../dist/sagemaker_tensorflow_container-*.tar.gz', '{}/../docker/{}/final/{}' \
-                    .format(PATH_TO_SCRIPT, PATH_TO_SCRIPT, framework_version, py_v))
+    output_file = glob.glob('{}/../dist/sagemaker_tensorflow_container-*.tar.gz'.format(PATH_TO_SCRIPT))[0] # use glob to use regex
+    shutil.copyfile(output_file, '{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v))
     subprocess.call([DOCKER, 'build', '-t', 'preprod-tensorflow:{}-{}-{}'.format(framework_version, processor, py_v), \
                     '--build-arg', 'py_version={}'.format(py_v[-1]), '--build-arg', 'framework_installable={}'.format(optbin_filename), \
                     '-f', 'Dockerfile.{}'.format(processor), '.'], cwd='{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v))
