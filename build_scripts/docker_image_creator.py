@@ -4,7 +4,7 @@
         python docker_image_creator.py optimized_binary_link gpu|cpu tensorflow_version python_version
 """
 import argparse
-import glob
+import os
 import shutil
 import subprocess
 import sys
