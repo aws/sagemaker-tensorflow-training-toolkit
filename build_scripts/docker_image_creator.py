@@ -5,6 +5,7 @@
 """
 import argparse
 import glob
+import shutil
 import subprocess
 import sys
 
@@ -34,14 +35,14 @@ def create_docker_image(optbin_link, processor, framework_version, python_versio
     print('Building base image...')
     image_name = 'tensorflow-base:{}-{}-{}'.format(framework_version, processor,  py_v)
     base_docker_path = '{}/../docker/{}/base/Dockerfile.{}'.format(PATH_TO_SCRIPT, framework_version, processor)
-    subprocess.call(['sudo', DOCKER, 'build', '-t', image_name, '-f', base_docker_path, '.'])
+    subprocess.call([DOCKER, 'build', '-t', image_name, '-f', base_docker_path, '.'])
 
     # 4.) Build final image
     print('Building final image...')
     subprocess.call(['python', 'setup.py', 'sdist'], cwd='{}/..'.format(PATH_TO_SCRIPT))
     output_file = glob.glob('{}/../dist/sagemaker_tensorflow_container-*.tar.gz'.format(PATH_TO_SCRIPT))[0] # use glob to use regex
-    subprocess.call(['cp', output_file, '{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v)])
-    subprocess.call(['sudo', DOCKER, 'build', '-t', 'preprod-tensorflow:{}-{}-{}'.format(framework_version, processor, py_v), \
+    shutil.copyfile(output_file, '{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v))
+    subprocess.call([DOCKER, 'build', '-t', 'preprod-tensorflow:{}-{}-{}'.format(framework_version, processor, py_v), \
                     '--build-arg', 'py_version={}'.format(py_v[-1]), '--build-arg', 'framework_installable={}'.format(optbin_filename), \
                     '-f', 'Dockerfile.{}'.format(processor), '.'], cwd='{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v))
 
@@ -59,8 +60,7 @@ if __name__ == '__main__':
     DOCKER = 'nvidia-docker' if args.nvidia_docker else DOCKER
 
     # Sets PATH_TO_SCRIPT so that command can be run from anywhere
-    PATH_TO_SCRIPT = '/'.join(sys.argv[0].split('/')[:-1])
-    PATH_TO_SCRIPT = '.' if PATH_TO_SCRIPT == '' else PATH_TO_SCRIPT
+    PATH_TO_SCRIPT = os.path.join('.', '/'.join(sys.argv[0].split('/')[:-1]))
 
     # Build image
     create_docker_image(args.optimized_binary_link, args.processor_type, args.framework_version, args.python_version)
