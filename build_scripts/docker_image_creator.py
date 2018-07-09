@@ -62,7 +62,7 @@ if __name__ == '__main__':
     DOCKER = 'nvidia-docker' if args.nvidia_docker else DOCKER
 
     # Sets PATH_TO_SCRIPT so that command can be run from anywhere
-    PATH_TO_SCRIPT = os.path.join('.', '/'.join(sys.argv[0].split('/')[:-1]))
+    PATH_TO_SCRIPT = os.path.dirname(os.path.abspath(sys.argv[0]))
 
     # Build image
     create_docker_image(args.optimized_binary_link, args.processor_type, args.framework_version, args.python_version)
