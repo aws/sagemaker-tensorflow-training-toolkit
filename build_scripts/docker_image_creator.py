@@ -31,7 +31,7 @@ def create_docker_image(processor, framework_version, python_version, optbin_pat
             shutil.copyfile(optbin_filename, '{}/../docker/{}/final/{}/{}'.format(PATH_TO_SCRIPT, framework_version, py_v, output_filename))
         else:
             with open('{}/../docker/{}/final/{}/{}'.format(PATH_TO_SCRIPT, framework_version, py_v, optbin_filename), 'wb') as optbin_file:
-                subprocess.call(['curl', optbin_link], stdout=optbin_file)
+                subprocess.call(['curl', optbin_path], stdout=optbin_file)
 
     # Build base image
     print('Building base image...')
