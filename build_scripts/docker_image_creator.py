@@ -25,8 +25,8 @@ def create_docker_image(processor, framework_version, python_version, optbin_pat
     # If necessary, get optimized binary and put in final docker image repo
     if optbin_path:
         print('Getting optimized binary...')
-        # Check if it is local or remote
-        optbin_filename = 'tensorflow-{}-{}-binary.whl'.format(framework_version, processor)
+        # Name of file will be the end of the path
+        optbin_filename = optbin_path.split('/')[-1]
         if os.path.isfile(optbin_path):
             shutil.copyfile(optbin_filename, '{}/../docker/{}/final/{}/{}'.format(PATH_TO_SCRIPT, framework_version, py_v, output_filename))
         else:
