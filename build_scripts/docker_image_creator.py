@@ -46,6 +46,7 @@ def create_docker_image(processor, framework_version, python_version, optbin_pat
     output_filename = output_file.split('/')[-1]
     shutil.copyfile(output_file, '{}/../docker/{}/final/{}/{}'.format(PATH_TO_SCRIPT, framework_version, py_v, output_filename))
     if optbin_path:
+        print("Building with binary")
         subprocess.call([DOCKER, 'build', '-t', 'preprod-tensorflow:{}-{}-{}'.format(framework_version, processor, py_v),
                         '--build-arg', 'py_version={}'.format(py_v[-1]), '--build-arg', 'framework_installable={}'.format(optbin_filename),
                         '-f', 'Dockerfile.{}'.format(processor), '.'], cwd='{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v))
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('processor_type', choices=['cpu', 'gpu'], help='gpu if you would like to use GPUs or cpu')
     parser.add_argument('framework_version', help='TensorFlow framework version (i.e. 1.8.0)')
     parser.add_argument('python_version', help='Python version to be used (i.e. 2.7.0)')
-    parser.add_argument('--optimized_binary_path', default=None, help='path to optimized binary')
+    parser.add_argument('--optimized-binary-path', default=None, help='path to optimized binary')
     parser.add_argument('--nvidia-docker', action='store_true', help="Enables nvidia-docker usage over docker usage")
     args = parser.parse_args()
 
