@@ -172,7 +172,7 @@ You can also use the build script in the folder build_scripts to build the Docke
 
 ::
 
-    python docker_image_creator.py path_to_wheel_binary gpu|cpu framework_version python_version
+    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version>
 
 ::
 
@@ -180,15 +180,15 @@ To use nvidia-docker instead of docker to build the image, run the command:
 
 ::
 
-     python docker_image_creator.py path_to_wheel_binary gpu|cpu framework_version python_version --nvidia-docker
+     python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --nvidia-docker
 
 ::
 
-The default repository the final image will be placed in is preprod-tensorflow. To set the repository to a custom value, run the command:
+The default repository the final image will be placed in is 'preprod-tensorflow'. To set the repository to a custom value, run the command:
 
 ::
 
-    python docker_image_creator.py path_to_wheel_binary gpu|cpu framework_version python_version --final-image-repository repository_name
+    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --final-image-repository <repository_name>
 
 ::
 
@@ -196,7 +196,7 @@ The default tag the final image will have is 'framework_version-processor_type-p
 
 ::
 
-    python docker_image_creator.py path_to_wheel_binary gpu|cpu framework_version python_version --final-image-tags tag1 tag2 ...
+    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --final-image-tags <tag1> <tag2> ...
 
 Running the tests
 -----------------
