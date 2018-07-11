@@ -1,7 +1,8 @@
 """ Script to create Sagemaker TensorFlow Docker images
 
     Usage:
-        python docker_image_creator.py binary_path gpu|cpu tensorflow_version python_version
+        python docker_image_creator.py <binary_path> <gpu|cpu> <tensorflow_version> <python_version> --nvidia-docker
+          --final-image-repository <name> --final-image-tags <tag1> <tag2> ...
 """
 import argparse
 import glob
@@ -23,16 +24,18 @@ def create_docker_image(binary_path, processor, framework_version, python_versio
     """
     # Initialize commonly used variables
     py_v = 'py{}'.format(python_version.split('.')[0]) # i.e. py2
-    base_docker_path = '{}/../docker/{}/base/Dockerfile.{}'.format(PATH_TO_SCRIPT, framework_version, processor)
-    final_docker_path = '{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v)
+    base_docker_path = os.path.join('{}/../docker/{}/base'.format(PATH_TO_SCRIPT, framework_version),
+                                    'Dockerfile.{}'.format(processor))
+    final_docker_path = os.path.join('{}/../docker/{}/final/{}'.format(PATH_TO_SCRIPT, framework_version, py_v), '')
 
     # Get binary file
     print('Getting binary...')
-    binary_filename = binary_path.split('/')[-1]
     if os.path.isfile(binary_path):
-        shutil.copyfile(binary_path, '{}/{}'.format(final_docker_path, binary_filename))
+        binary_filename = os.path.basename(binary_path)
+        shutil.copyfile(binary_path, os.path.join(final_docker_path, binary_filename))
     else:
-        with open('{}/{}'.format(final_docker_path, binary_filename), 'wb') as binary_file:
+        binary_filename = binary_path.split('/')[-1]
+        with open(os.path.join(final_docker_path, binary_filename), 'wb') as binary_file:
             subprocess.call(['curl', binary_path], stdout=binary_file)
 
     # Build base image
@@ -43,21 +46,21 @@ def create_docker_image(binary_path, processor, framework_version, python_versio
     #  Build final image
     print('Building final image...')
     subprocess.call(['python', 'setup.py', 'sdist'], cwd='{}/..'.format(PATH_TO_SCRIPT))
-    output_file = glob.glob('{}/../dist/sagemaker_tensorflow_container-*.tar.gz'.format(PATH_TO_SCRIPT))[0]
-    output_filename = output_file.split('/')[-1]
-    shutil.copyfile(output_file, '{}/{}'.format(final_docker_path, output_filename))
+    tar_file = glob.glob(os.path.join(PATH_TO_SCRIPT, '../dist/sagemaker_tensorflow_container-*.tar.gz'))[0]
+    tar_filename = os.path.basename(tar_file)
+    shutil.copyfile(tar_file, os.path.join(final_docker_path, tar_filename))
 
     final_image_repository = final_image_repository if final_image_repository else 'preprod-tensorflow'
     final_image_tags = final_image_tags if final_image_tags else ['{}-{}-{}'.format(framework_version, processor, py_v)]
-    command_list = [DOCKER, 'build']
+    final_command_list = [DOCKER, 'build']
     for tag in final_image_tags:
-        command_list.append('-t')
-        command_list.append('{}:{}'.format(final_image_repository, tag))
+        final_command_list.append('-t')
+        final_command_list.append('{}:{}'.format(final_image_repository, tag))
 
-    command_list.extend(['--build-arg', 'py_version={}'.format(py_v[-1]),
-                    '--build-arg', 'framework_installable={}'.format(binary_filename),
-                    '-f', 'Dockerfile.{}'.format(processor), '.'])
-    subprocess.call(command_list, cwd=final_docker_path)
+    final_command_list.extend(['--build-arg', 'py_version={}'.format(py_v[-1]),
+                               '--build-arg', 'framework_installable={}'.format(binary_filename),
+                               '-f', 'Dockerfile.{}'.format(processor), '.'])
+    subprocess.call(final_command_list, cwd=final_docker_path)
 
 if __name__ == '__main__':
     # Parse command line options
@@ -66,7 +69,7 @@ if __name__ == '__main__':
     parser.add_argument('processor_type', choices=['cpu', 'gpu'], help='gpu if you would like to use GPUs or cpu')
     parser.add_argument('framework_version', help='TensorFlow framework version (i.e. 1.8.0)')
     parser.add_argument('python_version', help='Python version to be used (i.e. 2.7.0)')
-    parser.add_argument('--nvidia-docker', action='store_true', help='Enables nvidia-docker usage over docker usage')
+    parser.add_argument('--nvidia-docker', action='store_true', help='Enables nvidia-docker usage over docker')
     parser.add_argument('--final-image-repository', default=None, help='Name of final repo the image is stored in')
     parser.add_argument('--final-image-tags', default=[], nargs='+', help='List of tag names for final image')
     args = parser.parse_args()
