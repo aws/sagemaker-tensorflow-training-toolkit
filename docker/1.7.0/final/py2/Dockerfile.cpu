@@ -20,5 +20,14 @@ RUN framework_installable_local=$(basename $framework_installable) && \
     rm $framework_installable_local && \
     rm $framework_support_installable_local
 
+# TODO: install from PyPI.
+COPY sagemaker-tensorflow-extensions sagemaker-tensorflow-extensions
+
+RUN cd sagemaker-tensorflow-extensions && \
+    git checkout 1.7 && \
+    LD_LIBRARY_PATH=$(dirname $(find /usr/local/lib | grep "libmkl")):$LD_LIBRARY_PATH pip install . && \
+    cd .. && \
+    rm -rf sagemaker-tensorflow-extensions
+
 # entry.py comes from sagemaker-container-support
 ENTRYPOINT ["entry.py"]
