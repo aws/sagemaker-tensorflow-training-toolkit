@@ -23,7 +23,6 @@ RUN framework_installable_local=$(basename $framework_installable) && \
 COPY sagemaker-tensorflow-extensions sagemaker-tensorflow-extensions
 
 RUN cd sagemaker-tensorflow-extensions && \
-    git checkout 1.7 && \
     LD_LIBRARY_PATH=$(dirname $(find /usr/local/lib | grep "libmkl")):$LD_LIBRARY_PATH pip install . && \
     cd .. && \
     rm -rf sagemaker-tensorflow-extensions
