@@ -13,6 +13,7 @@
 
 import logging
 
+import boto3
 import numpy as np
 from sagemaker.tensorflow import TensorFlow
 
@@ -26,9 +27,6 @@ logging.getLogger('auth.py').setLevel(logging.INFO)
 logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 logging.getLogger('session.py').setLevel(logging.DEBUG)
 logging.getLogger('sagemaker').setLevel(logging.DEBUG)
-
-script_path = 'test/resources/cifar_10/code'
-data_path = 'test/resources/cifar_10/data/training'
 
 
 class MyEstimator(TensorFlow):
@@ -46,6 +44,8 @@ class MyEstimator(TensorFlow):
 
 
 def test_distributed(instance_type, sagemaker_session, docker_image_uri):
+    script_path = 'test/resources/cifar_10/code'
+    data_path = 'test/resources/cifar_10/data/training'
     with timeout(minutes=15):
         estimator = MyEstimator(entry_point='resnet_cifar_10.py',
                                 source_dir=script_path,
@@ -73,3 +73,29 @@ def test_distributed(instance_type, sagemaker_session, docker_image_uri):
         predict_response = json_predictor.predict(data)
 
         assert len(predict_response['outputs']['probabilities']['floatVal']) == 10
+
+
+def test_distributed(instance_type, sagemaker_session, docker_image_uri):
+    script_path = 'test/resources/synthetic'
+
+    with timeout(minutes=15):
+        estimator = MyEstimator(entry_point='synthetic_pipe_mode_dataset.py',
+                                source_dir=script_path,
+                                role='SageMakerRole',
+                                input_mode='Pipe',
+                                training_steps=100,
+                                evaluation_steps=10,
+                                train_instance_count=1,
+                                train_instance_type=instance_type,
+                                sagemaker_session=sagemaker_session,
+                                docker_image_uri=docker_image_uri)
+
+        logger.info("uploading training data")
+
+        region = boto3.Session().region_name
+
+        train_data = 's3://sagemaker-sample-data-{}/tensorflow/pipemode/train'.format(region)
+        eval_data = 's3://sagemaker-sample-data-{}/tensorflow/pipemode/eval'.format(region)
+
+        logger.info("fitting estimator")
+        estimator.fit({'train': train_data, 'eval': eval_data})
