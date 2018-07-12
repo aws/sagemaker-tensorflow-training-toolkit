@@ -13,7 +13,6 @@
 
 import logging
 
-import boto3
 import numpy as np
 from sagemaker.tensorflow import TensorFlow
 
@@ -92,10 +91,8 @@ def test_distributed(instance_type, sagemaker_session, docker_image_uri):
 
         logger.info("uploading training data")
 
-        region = boto3.Session().region_name
-
-        train_data = 's3://sagemaker-sample-data-{}/tensorflow/pipemode/train'.format(region)
-        eval_data = 's3://sagemaker-sample-data-{}/tensorflow/pipemode/eval'.format(region)
+        train_data = 's3://sagemaker-sample-data-us-west-2/tensorflow/pipemode/train'
+        eval_data = 's3://sagemaker-sample-data-us-west-2/tensorflow/pipemode/eval'
 
         logger.info("fitting estimator")
         estimator.fit({'train': train_data, 'eval': eval_data})
