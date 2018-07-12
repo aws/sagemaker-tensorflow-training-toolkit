@@ -23,7 +23,9 @@ RUN framework_installable_local=$(basename $framework_installable) && \
 COPY sagemaker-tensorflow-extensions sagemaker-tensorflow-extensions
 
 RUN cd sagemaker-tensorflow-extensions && \
-    LD_LIBRARY_PATH=$(dirname $(find /usr/local/lib | grep "libmkl")):$LD_LIBRARY_PATH pip install . && \
+    ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 && \
+    LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:$(dirname $(find /usr/local/lib | grep "libmkl")):$LD_LIBRARY_PATH \
+    pip install . && \
     cd .. && \
     rm -rf sagemaker-tensorflow-extensions
 
