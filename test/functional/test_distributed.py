@@ -91,8 +91,8 @@ def test_distributed(instance_type, sagemaker_session, docker_image_uri):
 
         logger.info("uploading training data")
 
-        train_data = 's3://sagemaker-sample-data-us-west-2/tensorflow/pipemode/train'
-        eval_data = 's3://sagemaker-sample-data-us-west-2/tensorflow/pipemode/eval'
+        train_data = 's3://sagemaker-sample-data-us-west-2/tensorflow/pipe-mode/train'
+        eval_data = 's3://sagemaker-sample-data-us-west-2/tensorflow/pipe-mode/eval'
 
         logger.info("fitting estimator")
         estimator.fit({'train': train_data, 'eval': eval_data})
