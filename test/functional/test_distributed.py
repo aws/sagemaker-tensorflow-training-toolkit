@@ -14,6 +14,7 @@
 import logging
 
 import numpy as np
+import pytest
 from sagemaker.tensorflow import TensorFlow
 
 from test.resources.python_sdk.timeout import timeout, timeout_and_delete_endpoint
@@ -26,6 +27,8 @@ logging.getLogger('auth.py').setLevel(logging.INFO)
 logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 logging.getLogger('session.py').setLevel(logging.DEBUG)
 logging.getLogger('sagemaker').setLevel(logging.DEBUG)
+
+PIPE_MODE_VERSIONS = ['1.7.0', '1.8.0']
 
 
 class MyEstimator(TensorFlow):
@@ -74,7 +77,10 @@ def test_distributed(instance_type, sagemaker_session, docker_image_uri):
         assert len(predict_response['outputs']['probabilities']['floatVal']) == 10
 
 
-def test_distributed(instance_type, sagemaker_session, docker_image_uri):
+def test_distributed(instance_type, sagemaker_session, docker_image_uri, framework_version):
+    if framework_version not in PIPE_MODE_VERSIONS:
+        pytest.skip('skipping non-pipe-mode version {} because it is not in {}'
+                    .format(framework_version, PIPE_MODE_VERSIONS))
     script_path = 'test/resources/synthetic'
 
     with timeout(minutes=15):
