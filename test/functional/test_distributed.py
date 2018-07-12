@@ -77,7 +77,7 @@ def test_distributed(instance_type, sagemaker_session, docker_image_uri):
         assert len(predict_response['outputs']['probabilities']['floatVal']) == 10
 
 
-def test_distributed(instance_type, sagemaker_session, docker_image_uri):
+def test_pipe_mode(instance_type, sagemaker_session, docker_image_uri):
     framework_version = docker_image_uri.split(':')[-1].split('-')[0]
     if framework_version not in PIPE_MODE_VERSIONS:
         pytest.skip('skipping non-pipe-mode version {} because it is not in {}'
