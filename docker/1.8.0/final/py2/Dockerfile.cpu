@@ -7,23 +7,18 @@ ARG framework_support_installable=sagemaker_tensorflow_container-1.0.0.tar.gz
 
 WORKDIR /root
 
-# Will install from pypi once packages are released there. For now, copy from local file system.
-COPY $framework_installable .
 COPY $framework_support_installable .
 
-RUN framework_installable_local=$(basename $framework_installable) && \
-    framework_support_installable_local=$(basename $framework_support_installable) && \
-    \
-    pip install --no-cache --upgrade $framework_installable_local && \
+RUN framework_support_installable_local=$(basename $framework_support_installable) && \
     pip install $framework_support_installable_local && \
-    \
-    rm $framework_installable_local && \
     rm $framework_support_installable_local
+
+RUN pip install --no-cache --upgrade tensorflow==1.8.0
 
 COPY sagemaker-tensorflow-extensions sagemaker-tensorflow-extensions
 
 RUN cd sagemaker-tensorflow-extensions && \
-    LD_LIBRARY_PATH=$(dirname $(find /usr/local/lib | grep "libmkl")):$LD_LIBRARY_PATH pip install . && \
+    pip install . && \
     cd .. && \
     rm -rf sagemaker-tensorflow-extensions
 
