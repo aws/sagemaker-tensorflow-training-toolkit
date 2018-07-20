@@ -165,6 +165,38 @@ The dockerfiles for 1.4 and 1.5 build from source instead, so when building thos
     # GPU
     docker build -t preprod-tensorflow:1.4.1-gpu-py2 -f Dockerfile.gpu .
 
+Build scripts
+~~~~~~~~~~~~~
+
+You can also use the build script in the folder build_scripts to build the Docker images. To run this program, execute the command:
+
+::
+
+    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version>
+
+::
+
+To use nvidia-docker instead of docker to build the image, run the command:
+
+::
+
+     python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --nvidia-docker
+
+::
+
+The default repository the final image will be placed in is 'preprod-tensorflow'. To set the repository to a custom value, run the command:
+
+::
+
+    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --final-image-repository <repository_name>
+
+::
+
+The default tag the final image will have is 'framework_version-processor_type-py_version'. To customize the tag(s) set, run the command:
+
+::
+
+    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --final-image-tags <tag1> <tag2> ...
 
 Running the tests
 -----------------
