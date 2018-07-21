@@ -30,14 +30,15 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     final_docker_path = os.path.join('{}/docker/{}/final/{}'.format(main_directory_path, framework_version, py_v), '')
 
     # Get binary file - can pass either a local file path or a web url
-    print('Getting binary...')
-    if os.path.isfile(binary_path):
-        binary_filename = os.path.basename(binary_path)
-        shutil.copyfile(binary_path, os.path.join(final_docker_path, binary_filename))
-    else:
-        binary_filename = binary_path.split('/')[-1]
-        with open(os.path.join(final_docker_path, binary_filename), 'wb') as binary_file:
-            subprocess.call(['curl', binary_path], stdout=binary_file)
+    if framework_version not in ['1.4.1', '1.5.0']:
+        print('Getting binary...')
+        if os.path.isfile(binary_path):
+            binary_filename = os.path.basename(binary_path)
+            shutil.copyfile(binary_path, os.path.join(final_docker_path, binary_filename))
+        else:
+            binary_filename = binary_path.split('/')[-1]
+            with open(os.path.join(final_docker_path, binary_filename), 'wb') as binary_file:
+                subprocess.call(['curl', binary_path], stdout=binary_file)
 
     # Build base image
     print('Building base image...')
@@ -56,9 +57,12 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
         final_command_list.append('-t')
         final_command_list.append('{}:{}'.format(final_image_repository, tag))
 
-    final_command_list.extend(['--build-arg', 'py_version={}'.format(py_v[-1]),
-                               '--build-arg', 'framework_installable={}'.format(binary_filename),
-                               '-f', 'Dockerfile.{}'.format(processor), '.'])
+    if framework_version in ['1.4.1', '1.5.0']:
+        final_command_list.extend(['-f', 'Dockerfile.{}'.format(processor), '.'])
+    else:
+        final_command_list.extend(['--build-arg', 'py_version={}'.format(py_v[-1]),
+                                   '--build-arg', 'framework_installable={}'.format(binary_filename),
+                                   '-f', 'Dockerfile.{}'.format(processor), '.'])
 
     subprocess.call(final_command_list, cwd=final_docker_path)
 
@@ -68,7 +72,7 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
         parser.add_argument('framework_version', help='Framework version (i.e. 1.8.0)')
         parser.add_argument('python_version', help='Python version to be used (i.e. 2.7.0)')
         parser.add_argument('processor_type', choices=['cpu', 'gpu'], help='gpu if you would like to use GPUs or cpu')
-        parser.add_argument('binary_path', help='Path to the binary')
+        parser.add_argument('binary_path', help='Path to the binary. For versions 1.4.1, and 1.5.0 enter \'None\'')
         parser.add_argument('--nvidia-docker', action='store_true', help='Enables nvidia-docker usage over docker')
         parser.add_argument('--final-image-repository', default='preprod-tensorflow', help='Name of final docker repo the image is stored in')
         parser.add_argument('--final-image-tags', default=[], nargs='+', help='List of tag names for final image')
