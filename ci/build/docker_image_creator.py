@@ -51,7 +51,7 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     tar_file = glob.glob(os.path.join(main_directory_path, 'dist/sagemaker_tensorflow_container-*.tar.gz'))[0]
     tar_filename = os.path.basename(tar_file)
     shutil.copyfile(tar_file, os.path.join(final_docker_path, tar_filename))
-
+    
     final_command_list = [docker, 'build']
     for tag in final_image_tags:
         final_command_list.append('-t')
@@ -60,9 +60,7 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     if framework_version not in ['1.4.1', '1.5.0']:
         final_command_list.extend(['--build-arg', 'py_version={}'.format(py_v[-1]),
                                    '--build-arg', 'framework_installable={}'.format(binary_filename)])
-
     final_command_list.extend(['-f', 'Dockerfile.{}'.format(processor), '.'])
-
     subprocess.call(final_command_list, cwd=final_docker_path)
 
     def main(argv):
