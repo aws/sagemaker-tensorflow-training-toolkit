@@ -57,12 +57,11 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
         final_command_list.append('-t')
         final_command_list.append('{}:{}'.format(final_image_repository, tag))
 
-    if framework_version in ['1.4.1', '1.5.0']:
-        final_command_list.extend(['-f', 'Dockerfile.{}'.format(processor), '.'])
-    else:
+    if framework_version not in ['1.4.1', '1.5.0']:
         final_command_list.extend(['--build-arg', 'py_version={}'.format(py_v[-1]),
-                                   '--build-arg', 'framework_installable={}'.format(binary_filename),
-                                   '-f', 'Dockerfile.{}'.format(processor), '.'])
+                                   '--build-arg', 'framework_installable={}'.format(binary_filename)])
+
+    final_command_list.extend(['-f', 'Dockerfile.{}'.format(processor), '.'])
 
     subprocess.call(final_command_list, cwd=final_docker_path)
 
