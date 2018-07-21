@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import sys
 
-def create_docker_image(framework_version, python_version, processor, binary_path, final_image_repository, final_image_tags, docker, path_to_script):
+def create_docker_image(framework_version, python_version, processor, binary_path, final_image_repository, final_image_tags, docker, main_directory_path):
     """ Function builds TF docker image
 
     Args:
@@ -19,14 +19,13 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
         python_version (str): (i.e. 3.6.5 or 2.7.4)
         processor (str): gpu or cpu
         binary_path (str): path to where the binary is.
-        final_image_repository (str): name of final repo. If None, 'preprod-tensorflow' will be used
-        final_image_tags (list(str)): list of tag names for final image. If set to empty, default tag will be used
+        final_image_repository (str): name of final repo.
+        final_image_tags (list(str)): list of tag names for final image
         docker (str): either nvidia-docker or docker
-        path_to_script (str):  absolute path to where the sagemaker-tensorflow-repo build script is
+        main_directory_path (str):  absolute path to where the sagemaker-tensorflow-repo
     """
     # Initialize commonly used variables
     py_v = 'py{}'.format(python_version.split('.')[0]) # i.e. py2
-    main_directory_path = os.path.join('{}'.format(path_to_script), '../..') # assumes build script will be located in ci/build dir
     base_docker_path = os.path.join('{}/docker/{}/base'.format(main_directory_path, framework_version), '')
     final_docker_path = os.path.join('{}/docker/{}/final/{}'.format(main_directory_path, framework_version, py_v), '')
 
@@ -77,13 +76,13 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
 
         # Arguments used in build functions
         docker = 'nvidia-docker' if args.nvidia_docker else 'docker'
-        path_to_script = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '')
+        main_directory_path = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '../..') # assumes build script is in ci/build dir
         final_image_tags = args.final_image_tags if args.final_image_tags else \
             ['{}-{}-py{}'.format(args.framework_version, args.processor, args.python_version[0])]
 
         # Build the image
         create_docker_image(args.framework_version, args.python_version, args.processor_type, args.binary_path,
-                            args.final_image_repository, final_image_tags, docker, path_to_script)
+                            args.final_image_repository, final_image_tags, docker, main_directory_path)
 
     if __name__ == '__main__':
         main(sys.argv)
