@@ -79,7 +79,7 @@ def main(argv):
     docker = 'nvidia-docker' if args.nvidia_docker else 'docker'
     main_directory_path = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '../..') # assumes build script is in ci/build dir
     final_image_tags = args.final_image_tags if args.final_image_tags else \
-        ['{}-{}-py{}'.format(args.framework_version, args.processor, args.python_version[0])]
+        ['{}-{}-py{}'.format(args.framework_version, args.processor_type, args.python_version[0])]
 
     # Build the image
     create_docker_image(args.framework_version, args.python_version, args.processor_type, args.binary_path,
