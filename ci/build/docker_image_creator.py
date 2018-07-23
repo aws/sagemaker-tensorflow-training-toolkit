@@ -11,7 +11,8 @@ import shutil
 import subprocess
 import sys
 
-def create_docker_image(framework_version, python_version, processor, binary_path, final_image_repository, final_image_tags, docker, main_directory_path):
+def create_docker_image(framework_version, python_version, processor, binary_path, final_image_repository,
+                        final_image_tags, docker, main_directory_path):
     """ Function builds TF docker image
 
     Args:
@@ -43,7 +44,8 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     # Build base image
     print('Building base image...')
     image_name = 'tensorflow-base:{}-{}-{}'.format(framework_version, processor,  py_v)
-    subprocess.call([docker, 'build', '-t', image_name, '-f', 'Dockerfile.{}'.format(processor), '.'], cwd=base_docker_path)
+    subprocess.call([docker, 'build', '-t', image_name, '-f', 'Dockerfile.{}'.format(processor), '.'],
+                    cwd=base_docker_path)
 
     #  Build final image
     print('Building final image...')
@@ -71,13 +73,14 @@ def main(argv):
     parser.add_argument('processor_type', choices=['cpu', 'gpu'], help='gpu if you would like to use GPUs or cpu')
     parser.add_argument('binary_path', help='Path to the binary. For versions 1.4.1, and 1.5.0 enter \'None\'')
     parser.add_argument('--nvidia-docker', action='store_true', help='Enables nvidia-docker usage over docker')
-    parser.add_argument('--final-image-repository', default='preprod-tensorflow', help='Name of final docker repo the image is stored in')
+    parser.add_argument('--final-image-repository', default='preprod-tensorflow',
+                        help='Name of final docker repo the image is stored in')
     parser.add_argument('--final-image-tags', default=[], nargs='+', help='List of tag names for final image')
     args = parser.parse_args()
 
     # Arguments used in build functions
     docker = 'nvidia-docker' if args.nvidia_docker else 'docker'
-    main_directory_path = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '../..') # assumes build script is in ci/build dir
+    main_directory_path = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '../..')
     final_image_tags = args.final_image_tags if args.final_image_tags else \
         ['{}-{}-py{}'.format(args.framework_version, args.processor_type, args.python_version[0])]
 
