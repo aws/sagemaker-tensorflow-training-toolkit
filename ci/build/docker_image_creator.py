@@ -1,7 +1,7 @@
 """ Script to create Sagemaker TensorFlow Docker images
 
     Usage:
-        python docker_image_creator.py <binary_path> <gpu|cpu> <tensorflow_version> <python_version> --nvidia-docker
+        python docker_image_creator.py  <tensorflow_version> <python_version> <gpu|cpu> <binary_path> --nvidia-docker
           --final-image-repository <name> --final-image-tags <tag1> <tag2> ...
 """
 import argparse
@@ -51,7 +51,7 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     tar_file = glob.glob(os.path.join(main_directory_path, 'dist/sagemaker_tensorflow_container-*.tar.gz'))[0]
     tar_filename = os.path.basename(tar_file)
     shutil.copyfile(tar_file, os.path.join(final_docker_path, tar_filename))
-    
+
     final_command_list = [docker, 'build']
     for tag in final_image_tags:
         final_command_list.append('-t')
