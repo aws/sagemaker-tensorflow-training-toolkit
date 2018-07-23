@@ -63,27 +63,27 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     final_command_list.extend(['-f', 'Dockerfile.{}'.format(processor), '.'])
     subprocess.call(final_command_list, cwd=final_docker_path)
 
-    def main(argv):
-        # Parse command line options
-        parser = argparse.ArgumentParser(description='Build Sagemaker TensorFlow Docker Images')
-        parser.add_argument('framework_version', help='Framework version (i.e. 1.8.0)')
-        parser.add_argument('python_version', help='Python version to be used (i.e. 2.7.0)')
-        parser.add_argument('processor_type', choices=['cpu', 'gpu'], help='gpu if you would like to use GPUs or cpu')
-        parser.add_argument('binary_path', help='Path to the binary. For versions 1.4.1, and 1.5.0 enter \'None\'')
-        parser.add_argument('--nvidia-docker', action='store_true', help='Enables nvidia-docker usage over docker')
-        parser.add_argument('--final-image-repository', default='preprod-tensorflow', help='Name of final docker repo the image is stored in')
-        parser.add_argument('--final-image-tags', default=[], nargs='+', help='List of tag names for final image')
-        args = parser.parse_args()
+def main(argv):
+    # Parse command line options
+    parser = argparse.ArgumentParser(description='Build Sagemaker TensorFlow Docker Images')
+    parser.add_argument('framework_version', help='Framework version (i.e. 1.8.0)')
+    parser.add_argument('python_version', help='Python version to be used (i.e. 2.7.0)')
+    parser.add_argument('processor_type', choices=['cpu', 'gpu'], help='gpu if you would like to use GPUs or cpu')
+    parser.add_argument('binary_path', help='Path to the binary. For versions 1.4.1, and 1.5.0 enter \'None\'')
+    parser.add_argument('--nvidia-docker', action='store_true', help='Enables nvidia-docker usage over docker')
+    parser.add_argument('--final-image-repository', default='preprod-tensorflow', help='Name of final docker repo the image is stored in')
+    parser.add_argument('--final-image-tags', default=[], nargs='+', help='List of tag names for final image')
+    args = parser.parse_args()
 
-        # Arguments used in build functions
-        docker = 'nvidia-docker' if args.nvidia_docker else 'docker'
-        main_directory_path = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '../..') # assumes build script is in ci/build dir
-        final_image_tags = args.final_image_tags if args.final_image_tags else \
-            ['{}-{}-py{}'.format(args.framework_version, args.processor, args.python_version[0])]
+    # Arguments used in build functions
+    docker = 'nvidia-docker' if args.nvidia_docker else 'docker'
+    main_directory_path = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '../..') # assumes build script is in ci/build dir
+    final_image_tags = args.final_image_tags if args.final_image_tags else \
+        ['{}-{}-py{}'.format(args.framework_version, args.processor, args.python_version[0])]
 
-        # Build the image
-        create_docker_image(args.framework_version, args.python_version, args.processor_type, args.binary_path,
-                            args.final_image_repository, final_image_tags, docker, main_directory_path)
+    # Build the image
+    create_docker_image(args.framework_version, args.python_version, args.processor_type, args.binary_path,
+                        args.final_image_repository, final_image_tags, docker, main_directory_path)
 
 if __name__ == '__main__':
     main(sys.argv)
