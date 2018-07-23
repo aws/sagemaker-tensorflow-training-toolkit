@@ -85,5 +85,5 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
         create_docker_image(args.framework_version, args.python_version, args.processor_type, args.binary_path,
                             args.final_image_repository, final_image_tags, docker, main_directory_path)
 
-    if __name__ == '__main__':
-        main(sys.argv)
+if __name__ == '__main__':
+    main(sys.argv)
