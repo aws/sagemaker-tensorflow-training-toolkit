@@ -168,11 +168,11 @@ The dockerfiles for 1.4 and 1.5 build from source instead, so when building thos
 Build scripts
 ~~~~~~~~~~~~~
 
-You can also use the build script in the folder build_scripts to build the Docker images. To run this program, execute the command:
+You can also use docker_image_creator.py in ci/build to build the Docker images. To run this program, execute the command:
 
 ::
 
-    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version>
+    python docker_image_creator.py  <tensorflow_version> <python_version> <gpu|cpu> <binary_path>
 
 ::
 
@@ -180,23 +180,33 @@ To use nvidia-docker instead of docker to build the image, run the command:
 
 ::
 
-     python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --nvidia-docker
+    python docker_image_creator.py  <tensorflow_version> <python_version> <gpu|cpu> <binary_path> --nvidia-docker
 
 ::
 
-The default repository the final image will be placed in is 'preprod-tensorflow'. To set the repository to a custom value, run the command:
+The default Docker repository the final image will be placed in is 'preprod-tensorflow'. To set the repository to a custom value, run the command:
 
 ::
 
-    python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --final-image-repository <repository_name>
+    python docker_image_creator.py  <tensorflow_version> <python_version> <gpu|cpu> <binary_path> --final-image-repository <name>
 
 ::
 
-The default tag the final image will have is 'framework_version-processor_type-py_version'. To customize the tag(s) set, run the command:
+The default tag the final image will have is '<framework_version>-<processor_type>-<py_version>' (i.e. 1.8.0-gpu-py2).
+To customize the tag(s) set, run the command:
 
 ::
 
     python docker_image_creator.py <path_to_wheel_binary> <gpu|cpu> <framework_version> <python_version> --final-image-tags <tag1> <tag2> ...
+
+::
+
+Notes
+* Only versions that have Dockerfiles in this repository can be built
+* Python version must have 3 sections (i.e. 2.7.0 or 3.6.0)
+* Framework version must have 3 sections (i.e. 1.8.0)
+* Build script only builds docker images from Dockerfiles in the main branch of the repos mentioned above
+
 
 Running the tests
 -----------------
