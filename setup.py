@@ -37,6 +37,7 @@ setup(
     install_requires=['sagemaker-container-support'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker', 'tensorflow']
+                 'sagemaker', 'tensorflow'],
+        'build': ['docker', 'nvidia-docker']
     },
 )

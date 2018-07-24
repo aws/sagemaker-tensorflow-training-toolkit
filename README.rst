@@ -165,7 +165,6 @@ The dockerfiles for 1.4 and 1.5 build from source instead, so when building thos
     # GPU
     docker build -t preprod-tensorflow:1.4.1-gpu-py2 -f Dockerfile.gpu .
 
-
 Running the tests
 -----------------
 
