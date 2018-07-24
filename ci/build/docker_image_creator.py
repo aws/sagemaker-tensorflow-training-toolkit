@@ -9,9 +9,8 @@ import glob
 import os
 import shutil
 import subprocess
-import sys
 
-def create_docker_image(framework_version, python_version, processor, binary_path, final_image_repository,
+def build_docker_image(framework_version, python_version, processor, binary_path, final_image_repository,
                         final_image_tags, docker, main_directory_path):
     """ Function builds TF docker image
 
@@ -27,8 +26,8 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     """
     # Initialize commonly used variables
     py_v = 'py{}'.format(python_version.split('.')[0]) # i.e. py2
-    base_docker_path = os.path.join('{}/docker/{}/base'.format(main_directory_path, framework_version), '')
-    final_docker_path = os.path.join('{}/docker/{}/final/{}'.format(main_directory_path, framework_version, py_v), '')
+    base_docker_path = os.path.join(main_directory_path, 'docker', framework_version, 'base')
+    final_docker_path = os.path.join(main_directory_path, 'docker', framework_version, 'final', py_v)
 
     # Get binary file - can pass either a local file path or a web url
     if framework_version not in ['1.4.1', '1.5.0']:
@@ -69,7 +68,7 @@ def create_docker_image(framework_version, python_version, processor, binary_pat
     final_command_list.extend(['-f', 'Dockerfile.{}'.format(processor), '.'])
     subprocess.call(final_command_list, cwd=final_docker_path)
 
-def main(argv):
+def main():
     # Parse command line options
     parser = argparse.ArgumentParser(description='Build Sagemaker TensorFlow Docker Images')
     parser.add_argument('framework_version', help='Framework version (i.e. 1.8.0)')
@@ -84,13 +83,15 @@ def main(argv):
 
     # Arguments used in build functions
     docker = 'nvidia-docker' if args.nvidia_docker else 'docker'
-    main_directory_path = os.path.join(os.path.dirname(os.path.abspath(argv[0])), '../..')
-    final_image_tags = args.final_image_tags if args.final_image_tags else \
-        ['{}-{}-py{}'.format(args.framework_version, args.processor_type, args.python_version[0])]
+    main_directory_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../..')
+    if args.final_image_tags:
+        final_image_tags = args.final_image_tags
+    else:
+        final_image_tags = ['{}-{}-py{}'.format(args.framework_version, args.processor_type, args.python_version[0])]
 
     # Build the image
-    create_docker_image(args.framework_version, args.python_version, args.processor_type, args.binary_path,
+    build_docker_image(args.framework_version, args.python_version, args.processor_type, args.binary_path,
                         args.final_image_repository, final_image_tags, docker, main_directory_path)
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
