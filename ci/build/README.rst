@@ -2,8 +2,7 @@
 SageMaker TensorFlow Containers Build Script
 ============================================
 
-Users can use docker_image_creator.py to build the Docker images with .whl files from either
- your local machine or the internet. To run this program, execute the command:
+Users can use docker_image_creator.py to build the Docker images with .whl files from either your local machine or the internet. To run this program, execute the command:
 
 ::
 
