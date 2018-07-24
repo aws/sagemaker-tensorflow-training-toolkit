@@ -202,10 +202,11 @@ To customize the tag(s) set, run the command:
 ::
 
 Notes
-* Only versions that have Dockerfiles in this repository can be built
-* Python version must have 3 sections (i.e. 2.7.0 or 3.6.0)
-* Framework version must have 3 sections (i.e. 1.8.0)
-* Build script only builds docker images from Dockerfiles in the main branch of the repos mentioned above
+
+``*`` Only versions that have Dockerfiles in this repository can be built
+``*`` Python version must have 3 sections (i.e. 2.7.0 or 3.6.0)
+``*`` Framework version must have 3 sections (i.e. 1.8.0)
+``*`` Build script only builds docker images from Dockerfiles in the main branch of the repos mentioned above
 
 
 Running the tests
