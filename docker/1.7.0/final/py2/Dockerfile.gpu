@@ -16,18 +16,10 @@ RUN framework_installable_local=$(basename $framework_installable) && \
     \
     pip install --no-cache --upgrade $framework_installable_local && \
     pip install $framework_support_installable_local && \
+    pip install "sagemaker-tensorflow>=1.7,<1.8" &&\
     \
     rm $framework_installable_local && \
     rm $framework_support_installable_local
-
-COPY sagemaker-tensorflow-extensions sagemaker-tensorflow-extensions
-
-RUN cd sagemaker-tensorflow-extensions && \
-    ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 && \
-    LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:$LD_LIBRARY_PATH \
-    pip install . && \
-    cd .. && \
-    rm -rf sagemaker-tensorflow-extensions
 
 # entry.py comes from sagemaker-container-support
 ENTRYPOINT ["entry.py"]
