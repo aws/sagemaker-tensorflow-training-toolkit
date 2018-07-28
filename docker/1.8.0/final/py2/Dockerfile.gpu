@@ -21,7 +21,5 @@ RUN framework_installable_local=$(basename $framework_installable) && \
     rm $framework_installable_local && \
     rm $framework_support_installable_local
 
-COPY sagemaker-tensorflow-extensions sagemaker-tensorflow-extensions
-
 # entry.py comes from sagemaker-container-support
 ENTRYPOINT ["entry.py"]
