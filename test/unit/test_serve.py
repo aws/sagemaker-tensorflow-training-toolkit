@@ -1,14 +1,14 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import json
@@ -17,6 +17,8 @@ import pytest
 from mock import Mock, call, patch
 from test.unit.utils import mock_import_modules
 from types import ModuleType
+
+from container_support.serving import UnsupportedAcceptTypeError, UnsupportedContentTypeError
 
 JSON_CONTENT_TYPE = "application/json"
 
@@ -277,6 +279,20 @@ def test_wait_model_to_load(proxy_client, serve):
 
     serve._wait_model_to_load(client, 10)
     client.cache_prediction_metadata.assert_called_once_with()
+
+
+def test_transformer_default_output_fn_unsupported_type(serve):
+    accept_type = 'fake/accept-type'
+
+    with pytest.raises(UnsupportedAcceptTypeError):
+        serve.Transformer._default_output_fn(None, accept_type)
+
+
+def test_transformer_default_input_fn_unsupported_type(serve):
+    content_type = 'fake/content-type'
+
+    with pytest.raises(UnsupportedContentTypeError):
+        serve.Transformer(None)._default_input_fn(None, content_type)
 
 
 class DummyTransformer(object):
