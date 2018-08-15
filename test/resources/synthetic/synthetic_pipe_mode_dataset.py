@@ -7,7 +7,7 @@ PREFETCH_SIZE = 10
 BATCH_SIZE = 64
 NUM_PARALLEL_BATCHES = 2
 DIMENSION = 1024
-EPOCHS = 1
+EPOCHS = 3
 
 def estimator_fn(run_config, params):
     column = tf.feature_column.numeric_column('data', shape=(DIMENSION, ))
