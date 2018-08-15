@@ -16,7 +16,7 @@ import tensorflow as tf
 import logging
 
 from tensorflow.python.estimator.export.export import build_raw_serving_input_receiver_fn
-from tensorflow.python.keras._impl.keras.layers import LSTM, Dense
+from tensorflow.python.keras.layers import LSTM, Dense
 from tensorflow.python.estimator.model_fn import ModeKeys as Modes
 
 
@@ -29,7 +29,7 @@ from tensorflow.python.estimator.model_fn import ModeKeys as Modes
 def model_fn(features, labels, mode, params):
     hidden_dim = params.get('hidden_dim', 512)
     classes = params.get('classes', 2)
-    learning_rate = params.get('learning_rate',0.001)
+    learning_rate = params.get('learning_rate', 0.001)
     embedding_dropout = params.get('embedding_dropout', 0.5)
 
     drop = (mode == Modes.TRAIN)
@@ -131,7 +131,7 @@ def _input_fn(params,shuffle=False):
     max_int = params.get('max_vocab_size', 134367) - 1
 
     word_ids = np.random.random_integers(0, high=max_int, size=(batch_size * 10, window_size)).astype(np.int32)
-    x={'inputs': word_ids}
+    x = {'inputs': word_ids}
 
     classes = np.random.random_integers(0, high=1, size=batch_size * 10).tolist()
     labels = []

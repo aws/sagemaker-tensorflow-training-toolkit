@@ -35,6 +35,9 @@ def required_versions(framework_version):
     elif framework_version == '1.8.0':
         return ['tensorflow-serving-api==1.7.0',
                 'tensorflow==1.8.0']
+    elif framework_version == '1.9.0':
+        return ['tensorflow-serving-api==1.7.0',
+                'tensorflow==1.9.0']
     else:
         raise ValueError("invalid internal test config")
 
@@ -42,6 +45,9 @@ def required_versions(framework_version):
 def test_framework_versions(docker_image, processor, required_versions):
     with Container(docker_image, processor) as c:
         output = c.execute_command(['pip', 'freeze'])
+        print('&*++***********************')
+        print(output)
+        print('&*++***********************')
         lines = output.splitlines()
         result = sorted([v for v in lines if v in required_versions])
 
