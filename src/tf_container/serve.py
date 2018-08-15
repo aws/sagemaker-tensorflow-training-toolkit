@@ -25,7 +25,9 @@ from tensorflow.core.framework import tensor_pb2
 from tf_container import proxy_client
 from six import StringIO
 import csv
-from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, OCTET_STREAM_CONTENT_TYPE, ANY_CONTENT_TYPE
+from container_support.serving import UnsupportedContentTypeError, UnsupportedAcceptTypeError, \
+                                      JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, \
+                                      OCTET_STREAM_CONTENT_TYPE, ANY_CONTENT_TYPE
 from tf_container.run import logger
 import time
 
@@ -227,19 +229,17 @@ class Transformer(object):
         if accepts == OCTET_STREAM_CONTENT_TYPE:
             return data.SerializeToString()
 
-        raise ValueError('invalid accept type {}'.format(accepts))
+        raise UnsupportedAcceptTypeError('invalid accept type {}'.format(accepts))
 
     def _default_input_fn(self, serialized_data, content_type):
         if content_type == JSON_CONTENT_TYPE:
-            data = self._parse_json_request(serialized_data)
-        elif content_type == CSV_CONTENT_TYPE:
-            data = self._parse_csv_request(serialized_data)
-        elif content_type == OCTET_STREAM_CONTENT_TYPE:
-            data = self.proxy_client.parse_request(serialized_data)
-        else:
-            raise ValueError("Unsupported content-type {}".format(content_type))
+            return self._parse_json_request(serialized_data)
+        if content_type == CSV_CONTENT_TYPE:
+            return self._parse_csv_request(serialized_data)
+        if content_type == OCTET_STREAM_CONTENT_TYPE:
+            return self.proxy_client.parse_request(serialized_data)
 
-        return data
+        raise UnsupportedContentTypeError('Unsupported content-type {}'.format(content_type))
 
     @classmethod
     def from_module(cls, m, grpc_proxy_client):
