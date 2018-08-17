@@ -74,7 +74,7 @@ def test_distributed(instance_type, sagemaker_session, docker_image_uri):
         data = np.random.rand(32, 32, 3)
         predict_response = json_predictor.predict(data)
 
-        assert len(predict_response['outputs']['probabilities']['floatVal']) == 10
+        assert predict_response['outputs']['probabilities']
 
 
 def test_pipe_mode(instance_type, sagemaker_session, docker_image_uri):
