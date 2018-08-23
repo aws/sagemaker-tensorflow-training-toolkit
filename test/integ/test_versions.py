@@ -45,9 +45,6 @@ def required_versions(framework_version):
 def test_framework_versions(docker_image, processor, required_versions):
     with Container(docker_image, processor) as c:
         output = c.execute_command(['pip', 'freeze'])
-        print('&*++***********************')
-        print(output)
-        print('&*++***********************')
         lines = output.splitlines()
         result = sorted([v for v in lines if v in required_versions])
 
