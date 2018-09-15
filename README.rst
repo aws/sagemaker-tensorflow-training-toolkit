@@ -63,7 +63,8 @@ Base Images
 ~~~~~~~~~~~
 
 The "base" Dockerfile encompass the installation of the framework and all of the dependencies
-needed.
+needed. It is needed before building container for TensorFlow 1.8.0 and before. Container of TensorFlow 1.9.0
+do not need to build this base image.
 
 Tagging scheme is based on <tensorflow_version>-<processor>-<python_version>. (e.g. 1.4
 .1-cpu-py2)
@@ -98,7 +99,7 @@ Final Images
 
 The "final" Dockerfiles encompass the installation of the SageMaker specific support code.
 
-All “final” Dockerfiles use `base images for building <https://github
+For images of TensorFlow 1.8.0 and before, all “final” Dockerfiles use `base images for building <https://github
 .com/aws/sagemaker-tensorflow-containers/blob/master/docker/1.4.1/final/py2/Dockerfile.cpu#L2>`__.
 
 These “base” images are specified with the naming convention of
@@ -107,7 +108,9 @@ tensorflow-base:<tensorflow_version>-<processor>-<python_version>.
 Before building “final” images:
 
 Build your “base” image. Make sure it is named and tagged in accordance with your “final”
-Dockerfile.
+Dockerfile. Skip this step if you want to build image of Tensorflow Version 1.9.0 and above.
+
+Then prepare the SageMaker TensorFlow Container python package in the image folder like below:
 
 ::
 
