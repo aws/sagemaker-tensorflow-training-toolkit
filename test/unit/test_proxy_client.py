@@ -254,15 +254,27 @@ def test_predict_with_predict_request(set_up, set_up_requests):
     assert prediction == predict_fn.return_value
 
 
-def test_predict_with_invalid_payload(set_up, set_up_requests):
-    mock, proxy_client = set_up
+@patch('tf_container.proxy_client.make_tensor_proto', side_effect=Exception('tensor proto failed!'))
+def test_predict_with_invalid_payload(make_tensor_proto, set_up, set_up_requests):
+    _, proxy_client = set_up
 
     data = complex('1+2j')
 
     with pytest.raises(ValueError) as error:
         proxy_client.predict(data)
 
-    assert 'Unsupported request data format' in str(error)
+    assert 'Unable to convert value to TensorProto' in str(error)
+
+
+@patch('tf_container.proxy_client.make_tensor_proto', return_value='MyTensorProto')
+def test_predict_create_input_map_with_dict_of_lists(make_tensor_proto, set_up, set_up_requests):
+    _, proxy_client = set_up
+
+    data = {'mytensor': [1, 2, 3]}
+
+    result = proxy_client._create_input_map(data)
+    assert result == {'mytensor': 'MyTensorProto'}
+    make_tensor_proto.assert_called_once()
 
 
 def test_classification_with_classification_request(set_up, set_up_requests):
