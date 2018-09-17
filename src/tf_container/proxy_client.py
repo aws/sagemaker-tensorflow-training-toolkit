@@ -202,25 +202,25 @@ class GRPCProxyClient(object):
 
 
         """
-        msg = """Unsupported request data format: {}.
-Valid formats: tensor_pb2.TensorProto, dict<string,  tensor_pb2.TensorProto> and predict_pb2.PredictRequest"""
-
         if isinstance(data, dict):
-            if all(isinstance(v, tensor_pb2.TensorProto) for k, v in data.items()):
-                return data
-            raise ValueError(msg.format(data))
+            return {k: self._value_to_tensor(v) for k, v in data.items()}
 
-        if isinstance(data, tensor_pb2.TensorProto):
-            return {self.input_tensor_name: data}
+        # When input data is not a dict, no tensor names are given, so use default
+        return {self.input_tensor_name: self._value_to_tensor(data)}
 
+    def _value_to_tensor(self, value):
+        if isinstance(value, tensor_pb2.TensorProto):
+            return value
+
+        msg = """Unable to convert value to TensorProto: {}. 
+        Valid formats: tensor_pb2.TensorProto, list, numpy.ndarray"""
         try:
             # TODO: tensorflow container supports prediction requests with ONLY one tensor as input
             input_type = self.input_type_map.values()[0]
-            ndarray = np.asarray(data)
-            tensor_proto = make_tensor_proto(values=ndarray, dtype=input_type, shape=ndarray.shape)
-            return {self.input_tensor_name: tensor_proto}
-        except:
-            raise ValueError(msg.format(data))
+            ndarray = np.asarray(value)
+            return make_tensor_proto(values=ndarray, dtype=input_type, shape=ndarray.shape)
+        except Exception:
+            raise ValueError(msg.format(value))
 
 
 def _create_tf_example(feature_dict):

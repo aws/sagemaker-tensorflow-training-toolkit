@@ -160,7 +160,7 @@ class Transformer(object):
 
     @staticmethod
     def _parse_json_request(serialized_data):
-        '''
+        """
         json deserialization works in the following order:
             1 - tries to deserialize the payload as a tensor using google.protobuf.json_format.Parse(
                 payload, tensor_pb2.TensorProto())
@@ -170,7 +170,7 @@ class Transformer(object):
 
         Returns:
             deserialized object
-        '''
+        """
         try:
             return json_format.Parse(serialized_data, tensor_pb2.TensorProto())
         except json_format.ParseError:

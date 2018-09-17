@@ -45,6 +45,7 @@ def set_up():
     patcher.start()
     from tf_container.proxy_client import GRPCProxyClient
     proxy_client = GRPCProxyClient(9000, input_tensor_name='inputs', signature_name='serving_default')
+    proxy_client.input_type_map['sometype'] = 'somedtype'
 
     yield mock, proxy_client
     patcher.stop()
