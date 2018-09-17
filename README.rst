@@ -63,8 +63,8 @@ Base Images
 ~~~~~~~~~~~
 
 The "base" Dockerfile encompass the installation of the framework and all of the dependencies
-needed. It is needed before building container for TensorFlow 1.8.0 and before. Container of TensorFlow 1.9.0
-do not need to build this base image.
+needed. It is needed before building image for TensorFlow 1.8.0 and before.
+Building a base image is not required for images for TensorFlow 1.9.0 and onwards.
 
 Tagging scheme is based on <tensorflow_version>-<processor>-<python_version>. (e.g. 1.4
 .1-cpu-py2)
