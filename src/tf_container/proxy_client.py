@@ -151,7 +151,8 @@ class GRPCProxyClient(object):
     def _create_feature_dict_list(self, data):
         """
         Parses the input data and returns a [dict<string, iterable>] which will be used to create the tf examples.
-        If the input data is not a dict, a dictionary will be created with the default predict key PREDICT_INPUTS
+        If the input data is not a dict, a dictionary will be created with the default key PREDICT_INPUTS.
+        Used on the code path for creating ClassificationRequests.
 
         Examples:
             input                                   => output
@@ -184,18 +185,20 @@ class GRPCProxyClient(object):
 
     def _create_input_map(self, data):
         """
-        Parses the input data and returns a dict<string, TensorProto> which will be used to create the predict request.
+        Parses the input data and returns a dict<string, TensorProto> which will be used to create the PredictRequest.
         If the input data is not a dict, a dictionary will be created with the default predict key PREDICT_INPUTS
 
         input.
 
         Examples:
             input                                   => output
-            {'inputs': tensor_proto}                => {'inputs': tensor_proto}
+            -------------------------------------------------
             tensor_proto                            => {PREDICT_INPUTS: tensor_proto}
-            [1,2,3]                                 => {PREDICT_INPUTS: tensor_proto(1,2,3)}
+            {'custom_tensor_name': tensor_proto}    => {'custom_tensor_name': TensorProto}
+            [1,2,3]                                 => {PREDICT_INPUTS: TensorProto(1,2,3)}
+            {'custom_tensor_name': [1, 2, 3]}       => {'custom_tensor_name': TensorProto(1,2,3)}
         Args:
-            data: request data. Can be any instance of dict<string, tensor_proto>, tensor_proto or any array like data.
+            data: request data. Can be any of: ndarray-like, TensorProto, dict<str, TensorProto>, dict<str, ndarray-like>
 
         Returns:
             dict<string, tensor_proto>
@@ -209,6 +212,7 @@ class GRPCProxyClient(object):
         return {self.input_tensor_name: self._value_to_tensor(data)}
 
     def _value_to_tensor(self, value):
+        """Converts the given value to a tensor_pb2.TensorProto. Used on code path for creating PredictRequests."""
         if isinstance(value, tensor_pb2.TensorProto):
             return value
 
