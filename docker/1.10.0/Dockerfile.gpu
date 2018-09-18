@@ -1,0 +1,94 @@
+FROM nvidia/cuda:9.0-base-ubuntu16.04
+
+MAINTAINER Amazon AI
+
+ARG framework_installable
+ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
+
+ARG USE_PYTHON_3_NOT_2
+ARG _PY_VERSION=${USE_PYTHON_3_NOT_2:+3.6}
+ARG PYTHON_PKG=python${_PY_VERSION}
+
+# Validate that arguments are specified
+RUN test $framework_installable || exit 1
+
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa -y
+
+RUN buildDeps=" \
+        build-essential \
+        cuda-command-line-tools-9-0 \
+        cuda-cublas-dev-9-0 \
+        cuda-cudart-dev-9-0 \
+        cuda-cufft-dev-9-0 \
+        cuda-curand-dev-9-0 \
+        cuda-cusolver-dev-9-0 \
+        cuda-cusparse-dev-9-0 \
+        curl \
+        git \
+        libcudnn7=7.1.4.18-1+cuda9.0 \
+        libcudnn7-dev=7.1.4.18-1+cuda9.0 \
+        libcurl3-dev \
+        libfreetype6-dev \
+        libpng12-dev \
+        libzmq3-dev \
+        pkg-config \
+        ${PYTHON_PKG}-dev \
+        rsync \
+        unzip \
+        zip \
+        zlib1g-dev \
+        wget \
+        vim \
+        nginx \
+        iputils-ping \
+    " \
+    && apt-get update && apt-get install -y --no-install-recommends $buildDeps \
+    && rm -rf /var/lib/apt/lists/* \
+    && find /usr/local/cuda-9.0/lib64/ -type f -name 'lib*_static.a' -not -name 'libcudart_static.a' -delete \
+    && rm /usr/lib/x86_64-linux-gnu/libcudnn_static_v7.a
+
+# Install pip and python
+RUN apt-get update && apt-get install -y \
+    ${PYTHON_PKG}
+
+RUN if [ $USE_PYTHON_3_NOT_2 ]; \
+        then ln -s /usr/bin/python3.6 /usr/bin/python; fi
+
+RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py && \
+    rm get-pip.py
+
+RUN pip --no-cache-dir install \
+        numpy \
+        scipy \
+        sklearn \
+        pandas \
+        Pillow \
+        h5py
+
+# Configure the build for our CUDA configuration.
+ENV CI_BUILD_PYTHON ${PYTHON}
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+ENV TF_NEED_CUDA 1
+ENV TF_CUDA_COMPUTE_CAPABILITIES=3.7,6.1
+ENV TF_CUDA_VERSION=9.0
+ENV TF_CUDNN_VERSION=7
+ENV CUDNN_INSTALL_PATH=/usr/lib/x86_64-linux-gnu
+
+WORKDIR /root
+
+COPY $framework_installable .
+COPY $framework_support_installable .
+
+RUN framework_installable_local=$(basename $framework_installable) && \
+    framework_support_installable_local=$(basename $framework_support_installable) && \
+    \
+    pip install --no-cache --upgrade $framework_installable_local && \
+    pip install $framework_support_installable_local && \
+    pip install "sagemaker-tensorflow>=1.10,<1.11" &&\
+    \
+    rm $framework_installable_local && \
+    rm $framework_support_installable_local
+
+ENV SAGEMAKER_TRAINING_MODULE tf_container.training:main

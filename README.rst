@@ -57,7 +57,7 @@ The Docker files are grouped based on TensorFlow version and separated
 based on Python version and processor type.
 
 The Docker images, used to run training & inference jobs, are built from
-both corresponding “base” and “final” Dockerfiles.
+both corresponding "base" and "final" Dockerfiles.
 
 Base Images
 ~~~~~~~~~~~
@@ -66,10 +66,10 @@ The "base" Dockerfile encompass the installation of the framework and all of the
 needed. It is needed before building image for TensorFlow 1.8.0 and before.
 Building a base image is not required for images for TensorFlow 1.9.0 and onwards.
 
-Tagging scheme is based on <tensorflow_version>-<processor>-<python_version>. (e.g. 1.4
+Tagging scheme is based on <tensorflow_version>-<processor>-<python_version>. (e.g. 1.4
 .1-cpu-py2)
 
-All “final” Dockerfiles build images using base images that use the tagging scheme
+All "final" Dockerfiles build images using base images that use the tagging scheme
 above.
 
 If you want to build your "base" Docker image, then use:
@@ -99,15 +99,15 @@ Final Images
 
 The "final" Dockerfiles encompass the installation of the SageMaker specific support code.
 
-For images of TensorFlow 1.8.0 and before, all “final” Dockerfiles use `base images for building <https://github
+For images of TensorFlow 1.8.0 and before, all "final" Dockerfiles use `base images for building <https://github
 .com/aws/sagemaker-tensorflow-containers/blob/master/docker/1.4.1/final/py2/Dockerfile.cpu#L2>`__.
 
-These “base” images are specified with the naming convention of
+These "base" images are specified with the naming convention of
 tensorflow-base:<tensorflow_version>-<processor>-<python_version>.
 
-Before building “final” images:
+Before building "final" images:
 
-Build your “base” image. Make sure it is named and tagged in accordance with your “final”
+Build your "base" image. Make sure it is named and tagged in accordance with your "final"
 Dockerfile. Skip this step if you want to build image of Tensorflow Version 1.9.0 and above.
 
 Then prepare the SageMaker TensorFlow Container python package in the image folder like below:
@@ -118,7 +118,7 @@ Then prepare the SageMaker TensorFlow Container python package in the image fold
     cd sagemaker-tensorflow-containers
     python setup.py sdist
 
-    #. Copy your Python package to “final” Dockerfile directory that you are building.
+    #. Copy your Python package to "final" Dockerfile directory that you are building.
     cp dist/sagemaker_tensorflow_container-<package_version>.tar.gz docker/<tensorflow_version>/final/py2
 
 If you want to build "final" Docker images, for versions 1.6 and above, you will first need to download the appropriate tensorflow pip wheel, then pass in its location as a build argument. These can be obtained from pypi. For example, the files for 1.6.0 are here:
