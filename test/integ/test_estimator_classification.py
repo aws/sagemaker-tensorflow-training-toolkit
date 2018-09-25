@@ -39,6 +39,8 @@ def test_estimator_classification(docker_image, sagemaker_session, opt_ml, proce
     train(docker_image, opt_ml, processor)
 
     assert file_exists(opt_ml, 'model/export/Servo'), 'model was not exported'
+    num_models = len([name for name in os.listdir(os.path.join(opt_ml, 'model/export/Servo'))])
+    assert num_models == 1, 'too many models saved: {}'.format(num_models)
     assert file_exists(opt_ml, 'model/checkpoint'), 'checkpoint was not created'
     assert file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not file_exists(opt_ml, 'output/failure'), 'Failure happened'

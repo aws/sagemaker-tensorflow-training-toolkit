@@ -127,8 +127,7 @@ class Trainer(object):
 
         if self.saves_training():
             serving_input_receiver_fn = lambda: self.customer_script.serving_input_fn(self.customer_params)
-            exporter = tf.estimator.LatestExporter('Servo',
-                                                   serving_input_receiver_fn=serving_input_receiver_fn)
+            exporter = tf.estimator.FinalExporter('Servo', serving_input_receiver_fn=serving_input_receiver_fn)
         else:
             logger.warn('serving_input_fn not specified, model NOT saved, use checkpoints to reconstruct')
             exporter = None

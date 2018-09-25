@@ -279,7 +279,7 @@ def test_build_eval_spec_with_serving(modules, trainer):
 
     spec = trainer._build_eval_spec()
 
-    exporter_mock = modules.estimator.LatestExporter
+    exporter_mock = modules.estimator.FinalExporter
     exporter_mock.assert_called_with('Servo', serving_input_receiver_fn=ANY)
     _, kwargs = exporter_mock.call_args
     serving_input_fn = kwargs['serving_input_receiver_fn']
@@ -293,7 +293,7 @@ def test_build_eval_spec_with_serving(modules, trainer):
     eval_input_fn = args[0]
     returned_dict, returned_labels = eval_input_fn()
     assert (tensor_dict, labels) == (returned_dict, returned_labels)
-    # Assert the created LatestExporter is passed correctly to the EvalSpec
+    # Assert the created FinalExporter is passed correctly to the EvalSpec
     assert exporter_mock.return_value == kwargs['exporters']
     # Assert the created EvalSpec is returned from _build_eval_spec
     assert evalspec_mock.return_value == spec
