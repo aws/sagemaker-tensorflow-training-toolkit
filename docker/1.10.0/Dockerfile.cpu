@@ -4,13 +4,11 @@ MAINTAINER Amazon AI
 
 ARG framework_installable
 ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
-
-ARG USE_PYTHON_3_NOT_2
-ARG _PY_VERSION=${USE_PYTHON_3_NOT_2:+3.6}
-ARG PYTHON_PKG=python${_PY_VERSION}
+ARG py_version
 
 # Validate that arguments are specified
-RUN test $framework_installable || exit 1
+RUN test $framework_installable || exit 1 \
+    && test $py_version || exit 1
 
 WORKDIR /root
 
@@ -29,7 +27,6 @@ RUN buildDeps=" \
         libpng12-dev \
         libzmq3-dev \
         pkg-config \
-        ${PYTHON_PKG}-dev \
         rsync \
         unzip \
         zip \
@@ -45,12 +42,10 @@ RUN buildDeps=" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pip and python
-RUN apt-get update && apt-get install -y \
-    ${PYTHON_PKG}
-
-RUN if [ $USE_PYTHON_3_NOT_2 ]; \
-        then ln -s /usr/bin/python3.6 /usr/bin/python; fi
+RUN if [ $py_version -eq 3 ]; \
+        then apt-get update && apt-get install -y --no-install-recommends python3.6-dev \
+             && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
+        else apt-get update && apt-get install -y --no-install-recommends python-dev; fi
 
 RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py && \
@@ -62,12 +57,11 @@ RUN pip install --upgrade \
 
 # Set environment variables for MKL
 # TODO: investigate the right value for OMP_NUM_THREADS
+# For more about MKL with TensorFlow see:
+# https://www.tensorflow.org/performance/performance_guide#tensorflow_with_intel%C2%AE_mkl_dnn
 ENV KMP_AFFINITY=granularity=fine,compact,1,0 KMP_BLOCKTIME=1 KMP_SETTINGS=0
 
-RUN additional_dependencies='install numpy scipy sklearn pandas Pillow h5py' \
-    && pip --no-cache-dir $additional_dependencies \
-    \
-    && framework_installable_local=$(basename $framework_installable) \
+RUN framework_installable_local=$(basename $framework_installable) \
     && framework_support_installable_local=$(basename $framework_support_installable) \
     && pip install --no-cache --upgrade $framework_installable_local \
     && pip install $framework_support_installable_local \

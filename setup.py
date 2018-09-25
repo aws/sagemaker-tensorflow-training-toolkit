@@ -31,10 +31,10 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['sagemaker-containers==2.1'],
+    install_requires=['sagemaker-containers==2.1', 'numpy', 'scipy', 'sklearn', 'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
                  'sagemaker', 'tensorflow']

@@ -10,40 +10,18 @@
 #  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
 #  express or implied. See the License for the specific language governing 
 #  permissions and limitations under the License.
-
 from __future__ import absolute_import
 
 import logging
-import os
 import subprocess
 import sys
 import tempfile
 import uuid
-from time import sleep
 
 logger = logging.getLogger(__name__)
 
 CYAN_COLOR = '\033[36m'
 END_COLOR = '\033[0m'
-
-
-def registry(aws_id, region):
-    return '{}.dkr.ecr.{}.amazonaws.com'.format(aws_id, region)
-
-
-def train(image_name, resource_folder, processor):
-    docker = 'docker' if processor == 'cpu' else 'nvidia-docker'
-
-    cmd = [docker,
-           'run',
-           '--rm',
-           '-h', 'algo-1',
-           '-v', '{}:/opt/ml'.format(resource_folder),
-           '-e', 'AWS_ACCESS_KEY_ID',
-           '-e', 'AWS_SECRET_ACCESS_KEY',
-           '-e', 'AWS_SESSION_TOKEN',
-           image_name, 'train']
-    check_call(cmd)
 
 
 def check_call(cmd, *popenargs, **kwargs):
@@ -74,20 +52,12 @@ class Container(object):
                'run',
                '-d',
                '-t',
-               '-e', 'AWS_ACCESS_KEY_ID',
-               '-e', 'AWS_SECRET_ACCESS_KEY',
-               '-e', 'AWS_SESSION_TOKEN',
                '--entrypoint', 'bash',
                '--name', self.name,
                self.image]
 
         check_call(cmd)
 
-        # waiting for the server to spin up
-        sleep(self.startup_delay)
-
-        self.execute_command(['pip', 'install', 'requests'])
-        self.execute_command(['pip', 'install', 'pytest'])
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -147,58 +117,3 @@ class Container(object):
             raise ValueError("non-zero exit code: {}".format(process.returncode))
 
         return output
-
-    def execute_pytest(self, tests_path):
-        container_test_path = '/root/{}'.format(os.path.basename(tests_path))
-        self.copy(tests_path, container_test_path)
-        return self.execute_command(['pytest', '-vv', '-s', '--color=yes', container_test_path])
-
-
-class HostingContainer(Container):
-    def __init__(self, image, opt_ml, script_name, processor, requirements_file=None,
-                 startup_delay=5):
-        super(HostingContainer, self).__init__(image=image,
-                                               processor=processor,
-                                               startup_delay=startup_delay)
-        self.opt_ml = opt_ml
-        self.script_name = script_name
-        self.opt_ml = opt_ml
-        self.requirements_file = requirements_file
-
-    def __enter__(self):
-        cmd = [self.docker,
-               'run',
-               '-d',
-               '-h', 'algo-1',
-               '-v', '{}:/opt/ml'.format(self.opt_ml),
-               '-e', 'AWS_ACCESS_KEY_ID',
-               '-e', 'AWS_SECRET_ACCESS_KEY',
-               '-e', 'AWS_SESSION_TOKEN',
-               '-e', 'SAGEMAKER_CONTAINER_LOG_LEVEL=20',
-               '-e', 'SAGEMAKER_PROGRAM={}'.format(self.script_name),
-               '-e', 'SAGEMAKER_REQUIREMENTS={}'.format(self.requirements_file),
-               '--name', self.name,
-               self.image, 'serve']
-
-        check_call(cmd)
-
-        # waiting for the server to spin up
-        sleep(self.startup_delay)
-
-        self.execute_command(['pip', 'install', 'requests'])
-        self.execute_command(['pip', 'install', 'pytest'])
-
-        return self
-
-    def invoke_endpoint(self, input, content_type='application/json', accept='application/json'):
-        return self.execute_command([
-            'curl',
-            '-f',
-            '-H', 'Content-Type: {}'.format(content_type),
-            '-H', 'Accept: {}'.format(accept),
-            '-d', str(input),
-            'http://127.0.0.1:8080/invocations'
-        ])
-
-    def ping(self):
-        self.execute_command(['curl', '-f', '-v', 'http://localhost:8080/ping'])

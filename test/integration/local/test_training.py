@@ -35,7 +35,7 @@ def test_py_versions(docker_image, processor, py_full_version):
 
 @pytest.mark.skip_gpu
 def test_mnist_cpu(sagemaker_local_session, docker_image):
-    resource_path = os.path.join(os.path.dirname(__file__), '..', 'resources', 'mnist')
+    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources', 'mnist')
     output_path = run_tf_single_training(script=os.path.join(resource_path, 'mnist.py'),
                                          instance_type='local',
                                          sagemaker_local_session=sagemaker_local_session,
@@ -46,7 +46,7 @@ def test_mnist_cpu(sagemaker_local_session, docker_image):
 
 @pytest.mark.skip_cpu
 def test_gpu(sagemaker_local_session, docker_image):
-    resource_path = os.path.join(os.path.dirname(__file__), '..', 'resources')
+    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     run_tf_single_training(script=os.path.join(resource_path, 'gpu_device_placement.py'),
                            instance_type='local_gpu',
                            sagemaker_local_session=sagemaker_local_session,
