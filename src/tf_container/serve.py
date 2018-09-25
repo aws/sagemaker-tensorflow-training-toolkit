@@ -37,7 +37,7 @@ GENERIC_MODEL_NAME = "generic_model"
 TF_SERVING_MAXIMUM_LOAD_MODEL_TIME_IN_SECONDS = 60 * 15
 
 
-def export_saved_model(checkpoint_dir, model_path, s3=boto3.client('s3')):
+def export_saved_model(checkpoint_dir, model_path, s3=boto3.client('s3', region_name=os.environ.get('AWS_REGION'))):
     if checkpoint_dir.startswith('s3://'):
         bucket_name, key_prefix = cs.parse_s3_url(checkpoint_dir)
         prefix = os.path.join(key_prefix, 'export', 'Servo')
