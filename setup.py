@@ -37,6 +37,6 @@ setup(
     install_requires=['sagemaker-containers==2.1', 'numpy', 'scipy', 'sklearn', 'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker', 'tensorflow']
+                 'sagemaker', 'tensorflow', 'docker-compose']
     },
 )
