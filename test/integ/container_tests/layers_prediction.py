@@ -60,3 +60,16 @@ def test_json_request():
     prediction_result = json.loads(serialized_output)
 
     assert len(prediction_result['outputs']['probabilities']['floatVal']) == 10
+
+
+def test_json_dict_of_lists():
+    data = {'inputs': [x for x in xrange(784)]}
+
+    url = "http://localhost:8080/invocations"
+    serialized_output = requests.post(url,
+                                      json.dumps(data),
+                                      headers={'Content-type': 'application/json'}).content
+
+    prediction_result = json.loads(serialized_output)
+
+    assert len(prediction_result['outputs']['probabilities']['floatVal']) == 10

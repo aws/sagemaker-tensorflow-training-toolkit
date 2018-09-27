@@ -151,7 +151,8 @@ class GRPCProxyClient(object):
     def _create_feature_dict_list(self, data):
         """
         Parses the input data and returns a [dict<string, iterable>] which will be used to create the tf examples.
-        If the input data is not a dict, a dictionary will be created with the default predict key PREDICT_INPUTS
+        If the input data is not a dict, a dictionary will be created with the default key PREDICT_INPUTS.
+        Used on the code path for creating ClassificationRequests.
 
         Examples:
             input                                   => output
@@ -184,43 +185,46 @@ class GRPCProxyClient(object):
 
     def _create_input_map(self, data):
         """
-        Parses the input data and returns a dict<string, TensorProto> which will be used to create the predict request.
+        Parses the input data and returns a dict<string, TensorProto> which will be used to create the PredictRequest.
         If the input data is not a dict, a dictionary will be created with the default predict key PREDICT_INPUTS
 
         input.
 
         Examples:
             input                                   => output
-            {'inputs': tensor_proto}                => {'inputs': tensor_proto}
+            -------------------------------------------------
             tensor_proto                            => {PREDICT_INPUTS: tensor_proto}
-            [1,2,3]                                 => {PREDICT_INPUTS: tensor_proto(1,2,3)}
+            {'custom_tensor_name': tensor_proto}    => {'custom_tensor_name': TensorProto}
+            [1,2,3]                                 => {PREDICT_INPUTS: TensorProto(1,2,3)}
+            {'custom_tensor_name': [1, 2, 3]}       => {'custom_tensor_name': TensorProto(1,2,3)}
         Args:
-            data: request data. Can be any instance of dict<string, tensor_proto>, tensor_proto or any array like data.
+            data: request data. Can be any of: ndarray-like, TensorProto, dict<str, TensorProto>, dict<str, ndarray-like>
 
         Returns:
             dict<string, tensor_proto>
 
 
         """
-        msg = """Unsupported request data format: {}.
-Valid formats: tensor_pb2.TensorProto, dict<string,  tensor_pb2.TensorProto> and predict_pb2.PredictRequest"""
-
         if isinstance(data, dict):
-            if all(isinstance(v, tensor_pb2.TensorProto) for k, v in data.items()):
-                return data
-            raise ValueError(msg.format(data))
+            return {k: self._value_to_tensor(v) for k, v in data.items()}
 
-        if isinstance(data, tensor_pb2.TensorProto):
-            return {self.input_tensor_name: data}
+        # When input data is not a dict, no tensor names are given, so use default
+        return {self.input_tensor_name: self._value_to_tensor(data)}
 
+    def _value_to_tensor(self, value):
+        """Converts the given value to a tensor_pb2.TensorProto. Used on code path for creating PredictRequests."""
+        if isinstance(value, tensor_pb2.TensorProto):
+            return value
+
+        msg = """Unable to convert value to TensorProto: {}. 
+        Valid formats: tensor_pb2.TensorProto, list, numpy.ndarray"""
         try:
             # TODO: tensorflow container supports prediction requests with ONLY one tensor as input
             input_type = self.input_type_map.values()[0]
-            ndarray = np.asarray(data)
-            tensor_proto = make_tensor_proto(values=ndarray, dtype=input_type, shape=ndarray.shape)
-            return {self.input_tensor_name: tensor_proto}
-        except:
-            raise ValueError(msg.format(data))
+            ndarray = np.asarray(value)
+            return make_tensor_proto(values=ndarray, dtype=input_type, shape=ndarray.shape)
+        except Exception:
+            raise ValueError(msg.format(value))
 
 
 def _create_tf_example(feature_dict):
