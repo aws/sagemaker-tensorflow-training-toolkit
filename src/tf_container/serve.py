@@ -10,27 +10,26 @@
 #  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 #  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
-
+import csv
 import json
+import os
 import shutil
 import subprocess
-import boto3
-import container_support as cs
-import google.protobuf.json_format as json_format
-import os
+import time
 
+import boto3
+import google.protobuf.json_format as json_format
 from grpc import StatusCode
 from grpc.framework.interfaces.face.face import AbortionError
-from tensorflow.core.framework import tensor_pb2
-from tf_container import proxy_client
 from six import StringIO
-import csv
+from tensorflow.core.framework import tensor_pb2
+
+import container_support as cs
 from container_support.serving import UnsupportedContentTypeError, UnsupportedAcceptTypeError, \
                                       JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, \
                                       OCTET_STREAM_CONTENT_TYPE, ANY_CONTENT_TYPE
+from tf_container import proxy_client
 from tf_container.run import logger
-import time
-
 
 TF_SERVING_PORT = 9000
 GENERIC_MODEL_NAME = "generic_model"

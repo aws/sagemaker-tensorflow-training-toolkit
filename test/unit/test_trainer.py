@@ -186,7 +186,7 @@ def test_user_model_fn(modules, trainer):
     estimator = trainer._build_estimator(fake_run_config)
 
     estimator_mock = modules.estimator.Estimator
-    # Verify that _model_fn passed to Estimator correctly passes args through to user script model_fn 
+    # Verify that _model_fn passed to Estimator correctly passes args through to user script model_fn
     estimator_mock.assert_called_with(model_fn=ANY, params=expected_hps, config=fake_run_config)
     _, kwargs, = estimator_mock.call_args
     kwargs['model_fn'](1, 2, 3, 4)
@@ -392,12 +392,13 @@ def test_build_tf_config_with_multiple_hosts(trainer):
 @patch('botocore.session.get_session')
 @patch('os.environ')
 def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module):
-    region = os_env.get('AWS_REGION')
+    region = 'my-region'
 
     trainer_module.Trainer(customer_script=MOCK_SCRIPT,
                            current_host=CURRENT_HOST,
                            hosts=HOSTS,
-                           model_path='s3://my/s3/path')
+                           model_path='s3://my/s3/path',
+                           customer_params={'sagemaker_region': region})
 
     boto_client.assert_called_once_with('s3', region_name=region)
     boto_client('s3', region_name=region).get_bucket_location.assert_called_once_with(Bucket='my')

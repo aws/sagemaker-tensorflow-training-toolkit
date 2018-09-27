@@ -10,7 +10,6 @@
 #  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 #  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
-
 import argparse
 import json
 import os
@@ -18,11 +17,11 @@ import subprocess
 import time
 from threading import Thread
 
+import boto3
 import tensorflow as tf
 
 import container_support as cs
 import tf_container.run
-import tf_container.s3_fs as s3_fs
 import tf_container.serve as serve
 
 _logger = tf_container.run.get_logger()
@@ -165,7 +164,7 @@ def train():
 
     # only the master should export the model at the end of the execution
     if checkpoint_dir != env.model_dir and train_wrapper.task_type == 'master' and train_wrapper.saves_training():
-        serve.export_saved_model(checkpoint_dir, env.model_dir)
+        serve.export_saved_model(checkpoint_dir, env.model_dir, s3=boto3.client('s3', region_name=env.sagemaker_region))
 
     if train_wrapper.task_type != 'master':
         _wait_until_master_is_down(_get_master(tf_config))

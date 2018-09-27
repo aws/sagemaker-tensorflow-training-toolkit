@@ -1,14 +1,14 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import pytest
@@ -112,12 +112,13 @@ def test_build_tf_config_with_multiple_hosts(trainer):
 @patch('botocore.session.get_session')
 @patch('os.environ')
 def test_configure_s3_file_system(os_env, botocore, boto_client, trainer):
-    region = os_env.get('AWS_REGION')
+    region = 'my-region'
 
     trainer.Trainer(customer_script=mock_script,
                     current_host=current_host,
                     hosts=hosts,
-                    model_path='s3://my/s3/path')
+                    model_path='s3://my/s3/path',
+                    customer_params={'sagemaker_region': region})
 
     boto_client.assert_called_once_with('s3', region_name=region)
     boto_client('s3', region_name=region).get_bucket_location.assert_called_once_with(Bucket='my')

@@ -3,9 +3,7 @@ import boto3
 import container_support as cs
 
 
-def configure_s3_fs(checkpoint_path):
-    # If env variable is not set, defaults to None, which will use the global endpoint.
-    region_name = os.environ.get('AWS_REGION')
+def configure_s3_fs(checkpoint_path, region_name=None):
     s3 = boto3.client('s3', region_name=region_name)
 
     # We get the AWS region of the checkpoint bucket, which may be different from

@@ -1,20 +1,19 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
-
-import boto3
 import inspect
-import os
+
 import tensorflow as tf
+
 from tf_container.run import logger
 import tf_container.s3_fs as s3_fs
 
@@ -62,7 +61,7 @@ class Trainer(object):
         self.customer_params = customer_params
 
         if model_path.startswith('s3://'):
-            s3_fs.configure_s3_fs(model_path)
+            s3_fs.configure_s3_fs(model_path, region_name=customer_params.get('sagemaker_region'))
 
     def train(self):
         run_config = self._build_run_config()
