@@ -12,7 +12,7 @@ def read(fname):
 
 setup(
     name='sagemaker_tensorflow_container',
-    version='1.0.0',
+    version='2.0.0',
     description='Open source library for creating TensorFlow containers to run on Amazon SageMaker.',
 
     packages=find_packages(where='src', exclude=('test',)),
@@ -31,12 +31,12 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['sagemaker-container-support'],
+    install_requires=['sagemaker-containers==2.1', 'numpy', 'scipy', 'sklearn', 'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker', 'tensorflow']
+                 'sagemaker', 'tensorflow', 'docker-compose']
     },
 )
