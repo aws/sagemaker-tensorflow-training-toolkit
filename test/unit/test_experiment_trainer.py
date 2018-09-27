@@ -10,9 +10,11 @@
 #  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 #  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
+import os
 
 import pytest
 from mock import patch, call, MagicMock, ANY
+
 from test.unit.utils import mock_import_modules
 
 mock_script = {}
@@ -113,12 +115,12 @@ def test_build_tf_config_with_multiple_hosts(trainer):
 @patch('os.environ')
 def test_configure_s3_file_system(os_env, botocore, boto_client, trainer):
     region = 'my-region'
+    os_env.get.return_value = region
 
     trainer.Trainer(customer_script=mock_script,
                     current_host=current_host,
                     hosts=hosts,
-                    model_path='s3://my/s3/path',
-                    customer_params={'sagemaker_region': region})
+                    model_path='s3://my/s3/path')
 
     boto_client.assert_called_once_with('s3', region_name=region)
     boto_client('s3', region_name=region).get_bucket_location.assert_called_once_with(Bucket='my')
@@ -129,6 +131,7 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer):
     ]
 
     os_env.__setitem__.assert_has_calls(calls, any_order=True)
+    os_env.get.assert_called_with('AWS_REGION')
 
 
 @patch('boto3.client')
