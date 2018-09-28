@@ -66,4 +66,5 @@ def run_tf_single_training(script, instance_type, sagemaker_local_session, docke
                            base_job_name='test-tf-single')
 
     estimator.fit(training_data_path)
-    return estimator.sagemaker_session.sagemaker_client.s3_model_artifacts
+    model = estimator.create_model()
+    return model.model_data

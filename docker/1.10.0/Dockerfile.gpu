@@ -69,4 +69,4 @@ RUN framework_installable_local=$(basename $framework_installable) && \
     rm $framework_installable_local && \
     rm $framework_support_installable_local
 
-ENV SAGEMAKER_TRAINING_MODULE tf_container.training:main
+ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main

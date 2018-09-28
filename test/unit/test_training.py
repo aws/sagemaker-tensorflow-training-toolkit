@@ -15,10 +15,12 @@ from __future__ import absolute_import
 import pytest
 from mock import MagicMock, patch
 
-from tf_container import training
+from sagemaker_tensorflow_container import training
 
 MODULE_DIR = 's3://my/bucket'
 MODULE_NAME = 'script_name'
+LOG_LEVEL = 'Debug'
+
 
 @pytest.fixture
 def single_machine_training_env():
@@ -27,11 +29,26 @@ def single_machine_training_env():
     env.module_dir = MODULE_DIR
     env.module_name = MODULE_NAME
     env.hyperparameters = {}
+    env.log_level = LOG_LEVEL
 
     return env
+
 
 @patch('sagemaker_containers.beta.framework.modules.run_module')
 def test_single_machine(run_module, single_machine_training_env):
     training.train(single_machine_training_env)
     run_module.assert_called_with(MODULE_DIR, single_machine_training_env.to_cmd_args(),
                                   single_machine_training_env.to_env_vars(), MODULE_NAME)
+
+
+@patch('sagemaker_tensorflow_container.training.train')
+@patch('logging.Logger.setLevel')
+@patch('sagemaker_containers.beta.framework.training_env')
+@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={})
+def test_main(read_hyperparameters, training_env, set_level, train, single_machine_training_env):
+    training_env.return_value = single_machine_training_env
+    training.main()
+    read_hyperparameters.assert_called_once_with()
+    training_env.assert_called_once_with(hyperparameters={})
+    set_level.assert_called_once_with(LOG_LEVEL)
+    train.assert_called_once_with(single_machine_training_env)
