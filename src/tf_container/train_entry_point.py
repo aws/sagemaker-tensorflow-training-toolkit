@@ -17,7 +17,6 @@ import subprocess
 import time
 from threading import Thread
 
-import boto3
 import tensorflow as tf
 
 import container_support as cs
@@ -164,7 +163,7 @@ def train():
 
     # only the master should export the model at the end of the execution
     if checkpoint_dir != env.model_dir and train_wrapper.task_type == 'master' and train_wrapper.saves_training():
-        serve.export_saved_model(checkpoint_dir, env.model_dir, s3=boto3.client('s3', region_name=env.sagemaker_region))
+        serve.export_saved_model(checkpoint_dir, env.model_dir)
 
     if train_wrapper.task_type != 'master':
         _wait_until_master_is_down(_get_master(tf_config))
