@@ -10,7 +10,6 @@
 #  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 #  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
-
 import argparse
 import json
 import os
@@ -22,7 +21,6 @@ import tensorflow as tf
 
 import container_support as cs
 import tf_container.run
-import tf_container.s3_fs as s3_fs
 import tf_container.serve as serve
 
 _logger = tf_container.run.get_logger()

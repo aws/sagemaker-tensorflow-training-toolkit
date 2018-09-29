@@ -10,9 +10,11 @@
 #  on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 #  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
+import os
 
 import pytest
 from mock import patch, call, MagicMock, ANY
+
 from test.unit.utils import mock_import_modules
 
 
@@ -186,7 +188,7 @@ def test_user_model_fn(modules, trainer):
     estimator = trainer._build_estimator(fake_run_config)
 
     estimator_mock = modules.estimator.Estimator
-    # Verify that _model_fn passed to Estimator correctly passes args through to user script model_fn 
+    # Verify that _model_fn passed to Estimator correctly passes args through to user script model_fn
     estimator_mock.assert_called_with(model_fn=ANY, params=expected_hps, config=fake_run_config)
     _, kwargs, = estimator_mock.call_args
     kwargs['model_fn'](1, 2, 3, 4)
@@ -392,7 +394,8 @@ def test_build_tf_config_with_multiple_hosts(trainer):
 @patch('botocore.session.get_session')
 @patch('os.environ')
 def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module):
-    region = os_env.get('AWS_REGION')
+    region = 'my-region'
+    os_env.get.return_value = region
 
     trainer_module.Trainer(customer_script=MOCK_SCRIPT,
                            current_host=CURRENT_HOST,
@@ -408,6 +411,7 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module)
     ]
 
     os_env.__setitem__.assert_has_calls(calls, any_order=False)
+    os_env.get.assert_called_with('AWS_REGION')
 
 
 CUSTOMER_PARAMS = HYPERPARAMETERS.copy()
