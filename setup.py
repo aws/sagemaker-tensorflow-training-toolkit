@@ -12,12 +12,12 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import os
 from glob import glob
+import os
 from os.path import basename
 from os.path import splitext
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 def read(fname):
@@ -27,7 +27,8 @@ def read(fname):
 setup(
     name='sagemaker_tensorflow_container',
     version='2.0.0',
-    description='Open source library for creating TensorFlow containers to run on Amazon SageMaker.',
+    description='Open source library for creating '
+                'TensorFlow containers to run on Amazon SageMaker.',
 
     packages=find_packages(where='src', exclude=('test',)),
     package_dir={'': 'src'},
@@ -48,7 +49,8 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['sagemaker-containers==2.1', 'numpy', 'scipy', 'sklearn', 'pandas', 'Pillow', 'h5py'],
+    install_requires=['sagemaker-containers==2.1', 'numpy', 'scipy', 'sklearn',
+                      'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
                  'sagemaker', 'tensorflow', 'docker-compose']

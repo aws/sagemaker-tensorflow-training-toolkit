@@ -17,7 +17,6 @@ import os
 
 import boto3
 import pytest
-
 from sagemaker import LocalSession, Session
 
 logger = logging.getLogger(__name__)
