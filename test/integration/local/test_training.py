@@ -13,9 +13,10 @@
 from __future__ import absolute_import
 
 import os
-import pytest
 
+import pytest
 from sagemaker.tensorflow import TensorFlow
+
 from test.integration.docker_utils import Container
 
 
@@ -40,7 +41,8 @@ def test_mnist_cpu(sagemaker_local_session, docker_image):
                                          instance_type='local',
                                          sagemaker_local_session=sagemaker_local_session,
                                          docker_image=docker_image,
-                                         training_data_path='file://{}'.format(os.path.join(resource_path, 'data')))
+                                         training_data_path='file://{}'.format(
+                                             os.path.join(resource_path, 'data')))
     assert os.path.exists(os.path.join(output_path, 'my_model.h5')), 'model file not found'
 
 
@@ -51,10 +53,12 @@ def test_gpu(sagemaker_local_session, docker_image):
                            instance_type='local_gpu',
                            sagemaker_local_session=sagemaker_local_session,
                            docker_image=docker_image,
-                           training_data_path='file://{}'.format(os.path.join(resource_path, 'mnist', 'data')))
+                           training_data_path='file://{}'.format(
+                               os.path.join(resource_path, 'mnist', 'data')))
 
 
-def run_tf_single_training(script, instance_type, sagemaker_local_session, docker_image, training_data_path):
+def run_tf_single_training(script, instance_type, sagemaker_local_session,
+                           docker_image, training_data_path):
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
                            training_steps=1,
@@ -66,4 +70,5 @@ def run_tf_single_training(script, instance_type, sagemaker_local_session, docke
                            base_job_name='test-tf-single')
 
     estimator.fit(training_data_path)
-    return estimator.sagemaker_session.sagemaker_client.s3_model_artifacts
+    model = estimator.create_model()
+    return model.model_data
