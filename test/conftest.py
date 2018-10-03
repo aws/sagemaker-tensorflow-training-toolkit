@@ -36,6 +36,8 @@ def pytest_addoption(parser):
     parser.addoption('--framework-version', default='1.10.0')
     parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
     parser.addoption('--py-version', default='3', choices=['2', '3'])
+    parser.addoption('--ecr-image', default=None)
+    parser.addoption('--instance-type', default=None)
 
 
 @pytest.fixture(scope='session')
@@ -78,6 +80,16 @@ def sagemaker_session(region):
 @pytest.fixture(scope='session')
 def sagemaker_local_session(region):
     return LocalSession(boto_session=boto3.Session(region_name=region))
+
+
+@pytest.fixture(scope='session')
+def ecr_image(request):
+    return request.config.getoption('--ecr-image')
+
+
+@pytest.fixture(scope='session')
+def instance_type(request):
+    return request.config.getoption('--instance-type')
 
 
 @pytest.fixture(autouse=True)
