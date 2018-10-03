@@ -14,15 +14,16 @@
 import numpy as np
 from google.protobuf import json_format
 from grpc.beta import implementations
-from tf_container.run import logger as _logger
 from tensorflow import make_tensor_proto
 from tensorflow.core.example import example_pb2, feature_pb2
 from tensorflow.core.framework import tensor_pb2
-from tensorflow.python.saved_model.signature_constants import DEFAULT_SERVING_SIGNATURE_DEF_KEY, PREDICT_INPUTS
+from tensorflow.python.saved_model.signature_constants import DEFAULT_SERVING_SIGNATURE_DEF_KEY, \
+    PREDICT_INPUTS
 from tensorflow_serving.apis import get_model_metadata_pb2
 from tensorflow_serving.apis import predict_pb2, classification_pb2, inference_pb2, regression_pb2
 from tensorflow_serving.apis import prediction_service_pb2
 
+from tf_container.run import logger as _logger
 
 REGRESSION = 'tensorflow/serving/regression'
 CLASSIFY = 'tensorflow/serving/classify'
@@ -32,8 +33,10 @@ GENERIC_MODEL_NAME = "generic_model"
 
 
 class GRPCProxyClient(object):
-    def __init__(self, tf_serving_port, host='localhost', request_timeout=10.0, model_name=GENERIC_MODEL_NAME,
-                 input_tensor_name=PREDICT_INPUTS, signature_name=DEFAULT_SERVING_SIGNATURE_DEF_KEY):
+    def __init__(self, tf_serving_port, host='localhost', request_timeout=10.0,
+                 model_name=GENERIC_MODEL_NAME,
+                 input_tensor_name=PREDICT_INPUTS,
+                 signature_name=DEFAULT_SERVING_SIGNATURE_DEF_KEY):
         self.tf_serving_port = tf_serving_port
         self.host = host
         self.request_timeout = request_timeout
@@ -47,6 +50,7 @@ class GRPCProxyClient(object):
                                REGRESSION: self._raise_not_implemented_exception,
                                }
         self.prediction_type = None
+        self.prediction_service_stub = None
         self.input_type_map = {}
 
     def parse_request(self, serialized_data):
@@ -88,16 +92,11 @@ class GRPCProxyClient(object):
 
         self.input_type_map = {key: serving_inputs[key].dtype for key in serving_inputs.keys()}
         self.prediction_type = serving_default.method_name
+        self.prediction_service_stub = stub
 
     def predict(self, data):
-
-        channel = implementations.insecure_channel(self.host, self.tf_serving_port)
-        stub = prediction_service_pb2.beta_create_PredictionService_stub(channel)
-
         request = self._create_predict_request(data)
-
-        result = stub.Predict(request, self.request_timeout)
-
+        result = self.prediction_service_stub.Predict(request, self.request_timeout)
         return result
 
     def _create_predict_request(self, data):
@@ -123,13 +122,8 @@ class GRPCProxyClient(object):
         return request
 
     def classification(self, data):
-        channel = implementations.insecure_channel(self.host, self.tf_serving_port)
-        stub = prediction_service_pb2.beta_create_PredictionService_stub(channel)
-
         request = self._create_classification_request(data)
-
-        result = stub.Classify(request, self.request_timeout)
-
+        result = self.prediction_service_stub.Classify(request, self.request_timeout)
         return result
 
     def _create_classification_request(self, data):
