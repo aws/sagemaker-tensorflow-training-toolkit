@@ -12,6 +12,7 @@
 #  permissions and limitations under the License.
 
 import json
+
 import pytest
 from mock import MagicMock, patch, ANY
 
@@ -44,8 +45,10 @@ def set_up():
     patcher = patch.dict('sys.modules', modules)
     patcher.start()
     from tf_container.proxy_client import GRPCProxyClient
-    proxy_client = GRPCProxyClient(9000, input_tensor_name='inputs', signature_name='serving_default')
+    proxy_client = GRPCProxyClient(9000, input_tensor_name='inputs',
+                                   signature_name='serving_default')
     proxy_client.input_type_map['sometype'] = 'somedtype'
+    proxy_client.prediction_service_stub = MagicMock()
 
     yield mock, proxy_client
     patcher.stop()
@@ -95,7 +98,8 @@ class FeatureList(object):
 
 
 class Feature(object):
-    def __init__(self, int64_list=FeatureList([]), bytes_list=FeatureList([]), float_list=FeatureList([])):
+    def __init__(self, int64_list=FeatureList([]), bytes_list=FeatureList([]),
+                 float_list=FeatureList([])):
         self.int64_list = int64_list
         self.bytes_list = bytes_list
         self.float_list = float_list
@@ -204,13 +208,10 @@ def test_predict_with_tensor_proto(set_up, set_up_requests):
     tensor_proto = TensorProto('/42-sagemaker')
     prediction = proxy_client.predict(tensor_proto)
 
-    create_stub = assert_prediction_service_was_called(mock)
+    predict_fn = proxy_client.prediction_service_stub.Predict
+    predict_fn.assert_called_once()
 
-    predict_fn = create_stub.return_value.Predict
-    predict_fn.assert_called_once_with(ANY, proxy_client.request_timeout)
-
-    first_call = predict_fn.call_args[0]
-    predict_request_attribute = first_call[0]
+    predict_request_attribute = predict_fn.call_args[0][0]
 
     assert predict_request_attribute.model_spec.name == 'generic_model'
     assert predict_request_attribute.model_spec.signature_name == 'serving_default'
@@ -225,13 +226,10 @@ def test_predict_with_dict(set_up, set_up_requests):
     tensor_proto = TensorProto('/42-sagemaker')
     prediction = proxy_client.predict({'inputs': tensor_proto})
 
-    create_stub = assert_prediction_service_was_called(mock)
+    predict_fn = proxy_client.prediction_service_stub.Predict
+    predict_fn.assert_called_once()
 
-    predict_fn = create_stub.return_value.Predict
-    predict_fn.assert_called_once_with(ANY, proxy_client.request_timeout)
-
-    first_call = predict_fn.call_args[0]
-    predict_request_attribute = first_call[0]
+    predict_request_attribute = predict_fn.call_args[0][0]
 
     assert predict_request_attribute.model_spec.name == 'generic_model'
     assert predict_request_attribute.model_spec.signature_name == 'serving_default'
@@ -246,9 +244,8 @@ def test_predict_with_predict_request(set_up, set_up_requests):
     request = PredictRequest()
     prediction = proxy_client.predict(request)
 
-    create_stub = assert_prediction_service_was_called(mock)
-
-    predict_fn = create_stub.return_value.Predict
+    predict_fn = proxy_client.prediction_service_stub.Predict
+    predict_fn.assert_called_once()
     predict_fn.assert_called_once_with(request, proxy_client.request_timeout)
 
     assert prediction == predict_fn.return_value
@@ -284,9 +281,7 @@ def test_classification_with_classification_request(set_up, set_up_requests):
 
     prediction = proxy_client.classification(request)
 
-    create_stub = assert_prediction_service_was_called(mock)
-
-    classification_fn = create_stub.return_value.Classify
+    classification_fn = proxy_client.prediction_service_stub.Classify
     classification_fn.assert_called_once_with(request, proxy_client.request_timeout)
 
     assert prediction == classification_fn.return_value
@@ -297,8 +292,7 @@ def test_classification_with_int_list(set_up, set_up_requests):
 
     proxy_client.classification([1, 2, 3, 0])
 
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
+    classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
     assert feature['inputs'].float_list.value == []
@@ -312,8 +306,7 @@ def test_classification_with_bytes_list(set_up, set_up_requests):
     bytes = ['fnenfionk4235g', 'faf']
     proxy_client.classification(bytes)
 
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
+    classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
     assert feature['inputs'].float_list.value == []
@@ -327,8 +320,7 @@ def test_classification_with_float_list(set_up, set_up_requests):
     data = [3.4, 0.0, 0.0]
     proxy_client.classification(data)
 
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
+    classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
     assert feature['inputs'].float_list.value == data
@@ -341,8 +333,7 @@ def test_classification_with_int(set_up, set_up_requests):
 
     proxy_client.classification(1)
 
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
+    classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
     assert feature['inputs'].float_list.value == []
@@ -356,8 +347,7 @@ def test_classification_with_bytes(set_up, set_up_requests):
     bytes = 'fnenfionk4235g'
     proxy_client.classification(bytes)
 
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
+    classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
     assert feature['inputs'].float_list.value == []
@@ -370,9 +360,9 @@ def test_classification_with_float(set_up, set_up_requests):
 
     data = 3.4
     proxy_client.classification(data)
+    proxy_client.prediction_service_stub.Classify.assert_called_once()
 
-    create_stub = assert_prediction_service_was_called(mock)
-    classification_request = _get_classification_request(create_stub, proxy_client)
+    classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
     assert feature['inputs'].float_list.value == [data]
@@ -396,8 +386,7 @@ def test_classification_protobuf(set_up, set_up_requests):
 
     request = MagicMock()
     proxy_client.classification(request)
-
-    assert_prediction_service_was_called(mock)
+    proxy_client.prediction_service_stub.Classify.assert_called_once()
 
 
 def test_cache_prediction_metadata(set_up):
@@ -416,12 +405,7 @@ def test_cache_prediction_metadata(set_up):
 
     stub().GetModelMetadata.assert_called_once_with(request(), 10.0)
 
-
-def assert_prediction_service_was_called(mock):
-    insecure_channel = mock.implementations.insecure_channel.return_value
-    create_stub = mock.prediction_service_pb2.beta_create_PredictionService_stub
-    create_stub.assert_called_with(insecure_channel)
-    return create_stub
+    assert proxy_client.prediction_service_stub == stub.return_value
 
 
 def patch_metadata_request_with(mock, method_name):
@@ -438,8 +422,8 @@ def patch_metadata_request_with(mock, method_name):
     })
 
 
-def _get_classification_request(create_stub, proxy_client):
-    predict_fn = create_stub.return_value.Classify
+def _get_classification_request(proxy_client):
+    predict_fn = proxy_client.prediction_service_stub.Classify
     predict_fn.assert_called_once_with(ANY, proxy_client.request_timeout)
     first_call = predict_fn.call_args[0]
     classification_request = first_call[0]
