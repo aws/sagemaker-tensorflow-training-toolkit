@@ -36,6 +36,8 @@ def pytest_addoption(parser):
     parser.addoption('--framework-version', default='1.10.0')
     parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
     parser.addoption('--py-version', default='3', choices=['2', '3'])
+    parser.addoption('--account-id', default='142577830533')
+    parser.addoption('--instance-type', default=None)
 
 
 @pytest.fixture(scope='session')
@@ -80,6 +82,17 @@ def sagemaker_local_session(region):
     return LocalSession(boto_session=boto3.Session(region_name=region))
 
 
+@pytest.fixture(scope='session')
+def account_id(request):
+    return request.config.getoption('--account-id')
+
+
+@pytest.fixture(scope='session')
+def instance_type(request, processor):
+    return request.config.getoption('--instance-type') or \
+        'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
+
+
 @pytest.fixture(autouse=True)
 def skip_by_device_type(request, processor):
     is_gpu = (processor == 'gpu')
@@ -91,3 +104,9 @@ def skip_by_device_type(request, processor):
 @pytest.fixture(scope='session')
 def docker_image(docker_base_name, tag):
     return '{}:{}'.format(docker_base_name, tag)
+
+
+@pytest.fixture(scope='session')
+def ecr_image(account_id, docker_base_name, tag, region):
+    return '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(
+        account_id, region, docker_base_name, tag)
