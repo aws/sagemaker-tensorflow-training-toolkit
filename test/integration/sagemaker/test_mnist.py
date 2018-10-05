@@ -14,17 +14,10 @@ from __future__ import absolute_import
 
 import os
 
-import pytest
 from sagemaker.tensorflow import TensorFlow
 
 
-@pytest.mark.skip_gpu
-def test_mnist_cpu(sagemaker_session, ecr_image, instance_type):
-    _run_minist_training(sagemaker_session, ecr_image, instance_type)
-
-
-@pytest.mark.skip_cpu
-def test_mnist_gpu(sagemaker_session, ecr_image, instance_type):
+def test_mnist(sagemaker_session, ecr_image, instance_type):
     _run_minist_training(sagemaker_session, ecr_image, instance_type)
 
 
