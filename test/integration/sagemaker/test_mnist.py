@@ -18,10 +18,6 @@ from sagemaker.tensorflow import TensorFlow
 
 
 def test_mnist(sagemaker_session, ecr_image, instance_type):
-    _run_minist_training(sagemaker_session, ecr_image, instance_type)
-
-
-def _run_minist_training(sagemaker_session, ecr_image, instance_type):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
