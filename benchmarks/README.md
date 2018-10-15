@@ -7,11 +7,11 @@ This folder contains the TF training scripts https://github.com/tensorflow/bench
 
 - role: SageMaker role used for training
 - region: SageMaker region
-- py-versions: py2 or py3 or py2, py3
-- instance-types: SageMaker instance types, for example 'ml.p2.xlarge', use 'local' for local mode training
+- py-versions: py2 or py3 or "py2, py3"
+- instance-types: A list of SageMaker instance types, for example 'ml.p2.xlarge, ml.c4.xlarge'. Use 'local' for local mode training.
 - checkpoint-path: The S3 location where the model checkpoints and tensorboard events are saved after training 
 
-Any additional argument will be passed to the training script as additional argument
+Any unknown arguments will be passed to the training script as additional arguments.
 
 ## Examples:
 
