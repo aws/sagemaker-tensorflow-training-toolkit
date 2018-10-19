@@ -16,7 +16,7 @@ from test.integ.docker_utils import Container
 
 
 @pytest.fixture
-def required_versions(framework_version, processor):
+def required_versions(framework_version):
     if framework_version == '1.4.1':
         return ['tensorflow-serving-api==1.4.0',
                 'tensorflow==1.4.1']

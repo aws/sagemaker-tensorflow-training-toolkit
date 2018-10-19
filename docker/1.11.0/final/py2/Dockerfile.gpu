@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libnccl2=${NCCL_VERSION} \
         libgomp1 \
         python \
-        python-pip \
         curl \
         nginx \
         && \
@@ -45,17 +44,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
+# Removing tests to free some space
 RUN set -ex; \
-	\
 	curl -k -O https://bootstrap.pypa.io/get-pip.py && \
-	\
 	python get-pip.py \
 		--disable-pip-version-check \
 		--no-cache-dir \
 		"pip==18.1" \
 	; \
 	pip --version; \
-	\
 	find /usr/local -depth \
 		\( \
 			\( -type d -a \( -name test -o -name tests \) \) \
