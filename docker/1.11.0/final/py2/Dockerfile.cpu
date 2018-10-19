@@ -7,6 +7,7 @@ ARG framework_installable
 ARG framework_support_installable=sagemaker_tensorflow_container-1.0.0.tar.gz
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     python \
     curl \
     nginx \
