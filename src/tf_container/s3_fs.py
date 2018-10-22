@@ -16,4 +16,6 @@ def configure_s3_fs(checkpoint_path):
     # Configure environment variables used by TensorFlow S3 file system
     if bucket_location:
         os.environ['S3_REGION'] = bucket_location
-    os.environ['S3_USE_HTTPS'] = '1'
+
+    # setting log level to WARNING
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
