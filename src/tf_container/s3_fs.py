@@ -19,3 +19,4 @@ def configure_s3_fs(checkpoint_path):
 
     # setting log level to WARNING
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+    os.environ['S3_USE_HTTPS'] = '1'
