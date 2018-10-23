@@ -403,6 +403,7 @@ def test_configure_s3_file_system(os_env, botocore, boto_client, trainer_module)
     boto_client('s3', region_name=region).get_bucket_location.assert_called_once_with(Bucket='my')
 
     calls = [
+        call('S3_USE_HTTPS', '1'),
         call('S3_REGION', boto_client('s3').get_bucket_location()['LocationConstraint']),
         call('TF_CPP_MIN_LOG_LEVEL', '1')
     ]
