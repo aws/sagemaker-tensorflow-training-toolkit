@@ -48,7 +48,7 @@ class MyEstimator(TensorFlow):
 def test_distributed(instance_type, sagemaker_session, docker_image_uri):
     script_path = 'test/resources/cifar_10/code'
     data_path = 'test/resources/cifar_10/data/training'
-    with timeout(minutes=15):
+    with timeout(minutes=30):
         estimator = MyEstimator(entry_point='resnet_cifar_10.py',
                                 source_dir=script_path,
                                 role='SageMakerRole',
