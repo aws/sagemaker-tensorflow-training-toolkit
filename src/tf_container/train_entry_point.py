@@ -22,7 +22,6 @@ import tensorflow as tf
 
 import container_support as cs
 import tf_container.run
-import tf_container.s3_fs as s3_fs
 import tf_container.serve as serve
 
 _logger = tf_container.run.get_logger()
@@ -124,6 +123,14 @@ def _get_checkpoint_dir(env):
         return os.path.join(checkpoint_path, job_name, 'checkpoints')
 
 
+def configure_mkl():
+    """Sets MKL env variables with default settings.
+    More information about how to setup MLK: ENV KMP_AFFINITY= KMP_BLOCKTIME=1 KMP_SETTINGS=0"""
+    os.environ['KMP_AFFINITY'] = 'granularity=fine,compact,1,0'
+    os.environ['KMP_BLOCKTIME'] = 1
+    os.environ['KMP_SETTINGS'] = 0
+
+
 def train():
     env = cs.TrainingEnvironment()
 
@@ -160,6 +167,8 @@ def train():
         _run_ps_server(env.current_host, env.hosts, tf_config)
 
     save_tf_config_env_var(tf_config)
+
+    configure_mkl()
 
     train_wrapper.train()
 
