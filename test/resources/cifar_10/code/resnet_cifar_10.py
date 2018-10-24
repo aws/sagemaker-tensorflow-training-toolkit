@@ -15,6 +15,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+os.environ['TF_DISABLE_MKL'] = '1'
+os.environ['TF_DISABLE_POOL_ALLOCATOR'] = '1'
+
 import resnet_model
 import tensorflow as tf
 
