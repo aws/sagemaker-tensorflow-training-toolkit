@@ -14,7 +14,7 @@
 import os
 
 import pytest
-from mock import Mock, patch
+from mock import Mock, patch, call
 
 from test.unit.utils import mock_import_modules
 
@@ -50,7 +50,27 @@ def modules():
 @pytest.fixture
 def train_entry_point_module(modules):
     import tf_container.train_entry_point
+
     yield tf_container.train_entry_point
+
+
+@patch('container_support.TrainingEnvironment')
+@patch('json.dumps')
+def test_mkl_env_vars(json, environment, modules):
+    from tf_container import train_entry_point
+
+    train_entry_point._get_trainer_class = Mock()
+    train_entry_point._wait_until_master_is_down = Mock()
+    train_entry_point._get_master = Mock()
+
+    with patch('os.environ') as os_env:
+        os_env.__get__item = Mock()
+        os_env.__set__item = Mock()
+        train_entry_point.train()
+
+        os_env.__setitem__.assert_any_call('KMP_SETTINGS', 0)
+        os_env.__setitem__.assert_any_call('KMP_AFFINITY', 'granularity=fine,compact,1,0')
+        os_env.__setitem__.assert_any_call('KMP_BLOCKTIME', 1)
 
 
 def test_get_checkpoint_dir_without_checkpoint_path(train_entry_point_module):
