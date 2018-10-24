@@ -68,9 +68,9 @@ def test_mkl_env_vars(json, environment, modules):
         os_env.__set__item = Mock()
         train_entry_point.train()
 
-        os_env.__setitem__.assert_any_call('KMP_SETTINGS', 0)
+        os_env.__setitem__.assert_any_call('KMP_SETTINGS', '0')
         os_env.__setitem__.assert_any_call('KMP_AFFINITY', 'granularity=fine,compact,1,0')
-        os_env.__setitem__.assert_any_call('KMP_BLOCKTIME', 1)
+        os_env.__setitem__.assert_any_call('KMP_BLOCKTIME', '1')
 
 
 def test_get_checkpoint_dir_without_checkpoint_path(train_entry_point_module):

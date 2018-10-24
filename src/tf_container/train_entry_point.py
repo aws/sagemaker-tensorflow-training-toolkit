@@ -127,8 +127,8 @@ def configure_mkl():
     """Sets MKL env variables with default settings.
     More information about how to setup MLK: ENV KMP_AFFINITY= KMP_BLOCKTIME=1 KMP_SETTINGS=0"""
     os.environ['KMP_AFFINITY'] = 'granularity=fine,compact,1,0'
-    os.environ['KMP_BLOCKTIME'] = 1
-    os.environ['KMP_SETTINGS'] = 0
+    os.environ['KMP_BLOCKTIME'] = '1'
+    os.environ['KMP_SETTINGS'] = '0'
 
 
 def train():
