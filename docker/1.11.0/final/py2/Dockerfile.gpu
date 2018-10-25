@@ -81,7 +81,7 @@ RUN pip install --no-cache-dir \
     \
     $framework_installable \
     $framework_support_installable \
-    "sagemaker-tensorflow>=1.10,<1.11" && \
+    "sagemaker-tensorflow>=1.11,<1.12" && \
     \
     rm $framework_installable && \
     rm $framework_support_installable && \
