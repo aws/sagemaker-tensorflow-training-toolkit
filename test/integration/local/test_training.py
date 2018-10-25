@@ -15,6 +15,7 @@ from __future__ import absolute_import
 import os
 
 import pytest
+from sagemaker.estimator import Framework
 from sagemaker.tensorflow import TensorFlow
 
 from test.integration.docker_utils import Container
@@ -37,37 +38,93 @@ def test_py_versions(docker_image, processor, py_full_version):
 @pytest.mark.skip_gpu
 def test_mnist_cpu(sagemaker_local_session, docker_image):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources', 'mnist')
-    output_path = run_tf_single_training(script=os.path.join(resource_path, 'mnist.py'),
-                                         instance_type='local',
-                                         sagemaker_local_session=sagemaker_local_session,
-                                         docker_image=docker_image,
-                                         training_data_path='file://{}'.format(
-                                             os.path.join(resource_path, 'data')))
+    output_path = run_tf_training(script=os.path.join(resource_path, 'mnist.py'),
+                                  instance_type='local',
+                                  instance_count=1,
+                                  sagemaker_local_session=sagemaker_local_session,
+                                  docker_image=docker_image,
+                                  training_data_path='file://{}'.format(
+                                      os.path.join(resource_path, 'data')))
     assert os.path.exists(os.path.join(output_path, 'my_model.h5')), 'model file not found'
 
 
 @pytest.mark.skip_cpu
 def test_gpu(sagemaker_local_session, docker_image):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    run_tf_single_training(script=os.path.join(resource_path, 'gpu_device_placement.py'),
-                           instance_type='local_gpu',
-                           sagemaker_local_session=sagemaker_local_session,
-                           docker_image=docker_image,
-                           training_data_path='file://{}'.format(
-                               os.path.join(resource_path, 'mnist', 'data')))
+    run_tf_training(script=os.path.join(resource_path, 'gpu_device_placement.py'),
+                    instance_type='local_gpu',
+                    instance_count=1,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    training_data_path='file://{}'.format(
+                        os.path.join(resource_path, 'mnist', 'data')))
 
 
-def run_tf_single_training(script, instance_type, sagemaker_local_session,
-                           docker_image, training_data_path):
-    estimator = TensorFlow(entry_point=script,
-                           role='SageMakerRole',
-                           training_steps=1,
-                           evaluation_steps=1,
-                           train_instance_count=1,
-                           train_instance_type=instance_type,
-                           sagemaker_session=sagemaker_local_session,
-                           image_name=docker_image,
-                           base_job_name='test-tf-single')
+@pytest.mark.skip_gpu
+def test_distributed_training_cpu(sagemaker_local_session, docker_image):
+    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
+    run_tf_training(script=os.path.join(resource_path, 'mnist', 'distributed_mnist.py'),
+                    instance_type='local',
+                    instance_count=2,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    training_data_path='file://{}'.format(
+                        os.path.join(resource_path, 'mnist', 'data-distributed')))
+
+
+@pytest.mark.skip_gpu
+def test_distributed_training_cpu_1_ps(sagemaker_local_session, docker_image):
+    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
+    run_tf_training(script=os.path.join(resource_path, 'mnist', 'distributed_mnist.py'),
+                    instance_type='local',
+                    instance_count=2,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    hyperparameters={'sagemaker_parameter_server_num': 1},
+                    training_data_path='file://{}'.format(
+                        os.path.join(resource_path, 'mnist', 'data-distributed')))
+
+
+@pytest.mark.skip_cpu
+def test_distributed_training_gpu(sagemaker_local_session, docker_image):
+    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
+    run_tf_training(script=os.path.join(resource_path, 'mnist', 'distributed_mnist.py'),
+                    instance_type='local_gpu',
+                    instance_count=2,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    hyperparameters={'sagemaker_parameter_server_num': 2},
+                    training_data_path='file://{}'.format(
+                        os.path.join(resource_path, 'mnist', 'data-distributed')))
+
+
+class ScriptModeTensorFlow(Framework):
+    """This class is temporary until the final version of Script Mode is released.
+    """
+
+    __framework_name__ = "tensorflow-scriptmode-beta"
+
+    create_model = TensorFlow.create_model
+
+    def __init__(self, py_version='py', **kwargs):
+        self.requirements_file = None
+        self.py_version = py_version
+        self.framework_version = 'some version'
+        super(ScriptModeTensorFlow, self).__init__(**kwargs)
+
+
+def run_tf_training(script, instance_type, instance_count,
+                    sagemaker_local_session,
+                    docker_image, training_data_path,
+                    hyperparameters={}):
+    estimator = ScriptModeTensorFlow(entry_point=script,
+                                     role='SageMakerRole',
+                                     train_instance_count=instance_count,
+                                     train_instance_type=instance_type,
+                                     sagemaker_session=sagemaker_local_session,
+                                     image_name=docker_image,
+                                     hyperparameters=hyperparameters,
+                                     base_job_name='test-tf')
 
     estimator.fit(training_data_path)
     model = estimator.create_model()

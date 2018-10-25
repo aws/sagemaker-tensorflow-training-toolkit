@@ -33,3 +33,21 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
     estimator.fit(inputs)
+
+
+def test_distributed_mnist(sagemaker_session, ecr_image, instance_type):
+    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
+    script = os.path.join(resource_path, 'mnist', 'distributed_mnist.py')
+    estimator = TensorFlow(entry_point=script,
+                           role='SageMakerRole',
+                           training_steps=1,
+                           evaluation_steps=1,
+                           train_instance_count=2,
+                           train_instance_type=instance_type,
+                           sagemaker_session=sagemaker_session,
+                           image_name=ecr_image,
+                           base_job_name='test-tf-sm-distributed-mnist')
+    inputs = estimator.sagemaker_session.upload_data(
+        path=os.path.join(resource_path, 'mnist', 'data-distributed'),
+        key_prefix='scriptmode/mnist-distributed')
+    estimator.fit(inputs)
