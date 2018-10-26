@@ -85,19 +85,6 @@ def test_distributed_training_cpu_1_ps(sagemaker_local_session, docker_image):
                         os.path.join(resource_path, 'mnist', 'data-distributed')))
 
 
-@pytest.mark.skip_cpu
-def test_distributed_training_gpu(sagemaker_local_session, docker_image):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    run_tf_training(script=os.path.join(resource_path, 'mnist', 'distributed_mnist.py'),
-                    instance_type='local_gpu',
-                    instance_count=2,
-                    sagemaker_local_session=sagemaker_local_session,
-                    docker_image=docker_image,
-                    hyperparameters={'sagemaker_parameter_server_num': 2},
-                    training_data_path='file://{}'.format(
-                        os.path.join(resource_path, 'mnist', 'data-distributed')))
-
-
 class ScriptModeTensorFlow(Framework):
     """This class is temporary until the final version of Script Mode is released.
     """
