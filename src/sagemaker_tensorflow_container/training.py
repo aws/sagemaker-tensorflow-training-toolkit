@@ -30,23 +30,20 @@ def _is_host_master(hosts, current_host):
 
 
 def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
-    """
-    Builds a dictionary containing cluster information based on number of hosts and number of
+    """Builds a dictionary containing cluster information based on number of hosts and number of
     parameter servers.
 
     Args:
         hosts (list[str]): List of host name in the cluster
         current_host (str): Current host name
-        ps_num (int): Number of parameter servers
-        ps_task (bool): Set to True if this config is built for a ps server process
+        ps_num (int): Number of parameter servers (default: 0)
+        ps_task (bool): Set to True if this config is built for a ps server process (default: False)
 
     Returns:
         dict[str: dict]: A dictionary describing the cluster setup for distributed training.
         For more information regarding TF_CONFIG:
         https://cloud.google.com/ml-engine/docs/tensorflow/distributed-training-details
-
     """
-
     # Assign the first host as the master. Rest of the hosts if any will be worker hosts.
     # The first ps_num hosts will also have a parameter task assign to them.
     masters = hosts[:1]
@@ -54,7 +51,8 @@ def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
     ps = hosts[:ps_num] if len(hosts) > 1 and ps_num > 0 else None
 
     def host_addresses(hosts, port=2222):
-        return ["{}:{}".format(host, port) for host in hosts]
+        return ['{}:{}'.format(host, port) for host in hosts]
+
     tf_config = {
         "cluster": {
             "master": host_addresses(masters)
@@ -85,7 +83,7 @@ def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
     return tf_config
 
 
-def _get_env_vars_with_tf_config(env, ps_task):
+def _env_vars_with_tf_config(env, ps_task):
     env_vars = env.to_env_vars()
     env_vars["TF_CONFIG"] = json.dumps(_build_tf_config(
         hosts=env.hosts,
@@ -96,13 +94,13 @@ def _get_env_vars_with_tf_config(env, ps_task):
 
 
 def _run_ps(env):
-    env_vars = _get_env_vars_with_tf_config(env, ps_task=True)
+    env_vars = _env_vars_with_tf_config(env, ps_task=True)
     return framework.modules.run_module(
         env.module_dir, env.to_cmd_args(), env_vars, env.module_name, wait=False)
 
 
 def _run_worker(env, install_module=False):
-    env_vars = _get_env_vars_with_tf_config(env, ps_task=False)
+    env_vars = _env_vars_with_tf_config(env, ps_task=False)
     if install_module:
         return framework.modules.run_module(
             env.module_dir, env.to_cmd_args(), env_vars, env.module_name)

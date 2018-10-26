@@ -116,14 +116,14 @@ def test_get_env_vars_with_tf_config(build_tf_config, distributed_training_env):
     distributed_training_env.to_env_vars.return_value = {}
     tf_config = {"some_key": "some_value"}
     build_tf_config.return_value = tf_config
-    assert training._get_env_vars_with_tf_config(
+    assert training._env_vars_with_tf_config(
         distributed_training_env, ps_task=True) == {"TF_CONFIG": json.dumps(tf_config)}
     build_tf_config.assert_called_once_with(hosts=HOST_LIST, current_host=CURRENT_HOST,
                                             ps_num=PS_NUM, ps_task=True)
 
 
 @patch('sagemaker_containers.beta.framework.modules.run_module')
-@patch('sagemaker_tensorflow_container.training._get_env_vars_with_tf_config')
+@patch('sagemaker_tensorflow_container.training._env_vars_with_tf_config')
 def test_run_ps(get_env_vars_with_tf_config, run_module, distributed_training_env):
     get_env_vars_with_tf_config.return_value = {}
     distributed_training_env.to_cmd_args.return_value = CMD_ARGS
@@ -138,7 +138,7 @@ def test_run_ps(get_env_vars_with_tf_config, run_module, distributed_training_en
 
 @patch('sagemaker_containers.beta.framework.modules.write_env_vars')
 @patch('sagemaker_containers.beta.framework.modules.run')
-@patch('sagemaker_tensorflow_container.training._get_env_vars_with_tf_config')
+@patch('sagemaker_tensorflow_container.training._env_vars_with_tf_config')
 def test_run_worker_no_install(get_env_vars_with_tf_config,
                                run,
                                write_env_vars,
@@ -154,7 +154,7 @@ def test_run_worker_no_install(get_env_vars_with_tf_config,
 
 
 @patch('sagemaker_containers.beta.framework.modules.run_module')
-@patch('sagemaker_tensorflow_container.training._get_env_vars_with_tf_config')
+@patch('sagemaker_tensorflow_container.training._env_vars_with_tf_config')
 def test_run_worker_install(get_env_vars_with_tf_config,
                             run_module,
                             distributed_training_env):
