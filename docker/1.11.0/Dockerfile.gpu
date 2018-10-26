@@ -42,7 +42,7 @@ RUN buildDeps=" \
         nvinfer-runtime-trt-repo-ubuntu1604-4.0.1-ga-cuda9.0 \
     && apt-get update && apt-get install -y --no-install-recommends \
         libnvinfer4=${TF_TENSORRT_VERSION}-1+cuda9.0 \
-    && apt-get clean && \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm /usr/lib/x86_64-linux-gnu/libnvinfer_plugin* \
     && rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* \
