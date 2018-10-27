@@ -11,7 +11,8 @@ RUN test $framework_installable || exit 1 \
     && test $py_version || exit 1
 
 RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa -y
+    && add-apt-repository ppa:deadsnakes/ppa -y \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV NCCL_VERSION=2.3.5-2+cuda9.0
 ENV CUDNN_VERSION=7.3.1.20-1+cuda9.0
@@ -46,12 +47,11 @@ RUN buildDeps=" \
     && rm -rf /var/lib/apt/lists/* \
     && rm /usr/lib/x86_64-linux-gnu/libnvinfer_plugin* \
     && rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* \
-    && rm /usr/lib/x86_64-linux-gnu/libnvparsers*
-
-RUN if [ $py_version -eq 3 ]; \
-        then apt-get update && apt-get install -y --no-install-recommends python3.6-dev \
-             && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
-        else apt-get update && apt-get install -y --no-install-recommends python-dev; fi
+    && rm /usr/lib/x86_64-linux-gnu/libnvparsers* \
+    && if [ $py_version -eq 3 ]; \
+           then apt-get update && apt-get install -y --no-install-recommends python3.6-dev \
+                && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
+           else apt-get update && apt-get install -y --no-install-recommends python-dev; fi
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1

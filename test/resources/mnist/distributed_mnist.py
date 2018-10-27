@@ -123,43 +123,47 @@ def _parse_args():
     parser.add_argument('--output-data-dir', type=str, default=os.environ['SM_OUTPUT_DATA_DIR'])
     parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
     parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
+    parser.add_argument('--checkpoint_path', type=str, default=os.environ['SM_MODEL_DIR'])
 
     return parser.parse_known_args()
 
 if __name__ == "__main__":
-  args, unknown = _parse_args()
+    args, unknown = _parse_args()
 
-  train_data, train_labels = _load_training_data(args.train)
-  eval_data, eval_labels = _load_testing_data(args.train)
+    if args.checkpoint_path.startswith('s3://'):
+        os.environ['S3_REGION'] = 'us-west-2'
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+        os.environ['S3_USE_HTTPS'] = '1'
 
-  # Create the Estimator
-  mnist_classifier = tf.estimator.Estimator(
-      model_fn=cnn_model_fn, model_dir=args.model_dir)
+    train_data, train_labels = _load_training_data(args.train)
+    eval_data, eval_labels = _load_testing_data(args.train)
 
-  # Set up logging for predictions
-  # Log the values in the "Softmax" tensor with label "probabilities"
-  tensors_to_log = {"probabilities": "softmax_tensor"}
-  logging_hook = tf.train.LoggingTensorHook(
-      tensors=tensors_to_log, every_n_iter=50)
+    # Create the Estimator
+    mnist_classifier = tf.estimator.Estimator(
+        model_fn=cnn_model_fn, model_dir=args.checkpoint_path)
 
-  # Train the model
-  train_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": train_data},
-      y=train_labels,
-      batch_size=100,
-      num_epochs=None,
-      shuffle=True)
+    # Set up logging for predictions
+    # Log the values in the "Softmax" tensor with label "probabilities"
+    tensors_to_log = {"probabilities": "softmax_tensor"}
+    logging_hook = tf.train.LoggingTensorHook(
+        tensors=tensors_to_log, every_n_iter=50)
 
-  # Evaluate the model and print results
-  eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": eval_data},
-      y=eval_labels,
-      num_epochs=1,
-      shuffle=False)
-  #eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
-  #print(eval_results)
+    # Train the model
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": train_data},
+        y=train_labels,
+        batch_size=100,
+        num_epochs=None,
+        shuffle=True)
 
-  train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=100)
-  eval_spec = tf.estimator.EvalSpec(eval_input_fn)
-  tf.estimator.train_and_evaluate(mnist_classifier, train_spec, eval_spec)
+    # Evaluate the model and print results
+    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": eval_data},
+        y=eval_labels,
+        num_epochs=1,
+        shuffle=False)
+
+    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=100)
+    eval_spec = tf.estimator.EvalSpec(eval_input_fn)
+    tf.estimator.train_and_evaluate(mnist_classifier, train_spec, eval_spec)
 

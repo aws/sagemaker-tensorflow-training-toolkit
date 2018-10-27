@@ -122,6 +122,13 @@ def _should_run_ps_on_this_host(hosts, current_host, parameter_server_num):
 
 
 def train(env):
+    """Get training job environment from env and run the training job.
+
+    Args:
+        env (sagemaker_containers._env.TrainingEnv): Instance of TrainingEnv class
+
+    Returns:
+    """
     if len(env.hosts) > 1 and _should_run_parameter_server(env):
 
         if _should_run_ps_on_this_host(env.hosts, env.current_host, _get_parameter_server_num(env)):
@@ -135,6 +142,10 @@ def train(env):
 
 
 def main():
+    """Training entry point
+
+    Returns:
+    """
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
     logger.setLevel(env.log_level)
