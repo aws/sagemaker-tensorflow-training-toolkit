@@ -146,7 +146,8 @@ def train(env):
             _run_ps(env)
             logger.info('Launching worker process')
             _run_worker(env, install_module=False)
-            _wait_until_master_is_down(env.hosts[0])
+            if not _is_host_master(env.hosts, env.current_host):
+                _wait_until_master_is_down(env.hosts[0])
         else:
             _run_worker(env, install_module=True)
 

@@ -98,7 +98,24 @@ def test_single_machine(run_module, single_machine_training_env):
 @patch('sagemaker_tensorflow_container.training._wait_until_master_is_down')
 @patch('sagemaker_tensorflow_container.training._run_worker')
 @patch('sagemaker_tensorflow_container.training._run_ps')
-def test_train_distributed(run_ps, run_worker, wait_until_master_is_down, distributed_training_env):
+def test_train_distributed_master(run_ps,
+                                  run_worker,
+                                  wait_until_master_is_down,
+                                  distributed_training_env):
+    training.train(distributed_training_env)
+    run_ps.assert_called_with(distributed_training_env)
+    run_worker.assert_called_with(distributed_training_env, install_module=False)
+    wait_until_master_is_down.assert_not_called
+
+
+@patch('sagemaker_tensorflow_container.training._wait_until_master_is_down')
+@patch('sagemaker_tensorflow_container.training._run_worker')
+@patch('sagemaker_tensorflow_container.training._run_ps')
+def test_train_distributed_worker(run_ps,
+                                  run_worker,
+                                  wait_until_master_is_down,
+                                  distributed_training_env):
+    distributed_training_env.current_host = HOST2
     training.train(distributed_training_env)
     run_ps.assert_called_with(distributed_training_env)
     run_worker.assert_called_with(distributed_training_env, install_module=False)
