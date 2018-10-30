@@ -146,10 +146,11 @@ def train(env):
             _run_ps(env)
             logger.info('Launching worker process')
             _run_worker(env, install_module=False)
-            if not _is_host_master(env.hosts, env.current_host):
-                _wait_until_master_is_down(env.hosts[0])
         else:
             _run_worker(env, install_module=True)
+
+        if not _is_host_master(env.hosts, env.current_host):
+            _wait_until_master_is_down(env.hosts[0])
 
     else:
         framework.modules.run_module(env.module_dir, env.to_cmd_args(),

@@ -152,7 +152,7 @@ if __name__ == "__main__":
     # Log the values in the "Softmax" tensor with label "probabilities"
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log, every_n_iter=1)
+        tensors=tensors_to_log, every_n_iter=50)
 
     # Train the model
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -169,7 +169,7 @@ if __name__ == "__main__":
         num_epochs=1,
         shuffle=False)
 
-    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=100)
+    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=1000)
     eval_spec = tf.estimator.EvalSpec(eval_input_fn)
     tf.estimator.train_and_evaluate(mnist_classifier, train_spec, eval_spec)
 
