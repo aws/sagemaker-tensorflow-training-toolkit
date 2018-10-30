@@ -13,7 +13,6 @@
 from __future__ import absolute_import
 
 import os
-import uuid
 
 import pytest
 from sagemaker.tensorflow import TensorFlow
@@ -69,8 +68,6 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, ps_nu
                            training_steps=1,
                            evaluation_steps=1,
                            hyperparameters={SAGEMAKER_PARAMETER_SERVER_NUM: ps_num},
-                           checkpoint_path='s3://{}/{}/checkpoints'.format(
-                               TEST_BUCKET, uuid.uuid4().hex),
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,

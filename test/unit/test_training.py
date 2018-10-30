@@ -83,22 +83,6 @@ def test_is_host_master():
     assert training._is_host_master(HOST_LIST, 'somehost') is False
 
 
-def test_should_run_parameter_server():
-    env = MagicMock()
-    env.additional_framework_parameters = {}
-    assert training._should_run_parameter_server(env) is False
-    env.additional_framework_parameters[training.SAGEMAKER_PARAMETER_SERVER_NUM] = 2
-    assert training._should_run_parameter_server(env) is True
-
-
-def test_get_parameter_server_num():
-    env = MagicMock()
-    env.additional_framework_parameters = {}
-    assert training._get_parameter_server_num(env) is None
-    env.additional_framework_parameters[training.SAGEMAKER_PARAMETER_SERVER_NUM] = 2
-    assert training._get_parameter_server_num(env) is 2
-
-
 def test_should_run_ps_on_this_host():
     assert training._should_run_ps_on_this_host(HOST_LIST, CURRENT_HOST, 1) is True
     assert training._should_run_ps_on_this_host(HOST_LIST, 'host2', 1) is False
@@ -109,6 +93,25 @@ def test_single_machine(run_module, single_machine_training_env):
     training.train(single_machine_training_env)
     run_module.assert_called_with(MODULE_DIR, single_machine_training_env.to_cmd_args(),
                                   single_machine_training_env.to_env_vars(), MODULE_NAME)
+
+
+@patch('sagemaker_tensorflow_container.training._wait_until_master_is_down')
+@patch('sagemaker_tensorflow_container.training._run_worker')
+@patch('sagemaker_tensorflow_container.training._run_ps')
+def test_train_distributed(run_ps, run_worker, wait_until_master_is_down, distributed_training_env):
+    training.train(distributed_training_env)
+    run_ps.assert_called_with(distributed_training_env)
+    run_worker.assert_called_with(distributed_training_env, install_module=False)
+    wait_until_master_is_down.assert_called_with(HOST1)
+
+
+@patch('sagemaker_tensorflow_container.training._run_worker')
+def test_train_distributed_no_ps(run_worker, distributed_training_env):
+    distributed_training_env.additional_framework_parameters[
+        training.SAGEMAKER_PARAMETER_SERVER_NUM] = 1
+    distributed_training_env.current_host = HOST2
+    training.train(distributed_training_env)
+    run_worker.assert_called_with(distributed_training_env, install_module=True)
 
 
 @patch('sagemaker_tensorflow_container.training._build_tf_config')

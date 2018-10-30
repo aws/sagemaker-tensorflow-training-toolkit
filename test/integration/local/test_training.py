@@ -21,6 +21,9 @@ from sagemaker.tensorflow import TensorFlow
 from test.integration.docker_utils import Container
 
 
+RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
+
+
 @pytest.fixture
 def py_full_version(py_version):
     if py_version == '2':
@@ -37,52 +40,49 @@ def test_py_versions(docker_image, processor, py_full_version):
 
 @pytest.mark.skip_gpu
 def test_mnist_cpu(sagemaker_local_session, docker_image):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources', 'mnist')
-    output_path = run_tf_training(script=os.path.join(resource_path, 'mnist.py'),
+    output_path = run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist.py'),
                                   instance_type='local',
                                   instance_count=1,
                                   sagemaker_local_session=sagemaker_local_session,
                                   docker_image=docker_image,
                                   training_data_path='file://{}'.format(
-                                      os.path.join(resource_path, 'data')))
+                                      os.path.join(RESOURCE_PATH, 'mnist', 'data')))
     assert os.path.exists(os.path.join(output_path, 'my_model.h5')), 'model file not found'
 
 
 @pytest.mark.skip_cpu
 def test_gpu(sagemaker_local_session, docker_image):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    run_tf_training(script=os.path.join(resource_path, 'gpu_device_placement.py'),
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'gpu_device_placement.py'),
                     instance_type='local_gpu',
                     instance_count=1,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
                     training_data_path='file://{}'.format(
-                        os.path.join(resource_path, 'mnist', 'data')))
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data')))
 
 
 @pytest.mark.skip_gpu
 def test_distributed_training_cpu(sagemaker_local_session, docker_image):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    run_tf_training(script=os.path.join(resource_path, 'mnist', 'distributed_mnist.py'),
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'distributed_mnist.py'),
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
                     training_data_path='file://{}'.format(
-                        os.path.join(resource_path, 'mnist', 'data-distributed')))
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
 
 
 @pytest.mark.skip_gpu
-def test_distributed_training_cpu_1_ps(sagemaker_local_session, docker_image):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    run_tf_training(script=os.path.join(resource_path, 'mnist', 'distributed_mnist.py'),
+@pytest.mark.parametrize('ps_num', [1, 2])
+def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, ps_num):
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'distributed_mnist.py'),
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
-                    hyperparameters={'sagemaker_parameter_server_num': 1},
+                    hyperparameters={'sagemaker_parameter_server_num': ps_num},
                     training_data_path='file://{}'.format(
-                        os.path.join(resource_path, 'mnist', 'data-distributed')))
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
 
 
 class ScriptModeTensorFlow(Framework):

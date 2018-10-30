@@ -8,8 +8,9 @@ import numpy as np
 import tensorflow as tf
 import os
 import argparse
-
-tf.logging.set_verbosity(tf.logging.INFO)
+from tensorflow.python.platform import tf_logging
+import logging as _logging
+import sys as _sys
 
 
 def cnn_model_fn(features, labels, mode):
@@ -127,12 +128,17 @@ def _parse_args():
 
     return parser.parse_known_args()
 
+
 if __name__ == "__main__":
     args, unknown = _parse_args()
+    tf.logging.set_verbosity(tf.logging.DEBUG)
+    _handler = _logging.StreamHandler(_sys.stdout)
+    tf_logger = tf_logging._get_logger()
+    tf_logger.handlers = [_handler]
 
     if args.checkpoint_path.startswith('s3://'):
         os.environ['S3_REGION'] = 'us-west-2'
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
         os.environ['S3_USE_HTTPS'] = '1'
 
     train_data, train_labels = _load_training_data(args.train)
@@ -146,7 +152,7 @@ if __name__ == "__main__":
     # Log the values in the "Softmax" tensor with label "probabilities"
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log, every_n_iter=50)
+        tensors=tensors_to_log, every_n_iter=1)
 
     # Train the model
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -167,3 +173,4 @@ if __name__ == "__main__":
     eval_spec = tf.estimator.EvalSpec(eval_input_fn)
     tf.estimator.train_and_evaluate(mnist_classifier, train_spec, eval_spec)
 
+    tf_logger.info('====== Training finished =========')

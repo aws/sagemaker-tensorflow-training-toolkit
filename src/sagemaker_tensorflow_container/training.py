@@ -15,6 +15,8 @@ from __future__ import absolute_import
 
 import json
 import logging
+import subprocess
+import time
 
 import sagemaker_containers.beta.framework as framework
 
@@ -34,10 +36,11 @@ def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
     parameter servers.
 
     Args:
-        hosts (list[str]): List of host name in the cluster
+        hosts (list[str]): List of host names in the cluster
         current_host (str): Current host name
         ps_num (int): Number of parameter servers (default: 0)
-        ps_task (bool): Set to True if this config is built for a ps server process (default: False)
+        ps_task (bool): Set to True if this config is built for a parameter server process
+            (default: False)
 
     Returns:
         dict[str: dict]: A dictionary describing the cluster setup for distributed training.
@@ -60,23 +63,23 @@ def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
         "environment": "cloud"
     }
 
-    if ps is not None:
+    if ps:
         tf_config["cluster"]["ps"] = host_addresses(ps, port='2223')
 
-    if len(workers) > 0:
+    if workers:
         tf_config["cluster"]["worker"] = host_addresses(workers)
 
     if ps_task:
         if ps is None:
             raise ValueError(
-                "Can not have a ps task if there are no parameter servers in the cluster")
-        task_type = "ps"
+                'Can not have a ps task if there are no parameter servers in the cluster')
+        task_type = 'ps'
         task_index = ps.index(current_host)
     elif _is_host_master(hosts, current_host):
-        task_type = "master"
+        task_type = 'master'
         task_index = 0
     else:
-        task_type = "worker"
+        task_type = 'worker'
         task_index = workers.index(current_host)
 
     tf_config["task"] = {"index": task_index, "type": task_type}
@@ -88,7 +91,7 @@ def _env_vars_with_tf_config(env, ps_task):
     env_vars["TF_CONFIG"] = json.dumps(_build_tf_config(
         hosts=env.hosts,
         current_host=env.current_host,
-        ps_num=_get_parameter_server_num(env),
+        ps_num=env.additional_framework_parameters.get(SAGEMAKER_PARAMETER_SERVER_NUM),
         ps_task=ps_task))
     return env_vars
 
@@ -109,33 +112,44 @@ def _run_worker(env, install_module=False):
         framework.modules.run(env.module_name, env.to_cmd_args(), env_vars)
 
 
-def _should_run_parameter_server(env):
-    return _get_parameter_server_num(env) is not None
-
-
-def _get_parameter_server_num(env):
-    return env.additional_framework_parameters.get(SAGEMAKER_PARAMETER_SERVER_NUM)
-
-
 def _should_run_ps_on_this_host(hosts, current_host, parameter_server_num):
     return current_host in hosts[:parameter_server_num]
+
+
+def _wait_until_master_is_down(master):
+    while True:
+        try:
+            subprocess.check_call(
+                ['curl', '{}:2222'.format(master)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            logger.info('master {} is still up, waiting for it to exit'.format(master))
+            time.sleep(10)
+        except subprocess.CalledProcessError:
+            logger.info('master {} is down, stopping parameter server'.format(master))
+            return
 
 
 def train(env):
     """Get training job environment from env and run the training job.
 
     Args:
-        env (sagemaker_containers._env.TrainingEnv): Instance of TrainingEnv class
+        env (sagemaker_containers.beta.framework.env.TrainingEnv): Instance of TrainingEnv class
 
     Returns:
     """
-    if len(env.hosts) > 1 and _should_run_parameter_server(env):
+    parameter_server_num = env.additional_framework_parameters.get(SAGEMAKER_PARAMETER_SERVER_NUM)
+    if len(env.hosts) > 1 and parameter_server_num:
 
-        if _should_run_ps_on_this_host(env.hosts, env.current_host, _get_parameter_server_num(env)):
+        logger.info('Running distributed training job with {} parameter servers'.
+                    format(parameter_server_num))
+        if _should_run_ps_on_this_host(env.hosts, env.current_host, parameter_server_num):
+            logger.info('Launching parameter server process')
             _run_ps(env)
+            logger.info('Launching worker process')
             _run_worker(env, install_module=False)
+            _wait_until_master_is_down(env.hosts[0])
         else:
             _run_worker(env, install_module=True)
+
     else:
         framework.modules.run_module(env.module_dir, env.to_cmd_args(),
                                      env.to_env_vars(), env.module_name)
@@ -143,8 +157,6 @@ def train(env):
 
 def main():
     """Training entry point
-
-    Returns:
     """
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
