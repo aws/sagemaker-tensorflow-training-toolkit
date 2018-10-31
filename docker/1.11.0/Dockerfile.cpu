@@ -10,11 +10,6 @@ ARG py_version
 RUN test $framework_installable || exit 1 \
     && test $py_version || exit 1
 
-WORKDIR /root
-
-COPY $framework_installable .
-COPY $framework_support_installable .
-
 RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
     && add-apt-repository ppa:deadsnakes/ppa -y \
     && rm -rf /var/lib/apt/lists/*
@@ -27,9 +22,9 @@ RUN buildDeps=" \
     && apt-get update && apt-get install -y --no-install-recommends $buildDeps \
     && rm -rf /var/lib/apt/lists/* \
     && if [ $py_version -eq 3 ]; \
-           then apt-get update && apt-get install -y --no-install-recommends python3.6-dev \
+           then apt-get update && apt-get install -y --no-install-recommends python3.6 \
                 && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
-           else apt-get update && apt-get install -y --no-install-recommends python-dev; fi
+           else apt-get update && apt-get install -y --no-install-recommends python; fi
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
@@ -55,13 +50,19 @@ RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
 # https://www.tensorflow.org/performance/performance_guide#tensorflow_with_intel%C2%AE_mkl_dnn
 ENV KMP_AFFINITY=granularity=fine,compact,1,0 KMP_BLOCKTIME=1 KMP_SETTINGS=0
 
-RUN framework_installable_local=$(basename $framework_installable) \
-    && framework_support_installable_local=$(basename $framework_support_installable) \
-    && pip install --no-cache --upgrade $framework_installable_local \
-    && pip install $framework_support_installable_local \
-    && pip install "sagemaker-tensorflow>=1.11,<1.12" \
+WORKDIR /
+
+COPY $framework_installable .
+COPY $framework_support_installable .
+
+RUN pip install --no-cache-dir $framework_installable \
+    $framework_support_installable\
+    "sagemaker-tensorflow>=1.11,<1.12" \
     \
-    && rm $framework_installable_local \
-    && rm $framework_support_installable_local
+    && rm -f $framework_installable \
+    && rm -f $framework_support_installable \
+    && pip uninstall -y --no-cache-dir \
+    markdown \
+    tensorboard
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main

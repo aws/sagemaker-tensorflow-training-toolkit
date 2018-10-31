@@ -57,22 +57,22 @@ def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
         return ['{}:{}'.format(host, port) for host in hosts]
 
     tf_config = {
-        "cluster": {
-            "master": host_addresses(masters)
+        'cluster': {
+            'master': host_addresses(masters)
         },
-        "environment": "cloud"
+        'environment': 'cloud'
     }
 
     if ps:
-        tf_config["cluster"]["ps"] = host_addresses(ps, port='2223')
+        tf_config['cluster']['ps'] = host_addresses(ps, port='2223')
 
     if workers:
-        tf_config["cluster"]["worker"] = host_addresses(workers)
+        tf_config['cluster']['worker'] = host_addresses(workers)
 
     if ps_task:
         if ps is None:
             raise ValueError(
-                'Can not have a ps task if there are no parameter servers in the cluster')
+                'Cannot have a ps task if there are no parameter servers in the cluster')
         task_type = 'ps'
         task_index = ps.index(current_host)
     elif _is_host_master(hosts, current_host):
@@ -82,13 +82,13 @@ def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
         task_type = 'worker'
         task_index = workers.index(current_host)
 
-    tf_config["task"] = {"index": task_index, "type": task_type}
+    tf_config['task'] = {'index': task_index, 'type': task_type}
     return tf_config
 
 
 def _env_vars_with_tf_config(env, ps_task):
     env_vars = env.to_env_vars()
-    env_vars["TF_CONFIG"] = json.dumps(_build_tf_config(
+    env_vars['TF_CONFIG'] = json.dumps(_build_tf_config(
         hosts=env.hosts,
         current_host=env.current_host,
         ps_num=env.additional_framework_parameters.get(SAGEMAKER_PARAMETER_SERVER_NUM),
@@ -133,8 +133,6 @@ def train(env):
 
     Args:
         env (sagemaker_containers.beta.framework.env.TrainingEnv): Instance of TrainingEnv class
-
-    Returns:
     """
     parameter_server_num = env.additional_framework_parameters.get(SAGEMAKER_PARAMETER_SERVER_NUM)
     if len(env.hosts) > 1 and parameter_server_num:
