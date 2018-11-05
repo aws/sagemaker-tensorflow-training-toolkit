@@ -1,6 +1,6 @@
 FROM nvidia/cuda:9.0-base-ubuntu16.04
 
-MAINTAINER Amazon AI
+LABEL maintainer="Amazon AI"
 
 ARG framework_installable
 ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
@@ -18,7 +18,7 @@ ENV NCCL_VERSION=2.3.5-2+cuda9.0
 ENV CUDNN_VERSION=7.3.1.20-1+cuda9.0
 ENV TF_TENSORRT_VERSION=4.1.2
 
-RUN buildDeps=" \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
         cuda-command-line-tools-9-0 \
         cuda-cublas-dev-9-0 \
@@ -31,8 +31,6 @@ RUN buildDeps=" \
         libcudnn7=${CUDNN_VERSION} \
         libnccl2=${NCCL_VERSION} \
         libgomp1 \
-    " \
-    && apt-get update && apt-get install -y --no-install-recommends $buildDeps \
     # The 'apt-get install' of nvinfer-runtime-trt-repo-ubuntu1604-4.0.1-ga-cuda9.0
     # adds a new list which contains libnvinfer library, so it needs another
     # 'apt-get update' to retrieve that list before it can actually install the
@@ -71,19 +69,19 @@ RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
 		\) -exec rm -rf '{}' +; \
     rm get-pip.py
 
-WORKDIR /root
+WORKDIR /
 
 COPY $framework_installable .
 COPY $framework_support_installable .
 
-RUN framework_installable_local=$(basename $framework_installable) \
-    && framework_support_installable_local=$(basename $framework_support_installable) \
+RUN pip install --no-cache-dir $framework_installable \
+    $framework_support_installable\
+    "sagemaker-tensorflow>=1.11,<1.12" \
     \
-    && pip install --no-cache --upgrade $framework_installable_local \
-    && pip install $framework_support_installable_local \
-    && pip install "sagemaker-tensorflow>=1.11,<1.12" \
-    \
-    && rm $framework_installable_local \
-    && rm $framework_support_installable_local
+    && rm -f $framework_installable \
+    && rm -f $framework_support_installable \
+    && pip uninstall -y --no-cache-dir \
+    markdown \
+    tensorboard
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main

@@ -43,8 +43,8 @@ def _build_tf_config(hosts, current_host, ps_task=False):
 
     Returns:
         dict[str: dict]: A dictionary describing the cluster setup for distributed training.
-        For more information regarding TF_CONFIG:
-        https://cloud.google.com/ml-engine/docs/tensorflow/distributed-training-details
+            For more information regarding TF_CONFIG:
+            https://cloud.google.com/ml-engine/docs/tensorflow/distributed-training-details
     """
     # Assign the first host as the master. Rest of the hosts if any will be worker hosts.
     # The first ps_num hosts will also have a parameter task assign to them.
