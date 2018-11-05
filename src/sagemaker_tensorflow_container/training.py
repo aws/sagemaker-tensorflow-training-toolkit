@@ -24,21 +24,20 @@ import sagemaker_containers.beta.framework as framework
 logger = logging.getLogger(__name__)
 
 
-SAGEMAKER_PARAMETER_SERVER_NUM = 'sagemaker_parameter_server_num'
+SAGEMAKER_PARAMETER_SERVER_ENABLED = 'sagemaker_parameter_server_enabled'
 
 
 def _is_host_master(hosts, current_host):
     return current_host == hosts[0]
 
 
-def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
+def _build_tf_config(hosts, current_host, ps_task=False):
     """Builds a dictionary containing cluster information based on number of hosts and number of
     parameter servers.
 
     Args:
         hosts (list[str]): List of host names in the cluster
         current_host (str): Current host name
-        ps_num (int): Number of parameter servers (default: 0)
         ps_task (bool): Set to True if this config is built for a parameter server process
             (default: False)
 
@@ -51,7 +50,7 @@ def _build_tf_config(hosts, current_host, ps_num=0, ps_task=False):
     # The first ps_num hosts will also have a parameter task assign to them.
     masters = hosts[:1]
     workers = hosts[1:]
-    ps = hosts[:ps_num] if len(hosts) > 1 and ps_num > 0 else None
+    ps = hosts if len(hosts) > 1 else None
 
     def host_addresses(hosts, port=2222):
         return ['{}:{}'.format(host, port) for host in hosts]
@@ -91,7 +90,6 @@ def _env_vars_with_tf_config(env, ps_task):
     env_vars['TF_CONFIG'] = json.dumps(_build_tf_config(
         hosts=env.hosts,
         current_host=env.current_host,
-        ps_num=env.additional_framework_parameters.get(SAGEMAKER_PARAMETER_SERVER_NUM),
         ps_task=ps_task))
     return env_vars
 
@@ -112,10 +110,6 @@ def _run_worker(env, install_module=False):
         framework.modules.run(env.module_name, env.to_cmd_args(), env_vars)
 
 
-def _should_run_ps_on_this_host(hosts, current_host, parameter_server_num):
-    return current_host in hosts[:parameter_server_num]
-
-
 def _wait_until_master_is_down(master):
     while True:
         try:
@@ -134,18 +128,15 @@ def train(env):
     Args:
         env (sagemaker_containers.beta.framework.env.TrainingEnv): Instance of TrainingEnv class
     """
-    parameter_server_num = env.additional_framework_parameters.get(SAGEMAKER_PARAMETER_SERVER_NUM)
-    if len(env.hosts) > 1 and parameter_server_num:
+    parameter_server_enabled = env.additional_framework_parameters.get(
+        SAGEMAKER_PARAMETER_SERVER_ENABLED, False)
+    if len(env.hosts) > 1 and parameter_server_enabled:
 
-        logger.info('Running distributed training job with {} parameter servers'.
-                    format(parameter_server_num))
-        if _should_run_ps_on_this_host(env.hosts, env.current_host, parameter_server_num):
-            logger.info('Launching parameter server process')
-            _run_ps(env)
-            logger.info('Launching worker process')
-            _run_worker(env, install_module=False)
-        else:
-            _run_worker(env, install_module=True)
+        logger.info('Running distributed training job with parameter servers')
+        logger.info('Launching parameter server process')
+        _run_ps(env)
+        logger.info('Launching worker process')
+        _run_worker(env, install_module=False)
 
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])

@@ -26,21 +26,11 @@ HOST1 = 'host1'
 HOST2 = 'host2'
 HOST_LIST = [HOST1, HOST2]
 CURRENT_HOST = HOST1
-PS_NUM = 2
 CMD_ARGS = {'some_key': 'some_value'}
-CLUSTER = {
-    'master': ['{}:2222'.format(HOST1)],
-    'worker': ['{}:2222'.format(HOST2)]
-}
 CLUSTER_WITH_PS = {
     'master': ['{}:2222'.format(HOST1)],
     'worker': ['{}:2222'.format(HOST2)],
     'ps': ['{}:2223'.format(HOST1), '{}:2223'.format(HOST2)]
-}
-CLUSTER_WITH_1_PS = {
-    'master': ['{}:2222'.format(HOST1)],
-    'worker': ['{}:2222'.format(HOST2)],
-    'ps': ['{}:2223'.format(HOST1)]
 }
 MASTER_TASK = {'index': 0, 'type': 'master'}
 WORKER_TASK = {'index': 0, 'type': 'worker'}
@@ -59,7 +49,7 @@ def distributed_training_env():
     env.hosts = HOST_LIST
     env.current_host = CURRENT_HOST
     env.additional_framework_parameters = {
-        training.SAGEMAKER_PARAMETER_SERVER_NUM: PS_NUM
+        training.SAGEMAKER_PARAMETER_SERVER_ENABLED: True
     }
 
     return env
@@ -81,11 +71,6 @@ def test_is_host_master():
     assert training._is_host_master(HOST_LIST, CURRENT_HOST) is True
     assert training._is_host_master(HOST_LIST, 'host2') is False
     assert training._is_host_master(HOST_LIST, 'somehost') is False
-
-
-def test_should_run_ps_on_this_host():
-    assert training._should_run_ps_on_this_host(HOST_LIST, CURRENT_HOST, 1) is True
-    assert training._should_run_ps_on_this_host(HOST_LIST, 'host2', 1) is False
 
 
 @patch('sagemaker_containers.beta.framework.modules.run_module')
@@ -122,13 +107,14 @@ def test_train_distributed_worker(run_ps,
     wait_until_master_is_down.assert_called_with(HOST1)
 
 
-@patch('sagemaker_tensorflow_container.training._run_worker')
-def test_train_distributed_no_ps(run_worker, distributed_training_env):
+@patch('sagemaker_containers.beta.framework.modules.run_module')
+def test_train_distributed_no_ps(run_module, distributed_training_env):
     distributed_training_env.additional_framework_parameters[
-        training.SAGEMAKER_PARAMETER_SERVER_NUM] = 1
+        training.SAGEMAKER_PARAMETER_SERVER_ENABLED] = False
     distributed_training_env.current_host = HOST2
     training.train(distributed_training_env)
-    run_worker.assert_called_with(distributed_training_env, install_module=True)
+    run_module.assert_called_with(MODULE_DIR, distributed_training_env.to_cmd_args(),
+                                  distributed_training_env.to_env_vars(), MODULE_NAME)
 
 
 @patch('sagemaker_tensorflow_container.training._build_tf_config')
@@ -138,17 +124,17 @@ def test_get_env_vars_with_tf_config(build_tf_config, distributed_training_env):
     build_tf_config.return_value = tf_config
     assert training._env_vars_with_tf_config(
         distributed_training_env, ps_task=True) == {'TF_CONFIG': json.dumps(tf_config)}
-    build_tf_config.assert_called_once_with(hosts=HOST_LIST, current_host=CURRENT_HOST,
-                                            ps_num=PS_NUM, ps_task=True)
+    build_tf_config.assert_called_once_with(
+        hosts=HOST_LIST, current_host=CURRENT_HOST, ps_task=True)
 
 
 @patch('sagemaker_containers.beta.framework.modules.run_module')
 @patch('sagemaker_tensorflow_container.training._env_vars_with_tf_config')
-def test_run_ps(get_env_vars_with_tf_config, run_module, distributed_training_env):
-    get_env_vars_with_tf_config.return_value = {}
+def test_run_ps(env_vars_with_tf_config, run_module, distributed_training_env):
+    env_vars_with_tf_config.return_value = {}
     distributed_training_env.to_cmd_args.return_value = CMD_ARGS
     training._run_ps(distributed_training_env)
-    get_env_vars_with_tf_config.assert_called_once_with(distributed_training_env, ps_task=True)
+    env_vars_with_tf_config.assert_called_once_with(distributed_training_env, ps_task=True)
     run_module.assert_called_once_with(distributed_training_env.module_dir,
                                        CMD_ARGS,
                                        {},
@@ -188,36 +174,20 @@ def test_run_worker_install(get_env_vars_with_tf_config,
                                        distributed_training_env.module_name)
 
 
-def test_build_tf_config_no_ps():
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_num=0) == \
-        {'cluster': CLUSTER, 'environment': 'cloud', 'task': MASTER_TASK}
-    assert training._build_tf_config(HOST_LIST, HOST2, ps_num=0) == \
-        {'cluster': CLUSTER, 'environment': 'cloud', 'task': WORKER_TASK}
-
-
-def test_build_tf_config_all_ps():
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_num=2) ==\
+def test_build_tf_config():
+    assert training._build_tf_config(HOST_LIST, HOST1) ==\
         {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': MASTER_TASK}
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_num=2, ps_task=True) == \
+    assert training._build_tf_config(HOST_LIST, HOST1, ps_task=True) == \
         {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_1}
-    assert training._build_tf_config(HOST_LIST, HOST2, ps_num=2) ==\
+    assert training._build_tf_config(HOST_LIST, HOST2) ==\
         {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': WORKER_TASK}
-    assert training._build_tf_config(HOST_LIST, HOST2, ps_num=2, ps_task=True) == \
+    assert training._build_tf_config(HOST_LIST, HOST2, ps_task=True) == \
         {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_2}
-
-
-def test_build_tf_config_1_ps():
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_num=1) == \
-        {'cluster': CLUSTER_WITH_1_PS, 'environment': 'cloud', 'task': MASTER_TASK}
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_num=1, ps_task=True) == \
-        {'cluster': CLUSTER_WITH_1_PS, 'environment': 'cloud', 'task': PS_TASK_1}
-    assert training._build_tf_config(HOST_LIST, HOST2, ps_num=1) == \
-        {'cluster': CLUSTER_WITH_1_PS, 'environment': 'cloud', 'task': WORKER_TASK}
 
 
 def test_build_tf_config_error():
     with pytest.raises(ValueError) as error:
-        training._build_tf_config(HOST_LIST, HOST1, ps_num=0, ps_task=True)
+        training._build_tf_config([HOST1], HOST1, ps_task=True)
     assert 'Cannot have a ps task if there are no parameter servers in the cluster' in str(error)
 
 
