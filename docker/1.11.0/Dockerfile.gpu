@@ -42,14 +42,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get update && apt-get install -y --no-install-recommends \
         libnvinfer4=${TF_TENSORRT_VERSION}-1+cuda9.0 \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
     && rm /usr/lib/x86_64-linux-gnu/libnvinfer_plugin* \
     && rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* \
     && rm /usr/lib/x86_64-linux-gnu/libnvparsers* \
     && if [ $py_version -eq 3 ]; \
-           then apt-get update && apt-get install -y --no-install-recommends python3.6 \
+           then apt-get install -y --no-install-recommends python3.6 \
                 && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
-           else apt-get update && apt-get install -y --no-install-recommends python; fi
+           else apt-get install -y --no-install-recommends python; fi \
+    && rm -rf /var/lib/apt/lists/*
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
