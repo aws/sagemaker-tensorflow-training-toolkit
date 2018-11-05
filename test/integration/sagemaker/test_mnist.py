@@ -14,13 +14,11 @@ from __future__ import absolute_import
 
 import os
 
-import pytest
+import boto3
 from sagemaker.tensorflow import TensorFlow
+from six.moves.urllib.parse import urlparse
 
 from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
-
-
-TEST_BUCKET = 'sagemaker-tensorflow-scriptmode'
 
 
 def test_mnist(sagemaker_session, ecr_image, instance_type):
@@ -39,6 +37,8 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
     estimator.fit(inputs)
+    model_s3_url = estimator.create_model().model_data
+    _assert_s3_file_exists(model_s3_url)
 
 
 def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
@@ -57,6 +57,9 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
+    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'graph.pbtxt'))
+    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.index'))
+    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.meta'))
 
 
 def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
@@ -76,3 +79,12 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
+    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'graph.pbtxt'))
+    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.index'))
+    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.meta'))
+
+
+def _assert_s3_file_exists(s3_url):
+    parsed_url = urlparse(s3_url)
+    s3 = boto3.resource('s3')
+    s3.Object(parsed_url.netloc, parsed_url.path.lstrip('/')).load()
