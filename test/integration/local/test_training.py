@@ -73,7 +73,7 @@ def test_distributed_training_cpu_no_ps(sagemaker_local_session, docker_image, t
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
-                    output_path = output_path,
+                    output_path=output_path,
                     training_data_path='file://{}'.format(
                         os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
     _assert_files_exist_in_tar(output_path, TF_CHECKPOINT_FILES)
@@ -87,7 +87,7 @@ def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, tmpd
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
-                    output_path = output_path,
+                    output_path=output_path,
                     hyperparameters={'sagemaker_parameter_server_enabled': True},
                     training_data_path='file://{}'.format(
                         os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
