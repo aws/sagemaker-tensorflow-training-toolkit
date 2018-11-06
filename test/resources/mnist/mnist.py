@@ -17,11 +17,13 @@ def _parse_args():
     parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
     
     return parser.parse_known_args()
-#
+
+
 def _load_training_data(base_dir):
     x_train = np.load(os.path.join(base_dir, 'train', 'x_train.npy'))
     y_train = np.load(os.path.join(base_dir, 'train', 'y_train.npy'))
     return x_train, y_train
+
 
 def _load_testing_data(base_dir):
     x_test = np.load(os.path.join(base_dir, 'test', 'x_test.npy'))
@@ -32,7 +34,7 @@ def _load_testing_data(base_dir):
 args, unknown = _parse_args()
 
 model = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(),
+  tf.keras.layers.Flatten(input_shape=(28, 28)),
   tf.keras.layers.Dense(512, activation=tf.nn.relu),
   tf.keras.layers.Dropout(0.2),
   tf.keras.layers.Dense(10, activation=tf.nn.softmax)
