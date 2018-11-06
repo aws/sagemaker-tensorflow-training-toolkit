@@ -67,6 +67,8 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
     script = os.path.join(resource_path, 'mnist', 'distributed_mnist.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
+                           # training_steps and evaluation_steps are legacy parameters from
+                           # framework mode. These number are not used in the training job.
                            training_steps=1,
                            evaluation_steps=1,
                            hyperparameters={SAGEMAKER_PARAMETER_SERVER_ENABLED: True},
