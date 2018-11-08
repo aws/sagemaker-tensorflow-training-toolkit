@@ -1,0 +1,12 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - docker build -t local-cpu-test -f docker/0.4.0/base/Dockerfile.cpu --build-arg py_version=3 .
+      - pip install -U .
+      - pip install wheel
+      - python setup.py bdist_wheel
+      - docker build -t preprod-pytorch:0.4.0-cpu-py3 -f docker/0.4.0/final/Dockerfile.cpu --build-arg py_version=3 .
+      - pip install -U .[test]
+      - pytest test/integration/local --docker-base-name preprod-pytorch --tag 0.4.0-cpu-py3 --py-version 3 --framework-version 0.4.0 --processor cpu
