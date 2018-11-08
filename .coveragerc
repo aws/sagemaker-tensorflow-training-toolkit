@@ -1,0 +1,14 @@
+[run]
+branch = True
+timid = True
+
+[report]
+exclude_lines =
+    pragma: no cover
+
+partial_branches =
+    pragma: no cover
+
+show_missing = True
+
+fail_under = 95

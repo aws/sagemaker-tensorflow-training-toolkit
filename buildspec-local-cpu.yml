@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - FRAMEWORK_VERSION=$(ls docker | sort --version-sort -r | sed -n 1p)
+      - TAG=FRAMEWORK_VERSION-cpu-py${PY_VERSION}
+      - pip install -U . --quiet
+      - pip install wheel --quiet
+      - python setup.py bdist_wheel
+      - docker build -t local-cpu-test -f docker/${FRAMEWORK_VERSION}/final/Dockerfile.cpu --build-arg py_version=${PY_VERSION} .
+      - pip install -U .[test] --quiet
+      - pytest test/integration/local --docker-base-name preprod-pytorch --tag ${TAG}
+                                      --py-version ${PY_VERSION} --framework-version ${FRAMEWORK_VERSION} --processor cpu
