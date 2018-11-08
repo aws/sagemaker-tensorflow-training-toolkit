@@ -2,6 +2,7 @@ FROM tensorflow/serving:1.11.0-gpu as tensorflow_serving_image
 FROM nvidia/cuda:9.0-base-ubuntu16.04
 
 LABEL maintainer="Amazon AI"
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
 ARG framework_installable
 ARG framework_support_installable=sagemaker_tensorflow_container-1.0.0.tar.gz
