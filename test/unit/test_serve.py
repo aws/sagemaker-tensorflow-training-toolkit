@@ -259,10 +259,14 @@ def test_transformer_method(proxy_client, serve):
 
 
 @patch('subprocess.Popen')
-def test_load_dependencies(popen, serve):
+@patch('container_support.HostingEnvironment')
+def test_load_dependencies_with_default_port(hosting_env, popen, serve):
     with patch('os.environ') as env:
         env['SAGEMAKER_PROGRAM'] = 'script.py'
         env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
+
+        hosting_env.return_value.port_range = None
+        hosting_env.return_value.model_dir = '/opt/ml/model'
 
         serve.Transformer.from_module = Mock()
         serve.load_dependencies()
@@ -273,12 +277,39 @@ def test_load_dependencies(popen, serve):
                                   '--model_base_path=/opt/ml/model/export/Servo'])
 
 
+@patch('subprocess.Popen')
+@patch('container_support.HostingEnvironment')
+def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
+    with patch('os.environ') as env:
+        env['SAGEMAKER_PROGRAM'] = 'script.py'
+        env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
+
+        hosting_env.return_value.port_range = '1234-2345'
+        hosting_env.return_value.model_dir = '/opt/ml/model'
+
+        serve.Transformer.from_module = Mock()
+        serve.load_dependencies()
+
+        popen.assert_called_with(['tensorflow_model_server',
+                                  '--port=1234',
+                                  '--model_name=generic_model',
+                                  '--model_base_path=/opt/ml/model/export/Servo'])
+
+
 @patch('tf_container.proxy_client.GRPCProxyClient')
 def test_wait_model_to_load(proxy_client, serve):
     client = proxy_client()
 
     serve._wait_model_to_load(client, 10)
     client.cache_prediction_metadata.assert_called_once_with()
+
+
+def test_get_safe_port(serve):
+    port_range = '1234-5678'
+
+    port = serve._get_first_safe_port(port_range)
+
+    assert port == '1234'
 
 
 def test_transformer_default_output_fn_unsupported_type(serve):
