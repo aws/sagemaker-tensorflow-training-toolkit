@@ -26,13 +26,12 @@ from tf_container import proxy_client
 from six import StringIO
 import csv
 from container_support.serving import UnsupportedContentTypeError, UnsupportedAcceptTypeError, \
-                                      JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, \
-                                      OCTET_STREAM_CONTENT_TYPE, ANY_CONTENT_TYPE
+    JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, \
+    OCTET_STREAM_CONTENT_TYPE, ANY_CONTENT_TYPE
 from tf_container.run import logger
 import time
 
-
-TF_SERVING_PORT = 9000
+DEFAULT_TF_SERVING_PORT = 9000
 GENERIC_MODEL_NAME = "generic_model"
 TF_SERVING_MAXIMUM_LOAD_MODEL_TIME_IN_SECONDS = 60 * 15
 
@@ -97,7 +96,11 @@ def _recursive_copy(src, dst):
 
 
 def transformer(user_module):
-    grpc_proxy_client = proxy_client.GRPCProxyClient(TF_SERVING_PORT)
+    env = cs.HostingEnvironment()
+
+    port = _get_safe_port(env.port_range) if env.port_range else DEFAULT_TF_SERVING_PORT
+
+    grpc_proxy_client = proxy_client.GRPCProxyClient(port)
     _wait_model_to_load(grpc_proxy_client, TF_SERVING_MAXIMUM_LOAD_MODEL_TIME_IN_SECONDS)
 
     return Transformer.from_module(user_module, grpc_proxy_client)
@@ -105,9 +108,11 @@ def transformer(user_module):
 
 def load_dependencies():
     env = cs.HostingEnvironment()
+
+    port = _get_safe_port(env.port_range) if env.port_range else DEFAULT_TF_SERVING_PORT
     saved_model_path = os.path.join(env.model_dir, 'export/Servo')
     subprocess.Popen(['tensorflow_model_server',
-                      '--port={}'.format(TF_SERVING_PORT),
+                      '--port={}'.format(port),
                       '--model_name={}'.format(GENERIC_MODEL_NAME),
                       '--model_base_path={}'.format(saved_model_path)])
 
@@ -132,6 +137,10 @@ def _wait_model_to_load(grpc_proxy_client, max_seconds):
 
     message = 'TF Serving failed to load the model under the maximum load time in seconds: {}'
     raise ValueError(message.format(max_seconds))
+
+
+def _get_safe_port(port_range):
+    return port_range.split('-')[0]
 
 
 class Transformer(object):
