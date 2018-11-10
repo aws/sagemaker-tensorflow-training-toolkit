@@ -2,6 +2,7 @@ FROM tensorflow/serving:1.11.0 as tensorflow_serving_image
 FROM ubuntu:16.04
 
 LABEL maintainer="Amazon AI"
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
 ARG framework_installable
 ARG framework_support_installable=sagemaker_tensorflow_container-1.0.0.tar.gz
