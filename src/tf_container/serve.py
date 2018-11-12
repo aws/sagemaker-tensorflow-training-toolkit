@@ -12,6 +12,7 @@
 #  permissions and limitations under the License.
 
 import json
+import re
 import shutil
 import subprocess
 import boto3
@@ -54,32 +55,31 @@ def export_saved_model(checkpoint_dir, model_path, s3=boto3.client('s3', region_
             raise e
         # Select most recent saved_model.pb
         saved_model_path = saved_model_path_array[-1]
-
-        variables_path = [x['Key'] for x in contents if 'variables/variables' in x['Key']]
-        variable_names_to_paths = {v.split('/').pop(): v for v in variables_path}
+        saved_model_base_path = os.path.dirname(saved_model_path)
 
         prefixes = key_prefix.split('/')
-        folders = saved_model_path.split('/')[len(prefixes):]
-        saved_model_filename = folders.pop()
+        folders = saved_model_path.split('/')[len(prefixes):-1]
         path_to_save_model = os.path.join(model_path, *folders)
 
-        path_to_variables = os.path.join(path_to_save_model, 'variables')
+        def file_filter(x): return x['Key'].startswith(saved_model_base_path) and not x['Key'].endswith("/")
+        paths_to_copy = [x['Key'] for x in contents if file_filter(x)]
 
-        os.makedirs(path_to_variables)
-
-        target = os.path.join(path_to_save_model, saved_model_filename)
-        s3.download_file(bucket_name, saved_model_path, target)
-        logger.info("Downloaded saved model at {}".format(target))
-
-        for filename, full_path in variable_names_to_paths.items():
-            key = full_path
-            target = os.path.join(path_to_variables, filename)
+        for key in paths_to_copy:
+            target = re.sub(r"^"+saved_model_base_path, path_to_save_model, key)
+            _makedirs_for_file(target)
             s3.download_file(bucket_name, key, target)
+        logger.info("Downloaded saved model at {}".format(path_to_save_model))
     else:
         if os.path.exists(checkpoint_dir):
             _recursive_copy(checkpoint_dir, model_path)
         else:
             logger.error("Failed to copy saved model. File does not exist in {}".format(checkpoint_dir))
+
+
+def _makedirs_for_file(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
 
 def _recursive_copy(src, dst):
