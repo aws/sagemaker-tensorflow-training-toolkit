@@ -1,0 +1,31 @@
+# samples from Large Movie Review Dataset (http://ai.stanford.edu/~amaas/data/sentiment/ , http://www.aclweb.org/anthology/P11-1015)
+1	One of the funniest movies made in recent years. Good characterization, plot and exceptional chemistry make this one a classic
+0	Hated it with all my being. Worst movie ever. Mentally- scarred. Help me. It was that bad.TRUST ME!!!
+0	This is quite possibly the worst sequel ever made. The script is unfunny and the acting stinks. The exact opposite of the original.
+0	This movie is terrible. It's about some no brain surfin dude that inherits some company. Does Carrot Top have no shame?<br /><br />
+1	This is the greatest movie ever. If you have written it off with out ever seeing it. You must give it a second try.
+1	Just love the interplay between two great characters of stage & screen - Veidt & Barrymore
+0	Don't waste your time and money on it. It's not quite as bad as "Adrenalin", by the same director but that's not saying much.
+1	Absolutely fantastic! Whatever I say wouldn't do this underrated movie the justice it deserves. Watch it now! FANTASTIC!
+0	This movie is so bad it's almost good. Bad story, bad acting, bad music, you name it. O.K., who are the jokers that gave this flick a '10'?
+1	Add this little gem to your list of holiday regulars. It is<br /><br />sweet, funny, and endearing
+0	Ten minutes of people spewing gallons of pink vomit. Recurring scenes of enormous piles of dog excrement - need one say more???
+0	Primary plot!Primary direction!Poor interpretation.
+0	Read the book, forget the movie!
+1	This is a good film. This is very funny. Yet after this film there were no good Ernest films!
+1	If you like Pauly Shore, you'll love Son in Law. If you hate Pauly Shore, then, well...I liked it!
+1	Brilliant and moving performances by Tom Courtenay and Peter Finch.
+1	A touching movie. It is full of emotions and wonderful acting. I could have sat through it a second time.
+1	Without a doubt, one of Tobe Hoppor's best! Epic storytellng, great special effects, and The Spacegirl (vamp me baby!).
+0	Widow hires a psychopath as a handyman. Sloppy film noir thriller which doesn't make much of its tension promising set-up. (3/10)
+1	For pure gothic vampire cheese nothing can compare to the Subspecies films. I highly recommend each and every one of them.
+0	More suspenseful, more subtle, much, much more disturbing....
+1	a mesmerizing film that certainly keeps your attention... Ben Daniels is fascinating (and courageous) to watch.
+0	What a script, what a story, what a mess!
+1	If you've ever had a mad week-end out with your mates then you'll appreciate this film. Excellent fun and a laugh a minute.
+0	I caught this film late at night on HBO. Talk about wooden acting, unbelievable plot, et al. Very little going in its favor. Skip it.
+1	Brilliant. Ranks along with Citizen Kane, The Matrix and Godfathers. Must see, at least for basset in her early days. Watch it.
+0	The plot was really weak and confused. This is a true Oprah flick. (In Oprah's world, all men are evil and all women are victims.)
+0	I hope this group of film-makers never re-unites.
+1	This is a great movie. Too bad it is not available on home video.
+0	This is a terrible movie, don't waste your money on it. Don't even watch it for free. That's all I have to say.

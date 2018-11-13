@@ -58,7 +58,12 @@ def serve(modules):
 def boto_session():
     session = Mock()
 
-    return_value = {"Contents": [{'Key': 'test/1/saved_model.pb'}, {'Key': 'test/1/variables/variables.index'}]}
+    return_value = {"Contents": [
+        {'Key': 'test/1/'},
+        {'Key': 'test/1/saved_model.pb'},
+        {'Key': 'test/1/variables/variables.index'},
+        {'Key': 'test/1/assets/vocabulary.txt'}
+    ]}
     session.list_objects_v2 = Mock(return_value=return_value)
     session.download_file = Mock(return_value=None)
     return session
@@ -68,12 +73,19 @@ def boto_session():
 def test_export_saved_model_from_s3(makedirs, boto_session, serve):
     serve.export_saved_model('s3://bucket/test', 'a/path', s3=boto_session)
 
-    first_call = call('bucket', 'test/1/saved_model.pb', 'a/path/1/saved_model.pb')
-    second_call = call('bucket', 'test/1/variables/variables.index', 'a/path/1/variables/variables.index')
+    expected_boto_calls = [
+        call('bucket', 'test/1/saved_model.pb', 'a/path/1/saved_model.pb'),
+        call('bucket', 'test/1/variables/variables.index', 'a/path/1/variables/variables.index'),
+        call('bucket', 'test/1/assets/vocabulary.txt', 'a/path/1/assets/vocabulary.txt')]
 
-    calls = [first_call, second_call]
+    expected_makedirs_calls = [
+        call('a/path/1'),
+        call('a/path/1/variables'),
+        call('a/path/1/assets'),
+    ]
 
-    boto_session.download_file.assert_has_calls(calls)
+    assert boto_session.download_file.mock_calls == expected_boto_calls
+    assert makedirs.mock_calls == expected_makedirs_calls
 
 
 @patch('os.path.exists')
