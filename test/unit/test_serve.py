@@ -289,6 +289,7 @@ def test_load_dependencies_with_default_port(hosting_env, popen, serve):
                                   '--model_base_path=/opt/ml/model/export/Servo'])
 
 
+@patch('container_support.Server.next_safe_port', lambda x: '1234')
 @patch('subprocess.Popen')
 @patch('container_support.HostingEnvironment')
 def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
@@ -314,14 +315,6 @@ def test_wait_model_to_load(proxy_client, serve):
 
     serve._wait_model_to_load(client, 10)
     client.cache_prediction_metadata.assert_called_once_with()
-
-
-def test_get_safe_port(serve):
-    port_range = '1234-5678'
-
-    port = serve._get_first_safe_port(port_range)
-
-    assert port == '1234'
 
 
 def test_transformer_default_output_fn_unsupported_type(serve):
