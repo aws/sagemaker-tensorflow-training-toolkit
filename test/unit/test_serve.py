@@ -21,6 +21,9 @@ from types import ModuleType
 from container_support.serving import UnsupportedAcceptTypeError, UnsupportedContentTypeError
 
 JSON_CONTENT_TYPE = "application/json"
+FIRST_PORT = '1111'
+LAST_PORT = '2222'
+SAFE_PORT_RANGE = '{}-{}'.format(FIRST_PORT, LAST_PORT)
 
 
 @pytest.fixture(scope="module")
@@ -289,7 +292,7 @@ def test_load_dependencies_with_default_port(hosting_env, popen, serve):
                                   '--model_base_path=/opt/ml/model/export/Servo'])
 
 
-@patch('container_support.Server.next_safe_port', lambda x: '1234')
+@patch('container_support.Server.next_safe_port', lambda x: FIRST_PORT)
 @patch('subprocess.Popen')
 @patch('container_support.HostingEnvironment')
 def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
@@ -297,14 +300,14 @@ def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
         env['SAGEMAKER_PROGRAM'] = 'script.py'
         env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
 
-        hosting_env.return_value.port_range = '1234-2345'
+        hosting_env.return_value.port_range = SAFE_PORT_RANGE
         hosting_env.return_value.model_dir = '/opt/ml/model'
 
         serve.Transformer.from_module = Mock()
         serve.load_dependencies()
 
         popen.assert_called_with(['tensorflow_model_server',
-                                  '--port=1234',
+                                  '--port={}'.format(FIRST_PORT),
                                   '--model_name=generic_model',
                                   '--model_base_path=/opt/ml/model/export/Servo'])
 
