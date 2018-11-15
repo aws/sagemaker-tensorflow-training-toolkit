@@ -292,7 +292,6 @@ def test_load_dependencies_with_default_port(hosting_env, popen, serve):
                                   '--model_base_path=/opt/ml/model/export/Servo'])
 
 
-@patch('container_support.Server.next_safe_port', lambda x: FIRST_PORT)
 @patch('subprocess.Popen')
 @patch('container_support.HostingEnvironment')
 def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
