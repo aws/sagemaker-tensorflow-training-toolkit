@@ -16,7 +16,7 @@ import os
 
 from mock import MagicMock, patch
 
-import sagemaker_tensorflow_container.s3_utils as s3_utils
+from sagemaker_tensorflow_container import s3_utils
 
 
 BUCKET_REGION = 'us-west-2'
@@ -27,12 +27,12 @@ MODEL_DIR = 's3://{}/{}'.format(JOB_BUKCET, PREFIX)
 
 
 @patch('boto3.client')
-def test_configure_s3_env(client):
+def test_configure(client):
     s3 = MagicMock()
     client.return_value = s3
     loc = {'LocationConstraint': BUCKET_REGION}
     s3.get_bucket_location.return_value = loc
-    s3_utils.configure_s3_env(MODEL_DIR, JOB_REGION)
+    s3_utils.configure(MODEL_DIR, JOB_REGION)
     assert os.environ['S3_REGION'] == BUCKET_REGION
     assert os.environ['TF_CPP_MIN_LOG_LEVEL'] == '1'
     assert os.environ['S3_USE_HTTPS'] == '1'

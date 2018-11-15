@@ -18,7 +18,7 @@ import boto3
 from six.moves.urllib.parse import urlparse
 
 
-def configure_s3_env(model_dir, job_region):
+def configure(model_dir, job_region):
     s3 = boto3.client('s3', region_name=job_region)
 
     # We get the AWS region of the checkpoint bucket, which may be different from

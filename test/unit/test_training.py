@@ -198,7 +198,7 @@ def test_build_tf_config_error():
 @patch('logging.Logger.setLevel')
 @patch('sagemaker_containers.beta.framework.training_env')
 @patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={})
-@patch('sagemaker_tensorflow_container.s3_utils.configure_s3_env')
+@patch('sagemaker_tensorflow_container.s3_utils.configure')
 def test_main(configure_s3_env, read_hyperparameters, training_env,
               set_level, train, single_machine_training_env):
     training_env.return_value = single_machine_training_env
