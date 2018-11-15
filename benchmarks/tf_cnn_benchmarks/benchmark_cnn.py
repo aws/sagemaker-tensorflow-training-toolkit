@@ -24,6 +24,7 @@ from collections import namedtuple
 import math
 import multiprocessing
 import os
+import re
 import threading
 import time
 
@@ -76,6 +77,29 @@ GraphInfo = namedtuple(  # pylint: disable=invalid-name
         'global_step',
         # Group of ops that perform per-device initialization work
         'local_var_init_op_group'
+    ])
+
+
+# InputProcessingInfo contains various sources of inputs which will be later fed
+# into the model. If synthetic data is used, all four fields are None.
+InputProcessingInfo = namedtuple(
+    'InputProcessingInfo',
+    [
+        # The first two fields are non-None iff datasets prefetching is not
+        # used.
+
+        # Ops that produce the input batches.
+        'input_producer_op',
+        # A list of StagingArea for each device.
+        'input_producer_stages',
+
+        # Input produced using FunctionBufferingResource. Non-None iff datasets
+        # prefetching is used and --use_multi_device_iterator=False
+        'function_buffering_resources',
+
+        # Input produced using multi device iterator. Non-None iff datasets
+        # prefetching is used and --use_multi_device_iterator=True
+        'multi_device_iterator_input'
     ])
 
 
@@ -148,7 +172,7 @@ flags.DEFINE_boolean('use_datasets', True,
 flags.DEFINE_string('input_preprocessor', 'default',
                     'Name of input preprocessor. The list of supported input '
                     'preprocessors are defined in preprocessing.py.')
-flags.DEFINE_string('gpu_thread_mode', 'gpu_shared',
+flags.DEFINE_string('gpu_thread_mode', 'gpu_private',
                     'Methods to assign GPU host work to threads. '
                     'global: all GPUs and CPUs share the same global threads; '
                     'gpu_private: a private threadpool for each GPU; '
@@ -232,8 +256,8 @@ flags.DEFINE_string('partitioned_graph_file_prefix', None,
                     'If specified, after the graph has been partitioned and '
                     'optimized, write out each partitioned graph to a file '
                     'with the given prefix.')
-flags.DEFINE_enum('optimizer', 'sgd', ('momentum', 'sgd', 'rmsprop'),
-                  'Optimizer to use: momentum or sgd or rmsprop')
+flags.DEFINE_enum('optimizer', 'sgd', ('momentum', 'sgd', 'rmsprop', 'adam'),
+                  'Optimizer to use')
 flags.DEFINE_float('init_learning_rate', None,
                    'Initial learning rate for training.')
 flags.DEFINE_string('piecewise_learning_rate_schedule', None,
@@ -264,6 +288,9 @@ flags.DEFINE_float('momentum', 0.9, 'Momentum for training.')
 flags.DEFINE_float('rmsprop_decay', 0.9, 'Decay term for RMSProp.')
 flags.DEFINE_float('rmsprop_momentum', 0.9, 'Momentum in RMSProp.')
 flags.DEFINE_float('rmsprop_epsilon', 1.0, 'Epsilon term for RMSProp.')
+flags.DEFINE_float('adam_beta1', 0.9, 'Beta2 term for the Adam optimizer')
+flags.DEFINE_float('adam_beta2', 0.999, 'Beta2 term for the Adam optimizer')
+flags.DEFINE_float('adam_epsilon', 1e-8, 'Epsilon term for the Adam optimizer')
 flags.DEFINE_float('gradient_clip', None,
                    'Gradient clipping magnitude. Disabled by default.')
 flags.DEFINE_float('weight_decay', 0.00004,
@@ -300,6 +327,15 @@ flags.DEFINE_integer('datasets_num_private_threads', None,
                      'all datasets computation. By default, we pick an '
                      'appropriate number. If set to 0, we use the default '
                      'tf-Compute threads for dataset operations.')
+flags.DEFINE_boolean(
+    'use_multi_device_iterator', False,
+    'If true, we use the MultiDeviceIterator for prefetching, '
+    'which deterministically prefetches the data onto the '
+    'various GPUs')
+flags.DEFINE_integer(
+    'multi_device_iterator_max_buffer_size', 1,
+    'Configuration parameter for the MultiDeviceIterator that '
+    ' specifies the host side buffer size for each device.')
 
 # Performance tuning parameters.
 flags.DEFINE_boolean('winograd_nonfused', True,
@@ -318,13 +354,13 @@ flags.DEFINE_boolean('force_gpu_compatible', False,
                      'whether to enable force_gpu_compatible in GPU_Options')
 flags.DEFINE_boolean('allow_growth', None,
                      'whether to enable allow_growth in GPU_Options')
-flags.DEFINE_boolean('xla', False, 'whether to enable XLA')
+flags.DEFINE_boolean('xla', False, 'whether to enable XLA auto-jit compilation')
 flags.DEFINE_boolean('fuse_decode_and_crop', True,
                      'Fuse decode_and_crop for image preprocessing.')
 flags.DEFINE_boolean('distort_color_in_yiq', True,
                      'Distort color of input images in YIQ space.')
-flags.DEFINE_boolean('enable_layout_optimizer', False,
-                     'whether to enable layout optimizer')
+flags.DEFINE_boolean('enable_optimizations', True,
+                     'Whether to enable grappler and other optimizations.')
 flags.DEFINE_string('rewriter_config', None,
                     'Config for graph optimizers, described as a '
                     'RewriterConfig proto buffer.')
@@ -346,7 +382,7 @@ flags.DEFINE_boolean('use_resource_vars', False,
                      'for debugging their performance.')
 # Performance tuning specific to MKL.
 flags.DEFINE_boolean('mkl', False, 'If true, set MKL environment variables.')
-flags.DEFINE_integer('kmp_blocktime', 30,
+flags.DEFINE_integer('kmp_blocktime', 0,
                      'The time, in milliseconds, that a thread should wait, '
                      'after completing the execution of a parallel region, '
                      'before sleeping')
@@ -381,6 +417,9 @@ flags.DEFINE_boolean('fp16_enable_auto_loss_scale', False,
 flags.DEFINE_integer('fp16_inc_loss_scale_every_n', 1000,
                      'If fp16 is enabled and fp16_enable_auto_loss_scale is '
                      'True, increase the loss scale every n steps.')
+## Sagemaker flags:
+
+flags.DEFINE_string('model_dir', '', '[Ignored] Collects model directory path from sagemaker.')
 
 # The method for managing variables:
 #   parameter_server: variables are stored on a parameter server that holds
@@ -490,11 +529,16 @@ flags.DEFINE_integer('save_summaries_steps', 0,
 flags.DEFINE_integer('save_model_secs', 0,
                      'How often to save trained models. Pass 0 to disable '
                      'checkpoints.')
+flags.DEFINE_integer('max_ckpts_to_keep', 5,
+                     'Max number of checkpoints to keep.')
 flags.DEFINE_string('train_dir', None,
                     'Path to session checkpoints. Pass None to disable saving '
                     'checkpoint at the end.')
 flags.DEFINE_string('eval_dir', '/tmp/tf_cnn_benchmarks/eval',
                     'Directory where to write eval event logs.')
+flags.DEFINE_string('backbone_model_path', None,
+                    'Path to pretrained backbone model checkpoint. Pass None '
+                    'if not using a backbone model.')
 
 # Benchmark logging for model garden metric
 flags.DEFINE_string('benchmark_log_dir', None,
@@ -575,23 +619,6 @@ def get_data_type(params):
   return tf.float16 if params.use_fp16 else tf.float32
 
 
-# Note that we monkey patch this function in the unit tests. So if this is
-# inlined or renamed, the unit tests must be updated.
-def loss_function(logits, labels, aux_logits):
-  """Loss function."""
-  with tf.name_scope('xentropy'):
-    cross_entropy = tf.losses.sparse_softmax_cross_entropy(
-        logits=logits, labels=labels)
-    loss = tf.reduce_mean(cross_entropy, name='xentropy_mean')
-  if aux_logits is not None:
-    with tf.name_scope('aux_xentropy'):
-      aux_cross_entropy = tf.losses.sparse_softmax_cross_entropy(
-          logits=aux_logits, labels=labels)
-      aux_loss = 0.4 * tf.reduce_mean(aux_cross_entropy, name='aux_loss')
-      loss = tf.add_n([loss, aux_loss])
-  return loss
-
-
 def create_config_proto(params):
   """Returns session config proto.
 
@@ -617,13 +644,27 @@ def create_config_proto(params):
   if params.xla:
     config.graph_options.optimizer_options.global_jit_level = (
         tf.OptimizerOptions.ON_1)
-  if params.enable_layout_optimizer:
-    config.graph_options.rewrite_options.layout_optimizer = (
-        rewriter_config_pb2.RewriterConfig.ON)
   if params.rewriter_config:
     rewriter_config = rewriter_config_pb2.RewriterConfig()
     text_format.Merge(params.rewriter_config, rewriter_config)
     config.graph_options.rewrite_options.CopyFrom(rewriter_config)
+  elif not params.enable_optimizations:
+    off = rewriter_config_pb2.RewriterConfig.OFF
+    config.graph_options.optimizer_options.opt_level = tf.OptimizerOptions.L0
+    rewrite_options = config.graph_options.rewrite_options
+    rewrite_options.layout_optimizer = off
+    rewrite_options.constant_folding = off
+    rewrite_options.shape_optimization = off
+    rewrite_options.remapping = off
+    rewrite_options.arithmetic_optimization = off
+    rewrite_options.dependency_optimization = off
+    rewrite_options.loop_optimization = off
+    rewrite_options.function_optimization = off
+    rewrite_options.debug_stripper = off
+    rewrite_options.disable_model_pruning = True
+    rewrite_options.scoped_allocator_optimization = off
+    rewrite_options.memory_optimization = (
+        rewriter_config_pb2.RewriterConfig.NO_MEM_OPT)
   if params.variable_update == 'horovod':
     import horovod.tensorflow as hvd  # pylint: disable=g-import-not-at-top
     config.gpu_options.visible_device_list = str(hvd.local_rank())
@@ -759,6 +800,7 @@ def benchmark_one_step(sess,
 
 def get_perf_timing_str(speed_mean, speed_uncertainty, speed_jitter, scale=1):
   if scale == 1:
+    # TODO(laigd): rename 'images' to maybe 'inputs', same below.
     return ('images/sec: %.1f +/- %.1f (jitter = %.1f)' %
             (speed_mean, speed_uncertainty, speed_jitter))
   else:
@@ -775,27 +817,57 @@ def get_perf_timing(batch_size, step_train_times, scale=1):
 
 
 def load_checkpoint(saver, sess, ckpt_dir):
-  ckpt = tf.train.get_checkpoint_state(ckpt_dir)
-  if ckpt and ckpt.model_checkpoint_path:
-    if os.path.isabs(ckpt.model_checkpoint_path):
-      # Restores from checkpoint with absolute path.
-      model_checkpoint_path = ckpt.model_checkpoint_path
-    else:
-      # Restores from checkpoint with relative path.
-      model_checkpoint_path = os.path.join(ckpt_dir, ckpt.model_checkpoint_path)
-    # Assuming model_checkpoint_path looks something like:
-    #   /my-favorite-path/imagenet_train/model.ckpt-0,
-    # extract global_step from it.
-    global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-    if not global_step.isdigit():
-      global_step = 0
-    else:
-      global_step = int(global_step)
-    saver.restore(sess, model_checkpoint_path)
-    log_fn('Successfully loaded model from %s.' % ckpt.model_checkpoint_path)
-    return global_step
+  """Loads checkpoint from provided directory or full path.
+
+  Args:
+    saver: Saver used to restore the checkpoint.
+    sess: TensorFlow session.
+    ckpt_dir: Path to a folder of checkpoints or full path to a checkpoint.
+
+  Returns:
+    Global step.
+  """
+  model_checkpoint_path = _get_checkpoint_to_load(ckpt_dir)
+  global_step = model_checkpoint_path.split('/')[-1].split('-')[-1]
+  if not global_step.isdigit():
+    global_step = 0
   else:
-    raise CheckpointNotFoundException('No checkpoint file found.')
+    global_step = int(global_step)
+  saver.restore(sess, model_checkpoint_path)
+  log_fn('Successfully loaded model from %s.' % model_checkpoint_path)
+  return global_step
+
+
+def _get_checkpoint_to_load(ckpt_dir):
+  """Returns which checkpoint to load.
+
+  Args:
+    ckpt_dir: Path to a folder of checkpoints or full path to a checkpoint.
+
+  Returns:
+    Full path to checkpoint to load.
+
+  Raises:
+    CheckpointNotFoundException: If checkpoint is not found.
+  """
+  p = re.compile(r'ckpt-\d+$')
+  if p.search(ckpt_dir):
+    model_checkpoint_path = ckpt_dir
+  else:
+    # Finds latest checkpoint in directory provided
+    ckpt = tf.train.get_checkpoint_state(ckpt_dir)
+    if ckpt and ckpt.model_checkpoint_path:
+      if os.path.isabs(ckpt.model_checkpoint_path):
+        # Restores from checkpoint with absolute path.
+        model_checkpoint_path = ckpt.model_checkpoint_path
+      else:
+        # Restores from checkpoint with relative path.
+        model_checkpoint_path = os.path.join(ckpt_dir,
+                                             ckpt.model_checkpoint_path)
+    else:
+      raise CheckpointNotFoundException('No checkpoint file found in dir:{}'.
+                                        format(ckpt_dir))
+  return model_checkpoint_path
 
 
 # Params are passed to BenchmarkCNN's constructor. Params is a map from name
@@ -1016,6 +1088,9 @@ def get_optimizer(params, learning_rate):
         params.rmsprop_decay,
         momentum=params.rmsprop_momentum,
         epsilon=params.rmsprop_epsilon)
+  elif params.optimizer == 'adam':
+    opt = tf.train.AdamOptimizer(learning_rate, params.adam_beta1,
+                                 params.adam_beta2, params.adam_epsilon)
   else:
     raise ValueError('Optimizer "%s" was not recognized',
                      params.optimizer)
@@ -1064,11 +1139,9 @@ class BenchmarkCNN(object):
     self.params = params
     self.dataset = dataset or datasets.create_dataset(self.params.data_dir,
                                                       self.params.data_name)
-    self.model = model or model_config.get_model_config(self.params.model,
-                                                        self.dataset)
+    self.model = model or model_config.get_model_config(
+        self.params.model, self.dataset, self.params)
     self.trace_filename = self.params.trace_file
-    self.data_format = self.params.data_format
-    self.enable_layout_optimizer = self.params.enable_layout_optimizer
     self.rewriter_config = self.params.rewriter_config
     autotune_threshold = self.params.autotune_threshold if (
         self.params.autotune_threshold) else 1
@@ -1084,7 +1157,6 @@ class BenchmarkCNN(object):
       self.gpu_indices = [int(x) for x in self.params.gpu_indices.split(',')]
     else:
       self.gpu_indices = [x for x in range(self.num_gpus)]
-    self.use_synthetic_gpu_images = self.dataset.use_synthetic_gpu_images()
 
     if (self.params.device == 'cpu' and self.params.data_format == 'NCHW' and
         not self.params.mkl):
@@ -1310,13 +1382,16 @@ class BenchmarkCNN(object):
     else:
       self.global_step_device = self.cpu_device
 
-    self.image_preprocessor = self.get_image_preprocessor()
+    self.input_preprocessor = None
+    if not self.dataset.use_synthetic_gpu_inputs():
+      self.input_preprocessor = self.get_input_preprocessor()
     self.datasets_use_prefetch = (
         self.params.datasets_use_prefetch and
         # TODO(rohanj): Figure out why --datasets_use_prefetch freezes on the
         # CPU.
         self.params.device.lower() != 'cpu' and
-        self.image_preprocessor.supports_datasets())
+        self.input_preprocessor and
+        self.input_preprocessor.supports_datasets())
     self.init_global_step = 0
 
     self._config_benchmark_logger()
@@ -1337,9 +1412,11 @@ class BenchmarkCNN(object):
           self.params.benchmark_log_dir)
     self.benchmark_logger = model_benchmark_logger
 
+  # TODO(laigd): this changes the global device list which is used everywhere,
+  # consider refactoring it.
   def reset_devices_for_task(self, task_num, is_local=False):
     """Used to imitate another task when building a distributed graph."""
-    worker_prefix = ('job:localhost' if is_local else
+    worker_prefix = ('/job:localhost' if is_local else
                      '/job:worker/replica:0/task:%s' % task_num)
     self.cpu_device = '%s/cpu:0' % worker_prefix
     self.raw_devices = [
@@ -1363,7 +1440,7 @@ class BenchmarkCNN(object):
   def print_info(self):
     """Print basic information."""
     benchmark_info = self._get_params_info()
-    log_fn('Model:       %s' % self.model.get_model())
+    log_fn('Model:       %s' % self.model.get_model_name())
     log_fn('Dataset:     %s' % benchmark_info['dataset_name'])
     log_fn('Mode:        %s' % get_mode_from_params(self.params))
     log_fn('SingleSess:  %s' % benchmark_info['single_session'])
@@ -1376,8 +1453,7 @@ class BenchmarkCNN(object):
     log_fn('Num batches: %d' % self.num_batches)
     log_fn('Num epochs:  %.2f' % self.num_epochs)
     log_fn('Devices:     %s' % benchmark_info['device_list'])
-    log_fn('Data format: %s' % self.data_format)
-    log_fn('Layout optimizer: %s' % self.enable_layout_optimizer)
+    log_fn('Data format: %s' % self.params.data_format)
     if self.rewriter_config:
       log_fn('RewriterConfig: %s' % self.rewriter_config)
     log_fn('Optimizer:   %s' % self.params.optimizer)
@@ -1401,7 +1477,7 @@ class BenchmarkCNN(object):
       A dict of processed parameters.
     """
     dataset_name = self.dataset.name
-    if self.dataset.use_synthetic_gpu_images():
+    if self.dataset.use_synthetic_gpu_inputs():
       dataset_name += ' (synthetic)'
     single_session = self.params.variable_update == 'distributed_all_reduce'
     if single_session:
@@ -1426,7 +1502,7 @@ class BenchmarkCNN(object):
       benchmark_info = self._get_params_info()
 
       run_param = {
-          'model': self.model.get_model(),
+          'model': self.model.get_model_name(),
           'dataset': benchmark_info['dataset_name'],
           'mode': get_mode_from_params(self.params),
           'single_sess': benchmark_info['single_session'],
@@ -1435,18 +1511,18 @@ class BenchmarkCNN(object):
           'batch_size_per_device': self.batch_size / len(self.raw_devices),
           'num_batches': self.num_batches,
           'num_epochs': self.num_epochs,
-          'data_format': self.data_format,
-          'layout_optimizer': self.enable_layout_optimizer,
+          'data_format': self.params.data_format,
           'rewrite_config': self.rewriter_config,
           'optimizer': self.params.optimizer,
+          'session_config': create_config_proto(self.params),
       }
       # TODO(scottzhu): tf_cnn_benchmark might execute several times with
       # different param setting on the same box. This will cause the run file to
       # only contain the latest info. The benchmark_log_dir should be updated
       # for every new run.
       self.benchmark_logger.log_run_info(
-          self.model.get_model(), benchmark_info['dataset_name'], run_param,
-          test_id=self.params.benchmark_test_id)
+          self.model.get_model_name(), benchmark_info['dataset_name'],
+          run_param, test_id=self.params.benchmark_test_id)
 
   def run(self):
     """Run the benchmark task assigned to this process.
@@ -1486,11 +1562,7 @@ class BenchmarkCNN(object):
       Dictionary containing eval statistics. Currently returns an empty
       dictionary.
     """
-    if self.datasets_use_prefetch:
-      (input_producer_op, enqueue_ops, fetches) = (
-          self._build_model_with_dataset_prefetching())
-    else:
-      (input_producer_op, enqueue_ops, fetches) = self._build_model()
+    (input_producer_op, enqueue_ops, fetches) = self._build_model()
     saver = tf.train.Saver(self.variable_mgr.savable_variables())
     summary_writer = tf.summary.FileWriter(self.params.eval_dir,
                                            tf.get_default_graph())
@@ -1534,10 +1606,14 @@ class BenchmarkCNN(object):
             sess, input_producer_op, self.batch_group_size,
             self.params.use_python32_barrier)
         image_producer.start()
+      if enqueue_ops:
         for i in xrange(len(enqueue_ops)):
           sess.run(enqueue_ops[:(i + 1)])
-          image_producer.notify_image_consumption()
+          if image_producer is not None:
+            image_producer.notify_image_consumption()
       loop_start_time = start_time = time.time()
+      # TODO(laigd): refactor the part to compute/report the accuracy. Currently
+      # it only works for image models.
       top_1_accuracy_sum = 0.0
       top_5_accuracy_sum = 0.0
       total_eval_count = self.num_batches * self.batch_size
@@ -1602,7 +1678,7 @@ class BenchmarkCNN(object):
     with graph.as_default():
       return self._benchmark_graph(result_to_benchmark)
 
-  GPU_CACHED_IMAGES_VARIABLE_NAME = 'gpu_cached_images'
+  GPU_CACHED_INPUT_VARIABLE_NAME = 'gpu_cached_inputs'
 
   def _unfreezable_local_variables(self, graph):
     """Get the local variables that we don't want to freeze."""
@@ -1610,7 +1686,7 @@ class BenchmarkCNN(object):
         tf.GraphKeys.LOCAL_VARIABLES,
         # We don't freeze the gpu_cached_images local variable so it won't get
         # constant folded with ops which process the input.
-        scope='.*' + BenchmarkCNN.GPU_CACHED_IMAGES_VARIABLE_NAME)
+        scope='.*' + BenchmarkCNN.GPU_CACHED_INPUT_VARIABLE_NAME)
 
   def _build_graph(self):
     """Build the graph.
@@ -1621,19 +1697,11 @@ class BenchmarkCNN(object):
     """
     if self.params.variable_update == 'distributed_all_reduce':
       self.single_session = True
-      if self.datasets_use_prefetch:
-        (input_producer_op, enqueue_ops, fetches) = (
-            self._build_model_single_session_with_dataset_prefetching())
-      else:
-        (input_producer_op, enqueue_ops, fetches) = (
-            self._build_model_single_session())
+      (input_producer_op, enqueue_ops, fetches) = (
+          self._build_model_single_session())
     else:
       self.single_session = False
-      if self.datasets_use_prefetch:
-        (input_producer_op, enqueue_ops, fetches) = (
-            self._build_model_with_dataset_prefetching())
-      else:
-        (input_producer_op, enqueue_ops, fetches) = self._build_model()
+      (input_producer_op, enqueue_ops, fetches) = self._build_model()
     fetches_list = nest.flatten(list(fetches.values()))
     main_fetch_group = tf.group(*fetches_list, name='main_fetch_group')
     execution_barrier = None
@@ -1732,7 +1800,9 @@ class BenchmarkCNN(object):
     # GPU memory.
     if is_chief and not self.forward_only_and_freeze:
       saver = tf.train.Saver(
-          self.variable_mgr.savable_variables(), save_relative_paths=True)
+          self.variable_mgr.savable_variables(),
+          save_relative_paths=True,
+          max_to_keep=self.params.max_ckpts_to_keep)
     else:
       saver = None
     ready_for_local_init_op = None
@@ -1786,6 +1856,8 @@ class BenchmarkCNN(object):
         master=target,
         config=create_config_proto(self.params),
         start_standard_services=start_standard_services) as sess:
+      if self.params.backbone_model_path is not None:
+        self.model.load_backbone_model(sess, self.params.backbone_model_path)
       if bcast_global_variables_op:
         sess.run(bcast_global_variables_op)
 
@@ -1795,9 +1867,11 @@ class BenchmarkCNN(object):
             sess, graph_info.input_producer_op, self.batch_group_size,
             self.params.use_python32_barrier)
         image_producer.start()
+      if graph_info.enqueue_ops:
         for i in xrange(len(graph_info.enqueue_ops)):
           sess.run(graph_info.enqueue_ops[:(i + 1)])
-          image_producer.notify_image_consumption()
+          if image_producer is not None:
+            image_producer.notify_image_consumption()
       self.init_global_step, = sess.run([graph_info.global_step])
       if self.job_name and not self.params.cross_replica_sync:
         # TODO(zhengxq): Do we need to use a global step watcher at all?
@@ -1854,9 +1928,11 @@ class BenchmarkCNN(object):
             log_fn('Waiting for other replicas to finish warm up')
             sess.run([graph_info.execution_barrier])
 
+          # TODO(laigd): rename 'Img' to maybe 'Input'.
           header_str = ('Step\tImg/sec\t' +
                         self.params.loss_type_to_report.replace('/', ' '))
           if self.params.print_training_accuracy or self.params.forward_only:
+            # TODO(laigd): use the actual accuracy op names of the model.
             header_str += '\ttop_1_accuracy\ttop_5_accuracy'
           log_fn(header_str)
           assert len(step_train_times) == self.num_warmup_batches
@@ -1902,6 +1978,7 @@ class BenchmarkCNN(object):
         images_per_sec = num_steps * self.batch_size / elapsed_time
 
       log_fn('-' * 64)
+      # TODO(laigd): rename 'images' to maybe 'inputs'.
       log_fn('total images/sec: %.2f' % images_per_sec)
       log_fn('-' * 64)
       if image_producer is not None:
@@ -2025,15 +2102,57 @@ class BenchmarkCNN(object):
     return (updated_graph, updated_graph_info)
 
   def _build_input_processing(self, shift_ratio=0):
-    """"Build the image (pre)processing portion of the model graph."""
+    """"Build the image (pre)processing portion of the model graph.
+
+    Args:
+      shift_ratio: shift_ratio for data_flow_ops.RecordInput.
+
+    Returns:
+      An InputProcessingInfo containing all the input sources to the model.
+    """
+    input_processing_info = InputProcessingInfo(
+        input_producer_op=None,
+        input_producer_stages=None,
+        function_buffering_resources=None,
+        multi_device_iterator_input=None)
+
+    # If using synthetic gpu inputs, do nothing on the cpu side.
+    if self.dataset.use_synthetic_gpu_inputs():
+      assert not self.datasets_use_prefetch
+      return input_processing_info
+
+    # Use prefetching mechanism provided by dataset input pipeline.
+    if self.datasets_use_prefetch:
+      if self.params.variable_update == 'distributed_all_reduce':
+        batch_size = self.batch_size // len(self.devices)
+      else:
+        batch_size = self.batch_size
+
+      if self.params.use_multi_device_iterator:
+        multi_device_iterator = data_utils.build_multi_device_iterator(
+            batch_size, len(self.devices),
+            self.input_preprocessor.parse_and_preprocess, self.cpu_device,
+            self.params, self.raw_devices, self.dataset)
+        return input_processing_info._replace(
+            multi_device_iterator_input=multi_device_iterator.get_next())
+
+      function_buffering_resources = (
+          data_utils.build_prefetch_input_processing(
+              batch_size, self.model.get_input_shape(),
+              len(self.devices), self.input_preprocessor.parse_and_preprocess,
+              self.cpu_device, self.params, self.devices,
+              get_data_type(self.params), self.dataset))
+      return input_processing_info._replace(
+          function_buffering_resources=function_buffering_resources)
+
+    # Not using dataset prefetching. Use a staging area to mimic the prefetching
+    # behavior instead.
     with tf.device(self.cpu_device):
       if self.params.eval:
         subset = 'validation'
       else:
         subset = 'train'
-      input_producer_op = []
-      input_producer_stages = []
-      images_splits, labels_splits = self.image_preprocessor.minibatch(
+      images_splits, labels_splits = self.input_preprocessor.minibatch(
           self.dataset,
           subset=subset,
           use_datasets=self.params.use_datasets,
@@ -2041,22 +2160,49 @@ class BenchmarkCNN(object):
           shift_ratio=shift_ratio)
       images_shape = images_splits[0].get_shape()
       labels_shape = labels_splits[0].get_shape()
+
+      input_producer_op = []
+      input_producer_stages = []
       for device_num in range(len(self.devices)):
-        input_producer_stages.append(
-            data_flow_ops.StagingArea(
-                [images_splits[0].dtype, labels_splits[0].dtype],
-                shapes=[images_shape, labels_shape],
-                shared_name='image_producer_staging_area_%d' % device_num))
+        staging_area = data_flow_ops.StagingArea(
+            [images_splits[0].dtype, labels_splits[0].dtype],
+            shapes=[images_shape, labels_shape],
+            shared_name='image_producer_staging_area_%d' % device_num)
+        input_producer_stages.append(staging_area)
         for group_index in xrange(self.batch_group_size):
-          if not self.use_synthetic_gpu_images:
-            batch_index = group_index + device_num * self.batch_group_size
-            put_op = input_producer_stages[device_num].put(
-                [images_splits[batch_index], labels_splits[batch_index]])
-            input_producer_op.append(put_op)
-    return (input_producer_op, input_producer_stages)
+          batch_index = group_index + device_num * self.batch_group_size
+          put_op = staging_area.put(
+              [images_splits[batch_index], labels_splits[batch_index]])
+          input_producer_op.append(put_op)
+      assert input_producer_op
+
+    return input_processing_info._replace(
+        input_producer_op=input_producer_op,
+        input_producer_stages=input_producer_stages)
+
+  def _maybe_initialize_fp16(self):
+    """Initialize fp16 settings."""
+    if self.params.use_fp16:
+      init_loss_scale_val = float(self.params.fp16_loss_scale or
+                                  self.model.get_fp16_loss_scale())
+      self.loss_scale = None
+      self.loss_scale_normal_steps = None
+      if self.enable_auto_loss_scale or init_loss_scale_val != 1:
+        self.loss_scale = tf.get_variable(
+            name='loss_scale',
+            initializer=init_loss_scale_val,
+            dtype=tf.float32,
+            trainable=False)
+      if self.enable_auto_loss_scale:
+        self.loss_scale_normal_steps = tf.get_variable(
+            name='loss_scale_normal_steps', initializer=0, trainable=False)
 
   def _build_model(self):
     """Build the TensorFlow graph."""
+    if self.datasets_use_prefetch:
+      assert not self.params.staged_vars
+      assert not self.variable_mgr.supports_staged_vars()
+
     # Adjust seed so different workers start read different input files.
     if self.params.variable_update == 'horovod':
       import horovod.tensorflow as hvd  # pylint: disable=g-import-not-at-top
@@ -2071,34 +2217,20 @@ class BenchmarkCNN(object):
     losses = []
     device_grads = []
     all_logits = []
-    all_top_1_ops = []
-    all_top_5_ops = []
-    enqueue_ops = []
+    all_accuracy_ops = {}
     gpu_compute_stage_ops = []
     gpu_grad_stage_ops = []
 
     with tf.device(self.global_step_device):
       global_step = tf.train.get_or_create_global_step()
-      if self.params.use_fp16:
-        init_loss_scale_val = float(self.params.fp16_loss_scale or
-                                    self.model.get_fp16_loss_scale())
-        if self.enable_auto_loss_scale or init_loss_scale_val != 1:
-          self.loss_scale = tf.get_variable(
-              name='loss_scale',
-              initializer=init_loss_scale_val,
-              dtype=tf.float32,
-              trainable=False)
-          self.loss_scale_normal_steps = tf.get_variable(
-              name='loss_scale_normal_steps', initializer=0, trainable=False)
-        else:
-          self.loss_scale = None
-          self.loss_scale_normal_steps = None
+      self._maybe_initialize_fp16()
 
     # Build the processing and model for the worker.
+    input_producer_op = None
     with tf.name_scope('input_processing'):
-      (input_producer_op,
-       input_producer_stages) = self._build_input_processing(shift_ratio=0)
-      input_producer_op = tf.group(*input_producer_op)
+      input_processing_info = self._build_input_processing(shift_ratio=0)
+      if input_processing_info.input_producer_op is not None:
+        input_producer_op = tf.group(*input_processing_info.input_producer_op)
     update_ops = None
     staging_delta_ops = []
 
@@ -2106,17 +2238,24 @@ class BenchmarkCNN(object):
       with tf.name_scope('tower_%i' % device_num) as name_scope, (
           self.variable_mgr.create_outer_variable_scope(device_num)):
         results = self.add_forward_pass_and_gradients(
-            phase_train, device_num, device_num,
-            input_producer_stages[device_num], gpu_compute_stage_ops,
-            gpu_grad_stage_ops)
+            phase_train, device_num, device_num, input_processing_info,
+            gpu_compute_stage_ops, gpu_grad_stage_ops)
+
+        if self.params.backbone_model_path:
+          self.model.add_backbone_saver()
+
         if phase_train:
           losses.append(results['loss'])
           device_grads.append(results['gradvars'])
         else:
           all_logits.append(results['logits'])
         if not phase_train or self.params.print_training_accuracy:
-          all_top_1_ops.append(results['top_1_op'])
-          all_top_5_ops.append(results['top_5_op'])
+          for name, op in results.items():
+            if name.startswith('accuracy:'):
+              key = name[9:]
+              if key not in all_accuracy_ops:
+                all_accuracy_ops[key] = []
+              all_accuracy_ops[key].append(op)
 
         if device_num == 0:
           # Retain the Batch Normalization updates operations only from the
@@ -2130,125 +2269,39 @@ class BenchmarkCNN(object):
           # towers share a copy of the variables so we also only need to update
           # and save the moving averages once.
           update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, name_scope)
-          staging_delta_ops = list(self.variable_mgr.staging_delta_ops)
+          if self.datasets_use_prefetch:
+            assert not self.variable_mgr.staging_delta_ops
+          else:
+            staging_delta_ops = list(self.variable_mgr.staging_delta_ops)
 
-    if self.variable_mgr.supports_staged_vars():
-      for staging_ops in self.variable_mgr.staging_vars_on_devices:
-        gpu_compute_stage_ops.extend(
-            [put_op for _, (put_op, _) in six.iteritems(staging_ops)])
-    enqueue_ops.append(tf.group(*gpu_compute_stage_ops,
-                                name='gpu_compute_stage_ops_group'))
-    if gpu_grad_stage_ops:
-      staging_delta_ops += gpu_grad_stage_ops
-    if staging_delta_ops:
-      enqueue_ops.append(tf.group(*(staging_delta_ops)))
+    enqueue_ops = []
+    if not self.datasets_use_prefetch:
+      if self.variable_mgr.supports_staged_vars():
+        for staging_ops in self.variable_mgr.staging_vars_on_devices:
+          gpu_compute_stage_ops.extend(
+              [put_op for _, (put_op, _) in six.iteritems(staging_ops)])
+      enqueue_ops.append(tf.group(*gpu_compute_stage_ops,
+                                  name='gpu_compute_stage_ops_group'))
+      if gpu_grad_stage_ops:
+        staging_delta_ops += gpu_grad_stage_ops
+      if staging_delta_ops:
+        enqueue_ops.append(tf.group(*(staging_delta_ops)))
 
     fetches = self._build_fetches(global_step, all_logits, losses, device_grads,
-                                  enqueue_ops, update_ops, all_top_1_ops,
-                                  all_top_5_ops, phase_train)
+                                  enqueue_ops, update_ops, all_accuracy_ops,
+                                  phase_train)
     return (input_producer_op, enqueue_ops, fetches)
 
-  # TODO(rohanj): Refactor this function and share with other code path.
-  def _build_model_with_dataset_prefetching(self):
-    """Build the TensorFlow graph using datasets prefetching."""
-    assert not self.params.staged_vars
-    assert not self.variable_mgr.supports_staged_vars()
-
-    # Adjust seed so different workers start read different input files.
-    if self.params.variable_update == 'horovod':
-      import horovod.tensorflow as hvd  # pylint: disable=g-import-not-at-top
-      seed_adjustment = hvd.rank()
-    else:
-      seed_adjustment = 0
-    tf.set_random_seed(self.params.tf_random_seed + seed_adjustment)
-    np.random.seed(4321 + seed_adjustment)
-    phase_train = not (self.params.eval or self.params.forward_only)
-
-    log_fn('Generating model')
-    losses = []
-    device_grads = []
-    all_logits = []
-    all_top_1_ops = []
-    all_top_5_ops = []
-
-    with tf.device(self.global_step_device):
-      global_step = tf.train.get_or_create_global_step()
-      if self.params.use_fp16:
-        init_loss_scale_val = float(self.params.fp16_loss_scale or
-                                    self.model.get_fp16_loss_scale())
-        if self.enable_auto_loss_scale or init_loss_scale_val != 1:
-          self.loss_scale = tf.get_variable(
-              name='loss_scale',
-              initializer=init_loss_scale_val,
-              dtype=tf.float32,
-              trainable=False)
-          self.loss_scale_normal_steps = tf.get_variable(
-              name='loss_scale_normal_steps', initializer=0, trainable=False)
-        else:
-          self.loss_scale = None
-          self.loss_scale_normal_steps = None
-
-    # Build the processing and model for the worker.
-    with tf.name_scope('input_processing'):
-      function_buffering_resources = data_utils.build_prefetch_image_processing(
-          self.model.get_image_size(), self.model.get_image_size(),
-          self.batch_size, len(
-              self.devices), self.image_preprocessor.parse_and_preprocess,
-          self.cpu_device, self.params, self.devices,
-          get_data_type(self.params), self.dataset)
-
-    update_ops = None
-
-    for device_num in range(len(self.devices)):
-      with tf.name_scope('tower_%i' % device_num) as name_scope, (
-          self.variable_mgr.create_outer_variable_scope(device_num)):
-        function_buffering_resource = function_buffering_resources[device_num]
-        results = self.add_forward_pass_and_gradients(
-            phase_train, device_num, device_num, None, None, None,
-            function_buffering_resource)
-        if phase_train:
-          losses.append(results['loss'])
-          device_grads.append(results['gradvars'])
-        else:
-          all_logits.append(results['logits'])
-        if not phase_train or self.params.print_training_accuracy:
-          all_top_1_ops.append(results['top_1_op'])
-          all_top_5_ops.append(results['top_5_op'])
-
-        if device_num == 0:
-          # Retain the Batch Normalization updates operations only from the
-          # first tower. These operations update the moving mean and moving
-          # variance variables, which are updated (but not used) during
-          # training, and used during evaluation. The moving mean and variance
-          # approximate the true mean and variance across all images in the
-          # dataset. Therefore, in replicated mode, these moving averages would
-          # be almost identical for each tower, and so we only update and save
-          # the moving averages for one tower. In parameter server mode, all
-          # towers share a copy of the variables so we also only need to update
-          # and save the moving averages once.
-          update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, name_scope)
-          assert not self.variable_mgr.staging_delta_ops
-
-    fetches = self._build_fetches(global_step, all_logits, losses, device_grads,
-                                  None, update_ops, all_top_1_ops,
-                                  all_top_5_ops, phase_train)
-    return (None, [], fetches)
-
   def _build_fetches(self, global_step, all_logits, losses, device_grads,
-                     enqueue_ops, update_ops, all_top_1_ops, all_top_5_ops,
-                     phase_train):
+                     enqueue_ops, update_ops, all_accuracy_ops, phase_train):
     """Complete construction of model graph, populating the fetches map."""
     fetches = {}
     if enqueue_ops:
       fetches['enqueue_ops'] = enqueue_ops
-    if all_top_1_ops:
-      fetches['top_1_accuracy'] = tf.reduce_sum(all_top_1_ops) / self.batch_size
+    for name, ops in all_accuracy_ops.items():
+      fetches[name] = tf.reduce_sum(ops) / self.batch_size
       if self.task_index == 0 and self.params.summary_verbosity >= 1:
-        tf.summary.scalar('top_1_accuracy', fetches['top_1_accuracy'])
-    if all_top_5_ops:
-      fetches['top_5_accuracy'] = tf.reduce_sum(all_top_5_ops) / self.batch_size
-      if self.task_index == 0 and self.params.summary_verbosity >= 1:
-        tf.summary.scalar('top_5_accuracy', fetches['top_5_accuracy'])
+        tf.summary.scalar(name, fetches[name])
 
     if not phase_train:
       if self.params.forward_only:
@@ -2309,6 +2362,7 @@ class BenchmarkCNN(object):
         tf.summary.scalar(self.params.loss_type_to_report, average_loss)
         if self.loss_scale is not None:
           tf.summary.scalar('loss_scale', self.loss_scale)
+        if self.loss_scale_normal_steps:
           tf.summary.scalar('loss_scale_normal_steps',
                             self.loss_scale_normal_steps)
 
@@ -2367,9 +2421,7 @@ class BenchmarkCNN(object):
     losses = []
     device_grads = []
     all_logits = []
-    all_top_1_ops = []
-    all_top_5_ops = []
-    enqueue_ops = []
+    all_accuracy_ops = {}
     gpu_compute_stage_ops = []
     gpu_grad_stage_ops = []
 
@@ -2388,10 +2440,10 @@ class BenchmarkCNN(object):
       self.reset_devices_for_task(task_num, is_local)
       # Build the per-worker image processing
       with tf.name_scope('input_processing'):
-        (input_producer_op, input_producer_stages) = (
-            self._build_input_processing(
-                shift_ratio=(float(task_num) / self.num_workers)))
-      global_input_producer_op.extend(input_producer_op)
+        input_processing_info = self._build_input_processing(
+            shift_ratio=(float(task_num) / self.num_workers))
+      if input_processing_info.input_producer_op is not None:
+        global_input_producer_op.extend(input_processing_info.input_producer_op)
       # Build the per-worker model replica.
       for rel_device_num in range(len(self.devices)):
         abs_device_num = task_num * len(self.devices) + rel_device_num
@@ -2400,16 +2452,23 @@ class BenchmarkCNN(object):
                 'task_%i_tower_%i' % (task_num, rel_device_num)) as name_scope:
           task_results = self.add_forward_pass_and_gradients(
               phase_train, rel_device_num, abs_device_num,
-              input_producer_stages[rel_device_num], gpu_compute_stage_ops,
-              gpu_grad_stage_ops)
+              input_processing_info, gpu_compute_stage_ops, gpu_grad_stage_ops)
+
+          if self.params.backbone_model_path:
+            self.model.add_backbone_saver()
+
           if phase_train:
             losses.append(task_results['loss'])
             device_grads.append(task_results['gradvars'])
           else:
             all_logits.append(task_results['logits'])
           if not phase_train or self.params.print_training_accuracy:
-            all_top_1_ops.append(task_results['top_1_op'])
-            all_top_5_ops.append(task_results['top_5_op'])
+            for name, op in task_results.items():
+              if name.startswith('accuracy:'):
+                key = name[9:]
+                if key not in all_accuracy_ops:
+                  all_accuracy_ops[key] = []
+                all_accuracy_ops[key].append(op)
 
           if rel_device_num == 0:
             # Retain the Batch Normalization updates operations only
@@ -2428,196 +2487,119 @@ class BenchmarkCNN(object):
                 tf.get_collection(tf.GraphKeys.UPDATE_OPS, name_scope))
             assert not self.variable_mgr.staging_delta_ops
 
-    enqueue_ops.append(tf.group(*gpu_compute_stage_ops,
-                                name='gpu_compute_stage_ops'))
+    enqueue_ops = []
+    if gpu_compute_stage_ops:
+      enqueue_ops.append(tf.group(*gpu_compute_stage_ops,
+                                  name='gpu_compute_stage_ops'))
     assert not self.variable_mgr.supports_staged_vars()
     assert not gpu_grad_stage_ops
 
     fetches = self._build_fetches(global_step, all_logits, losses, device_grads,
-                                  enqueue_ops, update_ops, all_top_1_ops,
-                                  all_top_5_ops, phase_train)
-    global_input_producer_op = tf.group(*global_input_producer_op)
+                                  enqueue_ops, update_ops, all_accuracy_ops,
+                                  phase_train)
+    if global_input_producer_op:
+      global_input_producer_op = tf.group(*global_input_producer_op)
+    else:
+      global_input_producer_op = None
     return (global_input_producer_op, enqueue_ops, fetches)
-
-  # TODO(rohanj): Refactor this function and share with other code path.
-  # TODO(reedwm): Add a test case for this function
-  def _build_model_single_session_with_dataset_prefetching(self):
-    """Build the TensorFlow graph for multiple replicas in a single_session.
-
-    Returns:
-      input_producer_op:
-      enqueue_ops:
-      fetches:
-
-    Raises:
-       ValueError: optimizer not recognized.
-
-    Single session runs multiple model replicas as part of one large
-    distributed graph, whose global execution is always step-synchronized.
-    """
-    # verify assumptions
-    assert self.params.task_index == 0
-    assert not self.params.eval
-    assert not self.params.forward_only
-    assert not self.params.staged_vars
-
-    tf.set_random_seed(self.params.tf_random_seed)
-    np.random.seed(4321)
-    phase_train = True
-
-    log_fn('Generating model')
-    losses = []
-    device_grads = []
-    all_logits = []
-    all_top_1_ops = []
-    all_top_5_ops = []
-
-    with tf.device(self.global_step_device):
-      global_step = tf.train.get_or_create_global_step()
-
-    update_ops = []
-
-    is_local = not self.job_name
-    if is_local:
-      assert self.num_workers == 1
-    for task_num in range(self.num_workers):
-      # Reset the devices that self.variable_mgr knows about to those
-      # belonging to the next worker (task).
-      self.reset_devices_for_task(task_num, is_local)
-      # Build the per-worker image processing
-      with tf.name_scope('input_processing'):
-        function_buffering_resources = (
-            data_utils.build_prefetch_image_processing(
-                self.model.get_image_size(), self.model.get_image_size(),
-                self.batch_size // len(self.devices), len(
-                    self.devices), self.image_preprocessor.parse_and_preprocess,
-                self.cpu_device, self.params, self.devices,
-                get_data_type(self.params), self.dataset))
-
-      # Build the per-worker model replica.
-      for rel_device_num in range(len(self.devices)):
-        abs_device_num = task_num * len(self.devices) + rel_device_num
-        with self.variable_mgr.create_outer_variable_scope(
-            abs_device_num), tf.name_scope(
-                'task_%i_tower_%i' % (task_num, rel_device_num)) as name_scope:
-          function_buffering_resource = (
-              function_buffering_resources[rel_device_num])
-          task_results = self.add_forward_pass_and_gradients(
-              phase_train, rel_device_num, abs_device_num, None, None, None,
-              function_buffering_resource)
-          if phase_train:
-            losses.append(task_results['loss'])
-            device_grads.append(task_results['gradvars'])
-          else:
-            all_logits.append(task_results['logits'])
-          if not phase_train or self.params.print_training_accuracy:
-            all_top_1_ops.append(task_results['top_1_op'])
-            all_top_5_ops.append(task_results['top_5_op'])
-
-          if rel_device_num == 0:
-            # Retain the Batch Normalization updates operations only
-            # from the first tower. These operations update the moving
-            # mean and moving variance variables, which are updated
-            # (but not used) during training, and used during
-            # evaluation. The moving mean and variance approximate the
-            # true mean and variance across all images in the
-            # dataset. Therefore, in replicated mode, these moving
-            # averages would be almost identical for each tower, and
-            # so we only update and save the moving averages for one
-            # tower. In parameter server mode, all towers share a copy
-            # of the variables so we also only need to update and save
-            # the moving averages once.
-            update_ops.extend(
-                tf.get_collection(tf.GraphKeys.UPDATE_OPS, name_scope))
-            assert not self.variable_mgr.staging_delta_ops
-
-    assert not self.variable_mgr.supports_staged_vars()
-
-    fetches = self._build_fetches(global_step, all_logits, losses, device_grads,
-                                  None, update_ops, all_top_1_ops,
-                                  all_top_5_ops, phase_train)
-    return (None, [], fetches)
 
   def add_forward_pass_and_gradients(self,
                                      phase_train,
                                      rel_device_num,
                                      abs_device_num,
-                                     image_producer_stage,
+                                     input_processing_info,
                                      gpu_compute_stage_ops,
-                                     gpu_grad_stage_ops,
-                                     function_buffering_resource=None):
+                                     gpu_grad_stage_ops):
     """Add ops for forward-pass and gradient computations."""
     nclass = self.dataset.num_classes
     data_type = get_data_type(self.params)
-    image_size = self.model.get_image_size()
-    if self.datasets_use_prefetch and function_buffering_resource is not None:
-      with tf.device(self.raw_devices[rel_device_num]):
-        images, labels = data_utils.get_images_and_labels(
-            function_buffering_resource, data_type)
-        images = tf.reshape(
-            images,
-            shape=[
-                self.batch_size // self.num_gpus, image_size, image_size,
-                self.dataset.depth
-            ])
+    if self.datasets_use_prefetch:
+      function_buffering_resource = None
+      if input_processing_info.function_buffering_resources:
+        function_buffering_resource = (
+            input_processing_info.function_buffering_resources[rel_device_num])
+
+      input_data = None
+      if input_processing_info.multi_device_iterator_input:
+        input_data = (
+            input_processing_info.multi_device_iterator_input[rel_device_num])
+
+      # Exactly one of function_buffering_resource or input_data is not None.
+      if function_buffering_resource is None and input_data is None:
+        raise ValueError('Both function_buffering_resource and input_data '
+                         'cannot be null if datasets_use_prefetch=True')
+      if function_buffering_resource is not None and input_data is not None:
+        raise ValueError('Both function_buffering_resource and input_data '
+                         'cannot be specified. Only one should be.')
+      input_shape = [self.model.get_batch_size()] + self.model.get_input_shape()
+      if function_buffering_resource is not None:
+        with tf.device(self.raw_devices[rel_device_num]):
+          inputs, labels = data_utils.get_inputs_and_labels(
+              function_buffering_resource, data_type)
+          inputs = tf.reshape(inputs, shape=input_shape)
+      else:
+        with tf.device(self.raw_devices[rel_device_num]):
+          labels, inputs = input_data
+          inputs = tf.reshape(inputs, shape=input_shape)
     else:
-      if not self.use_synthetic_gpu_images:
+      if not self.dataset.use_synthetic_gpu_inputs():
+        input_producer_stage = input_processing_info.input_producer_stages[
+            rel_device_num]
         with tf.device(self.cpu_device):
-          host_images, host_labels = image_producer_stage.get()
-          images_shape = host_images.get_shape()
+          host_inputs, host_labels = input_producer_stage.get()
+          inputs_shape = host_inputs.get_shape()
           labels_shape = host_labels.get_shape()
-      with tf.device(self.raw_devices[rel_device_num]):
-        if not self.use_synthetic_gpu_images:
+        with tf.device(self.raw_devices[rel_device_num]):
           gpu_compute_stage = data_flow_ops.StagingArea(
-              [host_images.dtype, host_labels.dtype],
-              shapes=[images_shape, labels_shape])
+              [host_inputs.dtype, host_labels.dtype],
+              shapes=[inputs_shape, labels_shape])
           # The CPU-to-GPU copy is triggered here.
           gpu_compute_stage_op = gpu_compute_stage.put(
-              [host_images, host_labels])
-          images, labels = gpu_compute_stage.get()
-          images = tf.reshape(images, shape=images_shape)
+              [host_inputs, host_labels])
+          inputs, labels = gpu_compute_stage.get()
+          inputs = tf.reshape(inputs, shape=inputs_shape)
           gpu_compute_stage_ops.append(gpu_compute_stage_op)
-        else:
+      else:
+        with tf.device(self.raw_devices[rel_device_num]):
           # Minor hack to avoid H2D copy when using synthetic data
-          image_shape = [
-              self.batch_size // self.num_gpus, image_size, image_size,
-              self.dataset.depth
-          ]
-          labels_shape = [self.batch_size // self.num_gpus]
-          # Synthetic image should be within [0, 255].
-          images = tf.truncated_normal(
-              image_shape,
-              dtype=data_type,
-              mean=127,
-              stddev=60,
-              name='synthetic_images')
-          images = tf.contrib.framework.local_variable(
-              images, name=BenchmarkCNN.GPU_CACHED_IMAGES_VARIABLE_NAME)
-          labels = tf.random_uniform(
-              labels_shape,
-              minval=0,
-              maxval=nclass - 1,
-              dtype=tf.int32,
-              name='synthetic_labels')
+          inputs, labels = self.model.get_synthetic_inputs_and_labels(
+              BenchmarkCNN.GPU_CACHED_INPUT_VARIABLE_NAME, data_type, nclass)
 
-    with tf.device(self.devices[rel_device_num]):
-      logits, aux_logits = self.model.build_network(
-          images, phase_train, nclass, self.dataset.depth, data_type,
-          self.data_format, self.params.use_tf_layers, self.params.fp16_vars)
-      results = {}  # The return value
-      if not phase_train or self.params.print_training_accuracy:
-        top_1_op = tf.reduce_sum(
-            tf.cast(tf.nn.in_top_k(logits, labels, 1), data_type))
-        top_5_op = tf.reduce_sum(
-            tf.cast(tf.nn.in_top_k(logits, labels, 5), data_type))
-        results['top_1_op'] = top_1_op
-        results['top_5_op'] = top_5_op
+    labels_shape = self.model.get_labels_shape()
+    if labels_shape:
+      labels = tf.reshape(labels, shape=labels_shape)
+
+    def forward_pass_and_gradients():
+      """Builds forward pass and gradient computation network.
+
+      When phase_train=True and print_training_accuracy=False:
+        return [loss] + grads
+
+      When phase_train=True and print_training_accuracy=True:
+        return [logits, loss] + grads
+
+      When phase_train=False,
+        return [logits]
+
+      Its output can always be unpacked by
+
+      ```
+        outputs = forward_pass_and_gradients()
+        logits, loss, grads = unpack_forward_pass_and_gradients_output(outputs)
+      ```
+
+      Returns:
+        outputs: A list of tensors depending on different modes.
+      """
+
+      build_network_result = self.model.build_network(
+          inputs, phase_train, nclass, data_type)
+      logits = build_network_result.logits
 
       if not phase_train:
-        results['logits'] = logits
-        return results
-      loss_func = self.model.loss_function or loss_function
-      base_loss = loss_func(logits, labels, aux_logits=aux_logits)
+        return [logits]
+
+      base_loss = self.model.loss_function(build_network_result, labels)
       params = self.variable_mgr.trainable_variables_on_device(
           rel_device_num, abs_device_num)
       l2_loss = None
@@ -2688,23 +2670,77 @@ class BenchmarkCNN(object):
         gpu_grad_stage_ops.append(grad_stage_op)
         grads = grad_stage.get()
 
-      param_refs = self.variable_mgr.trainable_variables_on_device(
-          rel_device_num, abs_device_num, writable=True)
-      gradvars = list(zip(grads, param_refs))
       if self.params.loss_type_to_report == 'total_loss':
-        results['loss'] = total_loss
+        loss = total_loss
       else:
-        results['loss'] = base_loss
-      results['gradvars'] = gradvars
+        loss = base_loss
+
+      if self.params.print_training_accuracy:
+        return [logits, loss] + grads
+      else:
+        return [loss] + grads
+
+    def unpack_forward_pass_and_gradients_output(forward_pass_and_grad_outputs):
+      """Unpacks outputs from forward_pass_and_gradients.
+
+      Args:
+        forward_pass_and_grad_outputs: Output from forward_pass_and_gradients.
+
+      Returns:
+        logits: Unscaled probability distribution from forward pass.
+          If unavailable, None is returned.
+        loss: Loss function result from logits.
+          If unavailable, None is returned.
+        grads: Gradients for all trainable variables.
+          If unavailable, None is returned.
+      """
+      logits = None
+      # logits is only fetched in non-train mode or when
+      # print_training_accuracy is set.
+      if not phase_train or self.params.print_training_accuracy:
+        logits = forward_pass_and_grad_outputs.pop(0)
+
+      loss = (
+          forward_pass_and_grad_outputs[0]
+          if forward_pass_and_grad_outputs else None)
+      grads = (
+          forward_pass_and_grad_outputs[1:]
+          if forward_pass_and_grad_outputs else None)
+
+      return logits, loss, grads
+
+    def make_results(logits, loss, grads):
+      """Generate results based on logits, loss and grads."""
+      results = {}  # The return value
+
+      if logits is not None:
+        results['logits'] = logits
+        accuracy_ops = self.model.accuracy_function(logits, labels, data_type)
+        for name, op in accuracy_ops.items():
+          results['accuracy:' + name] = op
+
+      if loss is not None:
+        results['loss'] = loss
+
+      if grads is not None:
+        param_refs = self.variable_mgr.trainable_variables_on_device(
+            rel_device_num, abs_device_num, writable=True)
+        results['gradvars'] = list(zip(grads, param_refs))
+
       return results
 
-  def get_image_preprocessor(self):
+    with tf.device(self.devices[rel_device_num]):
+      outputs = platforms_util.maybe_compile(forward_pass_and_gradients,
+                                             self.params)
+      logits, loss, grads = unpack_forward_pass_and_gradients_output(outputs)
+      return make_results(logits, loss, grads)
+
+  def get_input_preprocessor(self):
     """Returns the image preprocessor to used, based on the model.
 
     Returns:
       The image preprocessor, or None if synthetic data should be used.
     """
-    image_size = self.model.get_image_size()
     input_data_type = get_data_type(self.params)
 
     shift_ratio = 0
@@ -2713,13 +2749,12 @@ class BenchmarkCNN(object):
       # during a step
       shift_ratio = float(self.task_index) / self.num_workers
 
-    processor_class = self.dataset.get_image_preprocessor(
+    processor_class = self.dataset.get_input_preprocessor(
         self.params.input_preprocessor)
     assert processor_class
     return processor_class(
-        image_size,
-        image_size,
         self.batch_size * self.batch_group_size,
+        self.model.get_input_shape(),
         len(self.devices) * self.batch_group_size,
         dtype=input_data_type,
         train=(not self.params.eval),
@@ -2765,38 +2800,16 @@ class BenchmarkCNN(object):
       return tf.group(*queue_ops)
 
 
-class BenchmarkNMT(BenchmarkCNN):
-  """Class for benchmarking a NMT network."""
+def _is_mkl_flag_absent(mkl_flag):
+  return not (absl_flags.FLAGS.is_parsed() and mkl_flag in absl_flags.FLAGS
+              and absl_flags.FLAGS[mkl_flag].present)
 
-  def __init__(self, params, dataset=None, model=None):
-    # pylint:disable=super-init-not-called
-    pass
 
-  def _build_graph(self):
-    """Build the graph.
-
-    Returns:
-      A namedtuple containing the ops/tensors required by _benchmark_graph().
-    """
-    pass
-
-  def _build_model(self):
-    """Build the TensorFlow graph."""
-
-    # Not implemented since it's FLAGS.dataset_use_prefetch is default True.
-    raise NotImplementedError
-
-  def _build_model_single_session(self):
-    """Build the TensorFlow graph for multiple replicas in a single_session."""
-
-    # Not implemented since it's FLAGS.dataset_use_prefetch is default True.
-    raise NotImplementedError
-
-  def _build_model_with_dataset_prefetching(self):
-    pass
-
-  def _build_model_single_session_with_dataset_prefetching(self):
-    pass
+def _print_os_env_ignored_warning(mkl_flag, flag_default_val, os_env_var):
+  tf.logging.warn(
+      ('OS ENV variable %s=%s is ignored and script default: '
+       '%s is used. Use --%s to override.') %
+      (os_env_var, os.environ[os_env_var], flag_default_val, mkl_flag))
 
 
 def setup(params):
@@ -2825,12 +2838,20 @@ def setup(params):
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
   # Sets environment variables for MKL
+  # If OS ENV vars are overridden by script defaults, a warning msg is printed.
   if params.mkl:
-    os.environ['KMP_BLOCKTIME'] = str(params.kmp_blocktime)
-    os.environ['KMP_SETTINGS'] = str(params.kmp_settings)
-    os.environ['KMP_AFFINITY'] = params.kmp_affinity
-    if params.num_intra_threads > 0:
-      os.environ['OMP_NUM_THREADS'] = str(params.num_intra_threads)
+    mkl_flags = ['kmp_blocktime', 'kmp_settings', 'kmp_affinity',
+                 'num_intra_threads']
+    for mkl_flag in mkl_flags:
+      os_env_var = mkl_flag.upper()
+      if mkl_flag == 'num_intra_threads':
+        os_env_var = 'OMP_NUM_THREADS'
+      flag_val = str(getattr(params, mkl_flag))
+      if _is_mkl_flag_absent(mkl_flag) and os_env_var in os.environ:
+        _print_os_env_ignored_warning(mkl_flag, flag_val, os_env_var)
+      os.environ[os_env_var] = flag_val
+      if mkl_flag == 'num_intra_threads' and not params.num_intra_threads:
+        os.environ.pop(os_env_var, None)
 
   # Sets GPU thread settings
   if params.device.lower() == 'gpu':

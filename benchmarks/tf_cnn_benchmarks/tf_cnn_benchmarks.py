@@ -20,15 +20,6 @@ See the README for more information.
 
 from __future__ import print_function
 
-import os
-
-os.environ['AWS_REGION'] = 'us-west-2'
-os.environ['S3_REGION'] = 'us-west-2'
-os.environ['S3_USE_HTTPS'] = '0'
-os.environ['S3_VERIFY_SSL'] = '0'#
-# os.environ['TF_DISABLE_MKL'] = '1'
-# os.environ['TF_DISABLE_POOL_ALLOCATOR'] = '1
-
 from absl import app
 from absl import flags as absl_flags
 import tensorflow as tf
@@ -37,12 +28,20 @@ import benchmark_cnn
 import cnn_util
 import flags
 from cnn_util import log_fn
-
+from tensorflow.python.platform import tf_logging
+import logging as _logging
+import sys as _sys
+import os
 
 flags.define_flags()
 for name in flags.param_specs.keys():
   absl_flags.declare_key_flag(name)
 
+os.environ['AWS_REGION'] = 'us-west-2'
+os.environ['S3_REGION'] = 'us-west-2'
+os.environ['S3_USE_HTTPS'] = '0'
+os.environ['S3_VERIFY_SSL'] = '0'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 
 def main(positional_arguments):
   # Command-line arguments like '--distortions False' are equivalent to
@@ -66,4 +65,8 @@ def main(positional_arguments):
 
 
 if __name__ == '__main__':
+  tf.logging.set_verbosity(tf.logging.DEBUG)
+  _handler = _logging.StreamHandler(_sys.stdout)
+  tf_logger = tf_logging._get_logger()
+  tf_logger.handlers = [_handler]
   app.run(main)  # Raises error on invalid flags, unlike tf.app.run()
