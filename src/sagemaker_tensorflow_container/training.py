@@ -154,6 +154,6 @@ def main():
     """
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
-    s3_utils.configure(env.hyperparameters['model_dir'], os.environ['SAGEMAKER_REGION'])
+    s3_utils.configure(env.hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
     logger.setLevel(env.log_level)
     train(env)
