@@ -15,10 +15,13 @@ from __future__ import absolute_import
 
 import json
 import logging
+import os
 import subprocess
 import time
 
 import sagemaker_containers.beta.framework as framework
+
+import sagemaker_tensorflow_container.s3_utils as s3_utils
 
 
 logger = logging.getLogger(__name__)
@@ -151,5 +154,6 @@ def main():
     """
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
+    s3_utils.configure(env.hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
     logger.setLevel(env.log_level)
     train(env)

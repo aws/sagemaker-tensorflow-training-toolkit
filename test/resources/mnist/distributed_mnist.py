@@ -136,11 +136,6 @@ if __name__ == "__main__":
     tf_logger = tf_logging._get_logger()
     tf_logger.handlers = [_handler]
 
-    if args.checkpoint_path.startswith('s3://'):
-        os.environ['S3_REGION'] = 'us-west-2'
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
-        os.environ['S3_USE_HTTPS'] = '1'
-
     train_data, train_labels = _load_training_data(args.train)
     eval_data, eval_labels = _load_testing_data(args.train)
 
