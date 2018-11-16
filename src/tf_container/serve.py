@@ -98,7 +98,7 @@ def _recursive_copy(src, dst):
 def transformer(user_module):
     env = cs.HostingEnvironment()
 
-    port = cs.Server.next_safe_port(env.port_range) if env.port_range else DEFAULT_TF_SERVING_PORT
+    port = int(cs.Server.next_safe_port(env.port_range)) if env.port_range else DEFAULT_TF_SERVING_PORT
 
     grpc_proxy_client = proxy_client.GRPCProxyClient(port)
     _wait_model_to_load(grpc_proxy_client, TF_SERVING_MAXIMUM_LOAD_MODEL_TIME_IN_SECONDS)
