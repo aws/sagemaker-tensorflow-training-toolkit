@@ -216,9 +216,9 @@ If you want to run local integration tests, then use:
 
 ::
 
-    # Required arguments for integration tests are found in test/integ/conftest.py
+    # Required arguments for integration tests are found in test/integration/conftest.py
 
-    pytest test/integ --docker-base-name <your_docker_image> \
+    pytest test/integration --docker-base-name <your_docker_image> \
                       --tag <your_docker_image_tag> \
                       --framework-version <tensorflow_version> \
                       --processor <cpu_or_gpu>
@@ -226,7 +226,7 @@ If you want to run local integration tests, then use:
 ::
 
     # Example
-    pytest test/integ --docker-base-name preprod-tensorflow \
+    pytest test/integration --docker-base-name preprod-tensorflow \
                       --tag 1.0 \
                       --framework-version 1.4.1 \
                       --processor cpu
