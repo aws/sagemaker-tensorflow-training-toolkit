@@ -21,6 +21,9 @@ from types import ModuleType
 from container_support.serving import UnsupportedAcceptTypeError, UnsupportedContentTypeError
 
 JSON_CONTENT_TYPE = "application/json"
+FIRST_PORT = '1111'
+LAST_PORT = '2222'
+SAFE_PORT_RANGE = '{}-{}'.format(FIRST_PORT, LAST_PORT)
 
 
 @pytest.fixture(scope="module")
@@ -271,16 +274,39 @@ def test_transformer_method(proxy_client, serve):
 
 
 @patch('subprocess.Popen')
-def test_load_dependencies(popen, serve):
+@patch('container_support.HostingEnvironment')
+def test_load_dependencies_with_default_port(hosting_env, popen, serve):
     with patch('os.environ') as env:
         env['SAGEMAKER_PROGRAM'] = 'script.py'
         env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
+
+        hosting_env.return_value.port_range = None
+        hosting_env.return_value.model_dir = '/opt/ml/model'
 
         serve.Transformer.from_module = Mock()
         serve.load_dependencies()
 
         popen.assert_called_with(['tensorflow_model_server',
                                   '--port=9000',
+                                  '--model_name=generic_model',
+                                  '--model_base_path=/opt/ml/model/export/Servo'])
+
+
+@patch('subprocess.Popen')
+@patch('container_support.HostingEnvironment')
+def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
+    with patch('os.environ') as env:
+        env['SAGEMAKER_PROGRAM'] = 'script.py'
+        env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
+
+        hosting_env.return_value.port_range = SAFE_PORT_RANGE
+        hosting_env.return_value.model_dir = '/opt/ml/model'
+
+        serve.Transformer.from_module = Mock()
+        serve.load_dependencies()
+
+        popen.assert_called_with(['tensorflow_model_server',
+                                  '--port={}'.format(FIRST_PORT),
                                   '--model_name=generic_model',
                                   '--model_base_path=/opt/ml/model/export/Servo'])
 
