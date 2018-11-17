@@ -21,6 +21,9 @@ from types import ModuleType
 from container_support.serving import UnsupportedAcceptTypeError, UnsupportedContentTypeError
 
 JSON_CONTENT_TYPE = "application/json"
+FIRST_PORT = '1111'
+LAST_PORT = '2222'
+SAFE_PORT_RANGE = '{}-{}'.format(FIRST_PORT, LAST_PORT)
 
 
 @pytest.fixture(scope="module")
@@ -58,7 +61,12 @@ def serve(modules):
 def boto_session():
     session = Mock()
 
-    return_value = {"Contents": [{'Key': 'test/1/saved_model.pb'}, {'Key': 'test/1/variables/variables.index'}]}
+    return_value = {"Contents": [
+        {'Key': 'test/1/'},
+        {'Key': 'test/1/saved_model.pb'},
+        {'Key': 'test/1/variables/variables.index'},
+        {'Key': 'test/1/assets/vocabulary.txt'}
+    ]}
     session.list_objects_v2 = Mock(return_value=return_value)
     session.download_file = Mock(return_value=None)
     return session
@@ -68,12 +76,19 @@ def boto_session():
 def test_export_saved_model_from_s3(makedirs, boto_session, serve):
     serve.export_saved_model('s3://bucket/test', 'a/path', s3=boto_session)
 
-    first_call = call('bucket', 'test/1/saved_model.pb', 'a/path/1/saved_model.pb')
-    second_call = call('bucket', 'test/1/variables/variables.index', 'a/path/1/variables/variables.index')
+    expected_boto_calls = [
+        call('bucket', 'test/1/saved_model.pb', 'a/path/1/saved_model.pb'),
+        call('bucket', 'test/1/variables/variables.index', 'a/path/1/variables/variables.index'),
+        call('bucket', 'test/1/assets/vocabulary.txt', 'a/path/1/assets/vocabulary.txt')]
 
-    calls = [first_call, second_call]
+    expected_makedirs_calls = [
+        call('a/path/1'),
+        call('a/path/1/variables'),
+        call('a/path/1/assets'),
+    ]
 
-    boto_session.download_file.assert_has_calls(calls)
+    assert boto_session.download_file.mock_calls == expected_boto_calls
+    assert makedirs.mock_calls == expected_makedirs_calls
 
 
 @patch('os.path.exists')
@@ -259,16 +274,39 @@ def test_transformer_method(proxy_client, serve):
 
 
 @patch('subprocess.Popen')
-def test_load_dependencies(popen, serve):
+@patch('container_support.HostingEnvironment')
+def test_load_dependencies_with_default_port(hosting_env, popen, serve):
     with patch('os.environ') as env:
         env['SAGEMAKER_PROGRAM'] = 'script.py'
         env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
+
+        hosting_env.return_value.port_range = None
+        hosting_env.return_value.model_dir = '/opt/ml/model'
 
         serve.Transformer.from_module = Mock()
         serve.load_dependencies()
 
         popen.assert_called_with(['tensorflow_model_server',
                                   '--port=9000',
+                                  '--model_name=generic_model',
+                                  '--model_base_path=/opt/ml/model/export/Servo'])
+
+
+@patch('subprocess.Popen')
+@patch('container_support.HostingEnvironment')
+def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
+    with patch('os.environ') as env:
+        env['SAGEMAKER_PROGRAM'] = 'script.py'
+        env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
+
+        hosting_env.return_value.port_range = SAFE_PORT_RANGE
+        hosting_env.return_value.model_dir = '/opt/ml/model'
+
+        serve.Transformer.from_module = Mock()
+        serve.load_dependencies()
+
+        popen.assert_called_with(['tensorflow_model_server',
+                                  '--port={}'.format(FIRST_PORT),
                                   '--model_name=generic_model',
                                   '--model_base_path=/opt/ml/model/export/Servo'])
 
