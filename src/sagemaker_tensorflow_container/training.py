@@ -99,18 +99,12 @@ def _env_vars_with_tf_config(env, ps_task):
 
 def _run_ps(env):
     env_vars = _env_vars_with_tf_config(env, ps_task=True)
-    return framework.modules.run_module(
-        env.module_dir, env.to_cmd_args(), env_vars, env.module_name, wait=False)
+    framework.entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env_vars)
 
 
-def _run_worker(env, install_module=False):
+def _run_worker(env):
     env_vars = _env_vars_with_tf_config(env, ps_task=False)
-    if install_module:
-        return framework.modules.run_module(
-            env.module_dir, env.to_cmd_args(), env_vars, env.module_name)
-    else:
-        framework.modules.write_env_vars(env_vars)
-        framework.modules.run(env.module_name, env.to_cmd_args(), env_vars)
+    framework.entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env_vars)
 
 
 def _wait_until_master_is_down(master):
@@ -139,14 +133,14 @@ def train(env):
         logger.info('Launching parameter server process')
         _run_ps(env)
         logger.info('Launching worker process')
-        _run_worker(env, install_module=False)
+        _run_worker(env)
 
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])
 
     else:
-        framework.modules.run_module(env.module_dir, env.to_cmd_args(),
-                                     env.to_env_vars(), env.module_name)
+        framework.entry_point.run(env.module_dir, env.user_entry_point,
+                                  env.to_cmd_args(), env.to_env_vars())
 
 
 def main():

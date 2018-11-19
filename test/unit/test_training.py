@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import json
 import os
+import subprocess
 
 from mock import MagicMock, patch
 import pytest
@@ -43,19 +44,16 @@ REGION = 'us-west-2'
 
 @pytest.fixture
 def distributed_training_env():
-    env = MagicMock()
-
-    env.module_dir = MODULE_DIR
-    env.module_name = MODULE_NAME
-    env.hyperparameters = {}
-    env.log_level = LOG_LEVEL
-    env.hosts = HOST_LIST
-    env.current_host = CURRENT_HOST
-    env.additional_framework_parameters = {
-        training.SAGEMAKER_PARAMETER_SERVER_ENABLED: True
-    }
-
-    return env
+    return MagicMock(module_dir=MODULE_DIR,
+                     user_entry_point=MODULE_NAME,
+                     hyperparameters={},
+                     log_level=LOG_LEVEL,
+                     hosts=HOST_LIST,
+                     current_host=CURRENT_HOST,
+                     to_env_vars=lambda: {},
+                     additional_framework_parameters={
+                         training.SAGEMAKER_PARAMETER_SERVER_ENABLED: True
+                     })
 
 
 @pytest.fixture
@@ -63,7 +61,7 @@ def single_machine_training_env():
     env = MagicMock()
 
     env.module_dir = MODULE_DIR
-    env.module_name = MODULE_NAME
+    env.user_entry_point = MODULE_NAME
     env.hyperparameters = {'model_dir': MODEL_DIR}
     env.log_level = LOG_LEVEL
 
@@ -76,48 +74,87 @@ def test_is_host_master():
     assert training._is_host_master(HOST_LIST, 'somehost') is False
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module')
+@patch('sagemaker_containers.beta.framework.entry_point.run')
 def test_single_machine(run_module, single_machine_training_env):
     training.train(single_machine_training_env)
-    run_module.assert_called_with(MODULE_DIR, single_machine_training_env.to_cmd_args(),
-                                  single_machine_training_env.to_env_vars(), MODULE_NAME)
+    run_module.assert_called_with(MODULE_DIR, MODULE_NAME,
+                                  single_machine_training_env.to_cmd_args(),
+                                  single_machine_training_env.to_env_vars())
 
 
-@patch('sagemaker_tensorflow_container.training._wait_until_master_is_down')
-@patch('sagemaker_tensorflow_container.training._run_worker')
-@patch('sagemaker_tensorflow_container.training._run_ps')
-def test_train_distributed_master(run_ps,
-                                  run_worker,
-                                  wait_until_master_is_down,
-                                  distributed_training_env):
+@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('time.sleep', MagicMock())
+def test_train_distributed_master(run, distributed_training_env):
     training.train(distributed_training_env)
-    run_ps.assert_called_with(distributed_training_env)
-    run_worker.assert_called_with(distributed_training_env, install_module=False)
-    wait_until_master_is_down.assert_not_called
+
+    ps_tf_config = '{"cluster": {' \
+                   '"master": ["host1:2222"], ' \
+                   '"ps": ["host1:2223", "host2:2223"], ' \
+                   '"worker": ["host2:2222"]}, ' \
+                   '"environment": "cloud", ' \
+                   '"task": {"index": 0, "type": "ps"}}'
+
+    run.assert_any_call('s3://my/bucket', 'script_name',
+                        distributed_training_env.to_cmd_args(),
+                        {'TF_CONFIG': ps_tf_config})
+
+    master_tf_config = '{"cluster": {' \
+                       '"master": ["host1:2222"], ' \
+                       '"ps": ["host1:2223", "host2:2223"], ' \
+                       '"worker": ["host2:2222"]}, ' \
+                       '"environment": "cloud", ' \
+                       '"task": {"index": 0, "type": "master"}}'
+
+    run.assert_called_with('s3://my/bucket', 'script_name',
+                           distributed_training_env.to_cmd_args(),
+                           {
+                               'TF_CONFIG': master_tf_config})
 
 
-@patch('sagemaker_tensorflow_container.training._wait_until_master_is_down')
-@patch('sagemaker_tensorflow_container.training._run_worker')
-@patch('sagemaker_tensorflow_container.training._run_ps')
-def test_train_distributed_worker(run_ps,
-                                  run_worker,
-                                  wait_until_master_is_down,
+@patch('subprocess.check_call')
+@patch('time.sleep', MagicMock())
+@patch('sagemaker_containers.beta.framework.entry_point.run')
+def test_train_distributed_worker(run,
+                                  check_call,
                                   distributed_training_env):
     distributed_training_env.current_host = HOST2
+    check_call.side_effect = subprocess.CalledProcessError(returncode=1, cmd=[])
+
     training.train(distributed_training_env)
-    run_ps.assert_called_with(distributed_training_env)
-    run_worker.assert_called_with(distributed_training_env, install_module=False)
-    wait_until_master_is_down.assert_called_with(HOST1)
+
+    ps_tf_config = '{"cluster": {' \
+                   '"master": ["host1:2222"], ' \
+                   '"ps": ["host1:2223", "host2:2223"], ' \
+                   '"worker": ["host2:2222"]}, ' \
+                   '"environment": "cloud", ' \
+                   '"task": {"index": 1, "type": "ps"}}'
+
+    run.assert_any_call('s3://my/bucket', 'script_name',
+                        distributed_training_env.to_cmd_args(),
+                        {'TF_CONFIG': ps_tf_config})
+
+    master_tf_config = '{"cluster": {' \
+                       '"master": ["host1:2222"], ' \
+                       '"ps": ["host1:2223", "host2:2223"], ' \
+                       '"worker": ["host2:2222"]}, ' \
+                       '"environment": "cloud", ' \
+                       '"task": {"index": 0, "type": "worker"}}'
+
+    run.assert_called_with('s3://my/bucket', 'script_name',
+                           distributed_training_env.to_cmd_args(),
+                           {
+                               'TF_CONFIG': master_tf_config})
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module')
-def test_train_distributed_no_ps(run_module, distributed_training_env):
+@patch('sagemaker_containers.beta.framework.entry_point.run')
+def test_train_distributed_no_ps(run, distributed_training_env):
     distributed_training_env.additional_framework_parameters[
         training.SAGEMAKER_PARAMETER_SERVER_ENABLED] = False
     distributed_training_env.current_host = HOST2
     training.train(distributed_training_env)
-    run_module.assert_called_with(MODULE_DIR, distributed_training_env.to_cmd_args(),
-                                  distributed_training_env.to_env_vars(), MODULE_NAME)
+
+    run.assert_called_with(MODULE_DIR, MODULE_NAME, distributed_training_env.to_cmd_args(),
+                           distributed_training_env.to_env_vars())
 
 
 @patch('sagemaker_tensorflow_container.training._build_tf_config')
@@ -131,61 +168,26 @@ def test_get_env_vars_with_tf_config(build_tf_config, distributed_training_env):
         hosts=HOST_LIST, current_host=CURRENT_HOST, ps_task=True)
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module')
+@patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('sagemaker_tensorflow_container.training._env_vars_with_tf_config')
-def test_run_ps(env_vars_with_tf_config, run_module, distributed_training_env):
-    env_vars_with_tf_config.return_value = {}
-    distributed_training_env.to_cmd_args.return_value = CMD_ARGS
+def test_run_ps(env_vars_with_tf_config, run, distributed_training_env):
     training._run_ps(distributed_training_env)
     env_vars_with_tf_config.assert_called_once_with(distributed_training_env, ps_task=True)
-    run_module.assert_called_once_with(distributed_training_env.module_dir,
-                                       CMD_ARGS,
-                                       {},
-                                       distributed_training_env.module_name,
-                                       wait=False)
 
-
-@patch('sagemaker_containers.beta.framework.modules.write_env_vars')
-@patch('sagemaker_containers.beta.framework.modules.run')
-@patch('sagemaker_tensorflow_container.training._env_vars_with_tf_config')
-def test_run_worker_no_install(get_env_vars_with_tf_config,
-                               run,
-                               write_env_vars,
-                               distributed_training_env):
-    get_env_vars_with_tf_config.return_value = {}
-    distributed_training_env.to_cmd_args.return_value = CMD_ARGS
-    training._run_worker(distributed_training_env, install_module=False)
-    get_env_vars_with_tf_config.assert_called_once_with(distributed_training_env, ps_task=False)
-    write_env_vars.assert_called_once_with({})
-    run.assert_called_once_with(distributed_training_env.module_name,
-                                CMD_ARGS,
-                                {})
-
-
-@patch('sagemaker_containers.beta.framework.modules.run_module')
-@patch('sagemaker_tensorflow_container.training._env_vars_with_tf_config')
-def test_run_worker_install(get_env_vars_with_tf_config,
-                            run_module,
-                            distributed_training_env):
-    get_env_vars_with_tf_config.return_value = {}
-    distributed_training_env.to_cmd_args.return_value = CMD_ARGS
-    training._run_worker(distributed_training_env, install_module=True)
-    get_env_vars_with_tf_config.assert_called_once_with(distributed_training_env, ps_task=False)
-    run_module.assert_called_once_with(distributed_training_env.module_dir,
-                                       CMD_ARGS,
-                                       {},
-                                       distributed_training_env.module_name)
+    run.assert_called_once_with(distributed_training_env.module_dir,
+                                distributed_training_env.user_entry_point,
+                                distributed_training_env.to_cmd_args(), env_vars_with_tf_config())
 
 
 def test_build_tf_config():
-    assert training._build_tf_config(HOST_LIST, HOST1) ==\
-        {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': MASTER_TASK}
+    assert training._build_tf_config(HOST_LIST, HOST1) == \
+           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': MASTER_TASK}
     assert training._build_tf_config(HOST_LIST, HOST1, ps_task=True) == \
-        {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_1}
-    assert training._build_tf_config(HOST_LIST, HOST2) ==\
-        {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': WORKER_TASK}
+           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_1}
+    assert training._build_tf_config(HOST_LIST, HOST2) == \
+           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': WORKER_TASK}
     assert training._build_tf_config(HOST_LIST, HOST2, ps_task=True) == \
-        {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_2}
+           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_2}
 
 
 def test_build_tf_config_error():
