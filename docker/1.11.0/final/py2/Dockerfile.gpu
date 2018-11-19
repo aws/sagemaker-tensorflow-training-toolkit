@@ -71,7 +71,7 @@ COPY --from=tensorflow_serving_image /usr/bin/tensorflow_model_server /usr/bin/t
 COPY $framework_installable .
 COPY $framework_support_installable .
 
-RUN pip install --no-cache-dir \
+RUN pip install -U --no-cache-dir \
     numpy \
     scipy \
     sklearn \
