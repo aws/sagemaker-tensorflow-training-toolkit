@@ -97,7 +97,7 @@ def test_train_distributed_master(run, distributed_training_env):
     run.assert_any_call('s3://my/bucket', 'script_name',
                         distributed_training_env.to_cmd_args(),
                         {'TF_CONFIG': ps_tf_config},
-                        wait=True)
+                        wait=False)
 
     master_tf_config = '{"cluster": {' \
                        '"master": ["host1:2222"], ' \
@@ -131,7 +131,7 @@ def test_train_distributed_worker(run,
 
     run.assert_any_call('s3://my/bucket', 'script_name',
                         distributed_training_env.to_cmd_args(),
-                        {'TF_CONFIG': ps_tf_config}, wait=True)
+                        {'TF_CONFIG': ps_tf_config}, wait=False)
 
     master_tf_config = '{"cluster": {' \
                        '"master": ["host1:2222"], ' \
@@ -177,7 +177,7 @@ def test_run_ps(env_vars_with_tf_config, run, distributed_training_env):
     run.assert_called_once_with(distributed_training_env.module_dir,
                                 distributed_training_env.user_entry_point,
                                 distributed_training_env.to_cmd_args(), env_vars_with_tf_config(),
-                                wait=True)
+                                wait=False)
 
 
 def test_build_tf_config():
