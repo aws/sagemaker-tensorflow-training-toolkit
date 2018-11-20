@@ -96,7 +96,8 @@ def test_train_distributed_master(run, distributed_training_env):
 
     run.assert_any_call('s3://my/bucket', 'script_name',
                         distributed_training_env.to_cmd_args(),
-                        {'TF_CONFIG': ps_tf_config})
+                        {'TF_CONFIG': ps_tf_config},
+                        wait=False)
 
     master_tf_config = '{"cluster": {' \
                        '"master": ["host1:2222"], ' \
@@ -107,8 +108,7 @@ def test_train_distributed_master(run, distributed_training_env):
 
     run.assert_called_with('s3://my/bucket', 'script_name',
                            distributed_training_env.to_cmd_args(),
-                           {
-                               'TF_CONFIG': master_tf_config})
+                           {'TF_CONFIG': master_tf_config})
 
 
 @patch('subprocess.check_call')
@@ -131,7 +131,7 @@ def test_train_distributed_worker(run,
 
     run.assert_any_call('s3://my/bucket', 'script_name',
                         distributed_training_env.to_cmd_args(),
-                        {'TF_CONFIG': ps_tf_config})
+                        {'TF_CONFIG': ps_tf_config}, wait=False)
 
     master_tf_config = '{"cluster": {' \
                        '"master": ["host1:2222"], ' \
@@ -176,18 +176,30 @@ def test_run_ps(env_vars_with_tf_config, run, distributed_training_env):
 
     run.assert_called_once_with(distributed_training_env.module_dir,
                                 distributed_training_env.user_entry_point,
-                                distributed_training_env.to_cmd_args(), env_vars_with_tf_config())
+                                distributed_training_env.to_cmd_args(), env_vars_with_tf_config(),
+                                wait=False)
 
 
 def test_build_tf_config():
-    assert training._build_tf_config(HOST_LIST, HOST1) == \
-           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': MASTER_TASK}
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_task=True) == \
-           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_1}
-    assert training._build_tf_config(HOST_LIST, HOST2) == \
-           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': WORKER_TASK}
-    assert training._build_tf_config(HOST_LIST, HOST2, ps_task=True) == \
-           {'cluster': CLUSTER_WITH_PS, 'environment': 'cloud', 'task': PS_TASK_2}
+    assert training._build_tf_config(HOST_LIST, HOST1) == {
+        'cluster': CLUSTER_WITH_PS,
+        'environment': 'cloud',
+        'task': MASTER_TASK
+    }
+    assert training._build_tf_config(HOST_LIST, HOST1, ps_task=True) == {
+        'cluster': CLUSTER_WITH_PS,
+        'environment': 'cloud',
+        'task': PS_TASK_1
+    }
+    assert training._build_tf_config(HOST_LIST, HOST2) == {
+        'cluster': CLUSTER_WITH_PS,
+        'environment': 'cloud',
+        'task': WORKER_TASK
+    }
+    assert training._build_tf_config(HOST_LIST, HOST2, ps_task=True) == {
+        'cluster': CLUSTER_WITH_PS,
+        'environment': 'cloud',
+        'task': PS_TASK_2}
 
 
 def test_build_tf_config_error():
