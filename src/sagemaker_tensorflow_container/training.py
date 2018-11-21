@@ -99,6 +99,9 @@ def _env_vars_with_tf_config(env, ps_task):
 
 def _run_ps(env):
     env_vars = _env_vars_with_tf_config(env, ps_task=True)
+    # Parameter server processes should always run on CPU. Sets CUDA_VISIBLE_DEVICES to '-1' forces
+    # TensorFlow to use CPU.
+    env_vars['CUDA_VISIBLE_DEVICES'] = json.dumps(-1)
     framework.entry_point.run(env.module_dir, env.user_entry_point,
                               env.to_cmd_args(), env_vars, wait=False)
 
