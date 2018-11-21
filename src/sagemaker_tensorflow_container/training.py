@@ -107,6 +107,8 @@ def _run_ps(env):
 
 
 def _run_worker(env):
+    if os.environ.get('CUDA_VISIBLE_DEVICES'):
+        del os.environ['CUDA_VISIBLE_DEVICES']
     env_vars = _env_vars_with_tf_config(env, ps_task=False)
     framework.entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env_vars)
 
