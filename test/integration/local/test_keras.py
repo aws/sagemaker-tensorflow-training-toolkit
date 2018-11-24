@@ -12,13 +12,14 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import os
 import logging
-import numpy as np
+import os
 
-from sagemaker.tensorflow import TensorFlow, serving
+import numpy as np
+from sagemaker.tensorflow import serving, TensorFlow
 
 from test.integration import RESOURCE_PATH
+
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -47,3 +48,5 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
     predictor = model.deploy(initial_instance_count=1, instance_type='local')
 
     assert predictor.predict(np.random.randn(4, 4, 4, 2) * 255)
+
+    predictor.delete_endpoint()
