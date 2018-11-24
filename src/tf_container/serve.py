@@ -20,7 +20,7 @@ import container_support as cs
 import google.protobuf.json_format as json_format
 import os
 
-from grpc import StatusCode
+from grpc import StatusCode, RpcError
 from grpc.framework.interfaces.face.face import AbortionError
 from tensorflow.core.framework import tensor_pb2
 from tf_container import proxy_client
@@ -130,13 +130,24 @@ def _wait_model_to_load(grpc_proxy_client, max_seconds):
 
             logger.info("TF Serving model successfully loaded")
             return
-        except AbortionError as err:
-            if err.code == StatusCode.UNAVAILABLE:
-                logger.info("Waiting for TF Serving to load the model")
-                time.sleep(1)
+        except AbortionError as abort_err:
+            if abort_err.code == StatusCode.UNAVAILABLE:
+                _handle_rpc_exception(abort_err)
+        # GRPC throws a _Rendezvous, which inherits from RpcError
+        # _Rendezvous has a method for code instead of a parameter.
+        # https://github.com/grpc/grpc/issues/9270
+        except RpcError as rpc_error:
+            if rpc_error.code() == StatusCode.UNAVAILABLE:
+                _handle_rpc_exception(rpc_error)
 
     message = 'TF Serving failed to load the model under the maximum load time in seconds: {}'
     raise ValueError(message.format(max_seconds))
+
+
+def _handle_rpc_exception(err):
+    logger.info("Waiting for TF Serving to load the model due to {}"
+                .format(err.__class__.__name__))
+    time.sleep(1)
 
 
 class Transformer(object):
