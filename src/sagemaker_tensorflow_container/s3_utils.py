@@ -21,7 +21,8 @@ from six.moves.urllib.parse import urlparse
 def configure(model_dir, job_region):
 
     os.environ['S3_REGION'] = _s3_region(job_region, model_dir)
-# setting log level to WARNING
+
+    # setting log level to WARNING
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
     os.environ['S3_USE_HTTPS'] = '1'
 
