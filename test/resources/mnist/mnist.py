@@ -2,7 +2,6 @@ import tensorflow as tf
 import argparse
 import os
 import numpy as np
-import sys
 
 
 def _parse_args():

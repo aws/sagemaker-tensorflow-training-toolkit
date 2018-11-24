@@ -32,7 +32,17 @@ def test_configure(client):
     client.return_value = s3
     loc = {'LocationConstraint': BUCKET_REGION}
     s3.get_bucket_location.return_value = loc
+
     s3_utils.configure(MODEL_DIR, JOB_REGION)
+
     assert os.environ['S3_REGION'] == BUCKET_REGION
+    assert os.environ['TF_CPP_MIN_LOG_LEVEL'] == '1'
+    assert os.environ['S3_USE_HTTPS'] == '1'
+
+
+def test_configure_local_dir():
+    s3_utils.configure('/opt/ml/model', JOB_REGION)
+
+    assert os.environ['S3_REGION'] == JOB_REGION
     assert os.environ['TF_CPP_MIN_LOG_LEVEL'] == '1'
     assert os.environ['S3_USE_HTTPS'] == '1'

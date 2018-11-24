@@ -13,6 +13,9 @@
 from __future__ import absolute_import
 
 import logging
+import os
 
 logging.getLogger('boto3').setLevel(logging.INFO)
 logging.getLogger('botocore').setLevel(logging.INFO)
+
+RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', 'resources')
