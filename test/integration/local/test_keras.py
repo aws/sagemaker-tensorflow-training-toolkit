@@ -16,7 +16,7 @@ import os
 import logging
 import numpy as np
 
-from sagemaker.tensorflow import TensorFlow
+from sagemaker.tensorflow import TensorFlow, serving
 
 from test.integration import RESOURCE_PATH
 
@@ -40,6 +40,10 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
 
     estimator.fit()
 
-    estimator.image_name = '520713654638.dkr.ecr.us-west-2.amazonaws.com/sagemaker-tensorflow-serving:1.11.0-cpu'
-    predictor = estimator.deploy(initial_instance_count=1, instance_type='local')
+    model = serving.Model(model_data=output_path, role='SageMakerRole',
+                          framework_version='1.11.0',
+                          sagemaker_session=sagemaker_local_session)
+
+    predictor = model.deploy(initial_instance_count=1, instance_type='local')
+
     assert predictor.predict(np.random.randn(4, 4, 4, 2) * 255)
