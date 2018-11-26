@@ -105,6 +105,7 @@ def run_tf_training(script, instance_type, instance_count,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_local_session,
                            image_name=docker_image,
+                           model_dir='/opt/ml/model',
                            output_path=output_path,
                            hyperparameters=hyperparameters,
                            base_job_name='test-tf')

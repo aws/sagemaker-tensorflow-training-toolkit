@@ -45,7 +45,6 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
     model = serving.Model(model_data=output_path,
                           role='SageMakerRole',
                           framework_version='1.11.0',
-                          image_name=docker_image,
                           sagemaker_session=sagemaker_local_session)
 
     predictor = model.deploy(initial_instance_count=1, instance_type='local')
