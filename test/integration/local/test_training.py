@@ -108,7 +108,8 @@ def run_tf_training(script, instance_type, instance_count,
                            model_dir='/opt/ml/model',
                            output_path=output_path,
                            hyperparameters=hyperparameters,
-                           base_job_name='test-tf')
+                           base_job_name='test-tf',
+                           py_version='py3')
 
     estimator.fit(training_data_path)
 
