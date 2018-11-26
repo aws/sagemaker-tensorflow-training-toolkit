@@ -17,15 +17,15 @@ import json
 import logging
 import os
 import subprocess
+import threading
 import time
 
 import sagemaker_containers.beta.framework as framework
+import tensorflow as tf
 
-import sagemaker_tensorflow_container.s3_utils as s3_utils
-
+from sagemaker_tensorflow_container import s3_utils
 
 logger = logging.getLogger(__name__)
-
 
 SAGEMAKER_PARAMETER_SERVER_ENABLED = 'sagemaker_parameter_server_enabled'
 
@@ -90,27 +90,27 @@ def _build_tf_config(hosts, current_host, ps_task=False):
 
 def _env_vars_with_tf_config(env, ps_task):
     env_vars = env.to_env_vars()
-    env_vars['TF_CONFIG'] = json.dumps(_build_tf_config(
-        hosts=env.hosts,
-        current_host=env.current_host,
-        ps_task=ps_task))
+    tf_config = _build_tf_config(hosts=env.hosts,
+                                 current_host=env.current_host,
+                                 ps_task=ps_task)
+
+    env_vars['TF_CONFIG'] = json.dumps(tf_config, sort_keys=True)
     return env_vars
 
 
 def _run_ps(env):
-    env_vars = _env_vars_with_tf_config(env, ps_task=True)
-    # Parameter server processes should always run on CPU. Sets CUDA_VISIBLE_DEVICES to '-1' forces
-    # TensorFlow to use CPU.
-    env_vars['CUDA_VISIBLE_DEVICES'] = json.dumps(-1)
-    framework.entry_point.run(env.module_dir, env.user_entry_point,
-                              env.to_cmd_args(), env_vars, wait=False)
+    logger.info('Running distributed training job with parameter servers')
+
+    tf_config = _build_tf_config(hosts=env.hosts, current_host=env.current_host)
+    cluster_spec = tf.train.ClusterSpec(tf_config['cluster'])
+    task_index = env.hosts.index(env.current_host)
+
+    server = tf.train.Server(cluster_spec, job_name='ps', task_index=task_index)
+
+    threading.Thread(target=lambda: server.join()).start()
 
 
 def _run_worker(env):
-    # when _run_ps is called CUDA_VISIBLE_DEVICES is set with os.environ.
-    # We need to unset it so the worker process can use the GPUs.
-    if os.environ.get('CUDA_VISIBLE_DEVICES'):
-        del os.environ['CUDA_VISIBLE_DEVICES']
     env_vars = _env_vars_with_tf_config(env, ps_task=False)
     framework.entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env_vars)
 
