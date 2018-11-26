@@ -57,9 +57,9 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
-    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'graph.pbtxt'))
-    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.index'))
-    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.meta'))
+    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'graph.pbtxt'))
+    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.index'))
+    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.meta'))
 
 
 def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
@@ -79,9 +79,9 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
-    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'graph.pbtxt'))
-    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.index'))
-    _assert_s3_file_exists(os.path.join(estimator.checkpoint_path, 'model.ckpt-0.meta'))
+    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'graph.pbtxt'))
+    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.index'))
+    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.meta'))
 
 
 def _assert_s3_file_exists(s3_url):
