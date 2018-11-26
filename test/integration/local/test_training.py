@@ -92,7 +92,9 @@ def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, tmpd
     _assert_files_exist_in_tar(output_path, TF_CHECKPOINT_FILES)
 
 
-def run_tf_training(script, instance_type, instance_count,
+def run_tf_training(script,
+                    instance_type,
+                    instance_count,
                     sagemaker_local_session,
                     docker_image, training_data_path, output_path=None,
                     hyperparameters=None):
