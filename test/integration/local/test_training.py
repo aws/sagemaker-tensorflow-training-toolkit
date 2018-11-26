@@ -16,11 +16,9 @@ import os
 import tarfile
 
 import pytest
-from sagemaker.estimator import Framework
 from sagemaker.tensorflow import TensorFlow
 
 from test.integration.docker_utils import Container
-
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 TF_CHECKPOINT_FILES = ['graph.pbtxt', 'model.ckpt-0.index', 'model.ckpt-0.meta']
@@ -94,34 +92,22 @@ def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, tmpd
     _assert_files_exist_in_tar(output_path, TF_CHECKPOINT_FILES)
 
 
-class ScriptModeTensorFlow(Framework):
-    """This class is temporary until the final version of Script Mode is released.
-    """
-
-    __framework_name__ = "tensorflow-scriptmode-beta"
-
-    create_model = TensorFlow.create_model
-
-    def __init__(self, py_version='py', **kwargs):
-        self.requirements_file = None
-        self.py_version = py_version
-        self.framework_version = 'some version'
-        super(ScriptModeTensorFlow, self).__init__(**kwargs)
-
-
 def run_tf_training(script, instance_type, instance_count,
                     sagemaker_local_session,
                     docker_image, training_data_path, output_path=None,
-                    hyperparameters={}):
-    estimator = ScriptModeTensorFlow(entry_point=script,
-                                     role='SageMakerRole',
-                                     train_instance_count=instance_count,
-                                     train_instance_type=instance_type,
-                                     sagemaker_session=sagemaker_local_session,
-                                     image_name=docker_image,
-                                     output_path=output_path,
-                                     hyperparameters=hyperparameters,
-                                     base_job_name='test-tf')
+                    hyperparameters=None):
+
+    hyperparameters = hyperparameters or {}
+
+    estimator = TensorFlow(entry_point=script,
+                           role='SageMakerRole',
+                           train_instance_count=instance_count,
+                           train_instance_type=instance_type,
+                           sagemaker_session=sagemaker_local_session,
+                           image_name=docker_image,
+                           output_path=output_path,
+                           hyperparameters=hyperparameters,
+                           base_job_name='test-tf')
 
     estimator.fit(training_data_path)
 
