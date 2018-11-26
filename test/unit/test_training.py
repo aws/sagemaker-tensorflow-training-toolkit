@@ -87,6 +87,7 @@ def test_single_machine(run_module, single_machine_training_env):
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('threading.Thread', lambda target: target())
 @patch('time.sleep', MagicMock())
 def test_train_distributed_master(run, tf_server, cluster_spec, distributed_training_env):
     training.train(distributed_training_env)
