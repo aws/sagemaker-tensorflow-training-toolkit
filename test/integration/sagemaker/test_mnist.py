@@ -27,6 +27,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
                            train_instance_type=instance_type,
+                           train_instance_count=1,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
                            framework_version='1.11.0',
