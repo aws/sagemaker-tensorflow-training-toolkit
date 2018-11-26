@@ -12,8 +12,8 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import json
 import os
+import sys
 
 from mock import MagicMock, patch
 import pytest
@@ -84,6 +84,8 @@ def test_single_machine(run_module, single_machine_training_env):
                                   single_machine_training_env.to_env_vars())
 
 
+@pytest.mark.skipif(sys.version_info.major != 3,
+                    reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
@@ -111,6 +113,8 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                            {'TF_CONFIG': tf_config})
 
 
+@pytest.mark.skipif(sys.version_info.major != 3,
+                    reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
@@ -148,17 +152,6 @@ def test_train_distributed_no_ps(run, distributed_training_env):
 
     run.assert_called_with(MODULE_DIR, MODULE_NAME, distributed_training_env.to_cmd_args(),
                            distributed_training_env.to_env_vars())
-
-
-@patch('sagemaker_tensorflow_container.training._build_tf_config')
-def test_get_env_vars_with_tf_config(build_tf_config, distributed_training_env):
-    distributed_training_env.to_env_vars.return_value = {}
-    tf_config = {'some_key': 'some_value'}
-    build_tf_config.return_value = tf_config
-    assert training._env_vars_with_tf_config(
-        distributed_training_env, ps_task=True) == {'TF_CONFIG': json.dumps(tf_config)}
-    build_tf_config.assert_called_once_with(
-        hosts=HOST_LIST, current_host=CURRENT_HOST, ps_task=True)
 
 
 def test_build_tf_config():

@@ -88,21 +88,10 @@ def _build_tf_config(hosts, current_host, ps_task=False):
     return tf_config
 
 
-def _env_vars_with_tf_config(env, ps_task):
-    env_vars = env.to_env_vars()
-    tf_config = _build_tf_config(hosts=env.hosts,
-                                 current_host=env.current_host,
-                                 ps_task=ps_task)
-
-    env_vars['TF_CONFIG'] = json.dumps(tf_config, sort_keys=True)
-    return env_vars
-
-
-def _run_ps(env):
+def _run_ps(env, cluster):
     logger.info('Running distributed training job with parameter servers')
 
-    tf_config = _build_tf_config(hosts=env.hosts, current_host=env.current_host)
-    cluster_spec = tf.train.ClusterSpec(tf_config['cluster'])
+    cluster_spec = tf.train.ClusterSpec(cluster)
     task_index = env.hosts.index(env.current_host)
 
     server = tf.train.Server(cluster_spec, job_name='ps', task_index=task_index)
@@ -110,8 +99,10 @@ def _run_ps(env):
     threading.Thread(target=lambda: server.join()).start()
 
 
-def _run_worker(env):
-    env_vars = _env_vars_with_tf_config(env, ps_task=False)
+def _run_worker(env, tf_config):
+    env_vars = env.to_env_vars()
+    env_vars['TF_CONFIG'] = json.dumps(tf_config)
+
     framework.entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env_vars)
 
 
@@ -137,11 +128,13 @@ def train(env):
         SAGEMAKER_PARAMETER_SERVER_ENABLED, False)
     if len(env.hosts) > 1 and parameter_server_enabled:
 
+        tf_config = _build_tf_config(hosts=env.hosts, current_host=env.current_host)
+
         logger.info('Running distributed training job with parameter servers')
         logger.info('Launching parameter server process')
-        _run_ps(env)
+        _run_ps(env, tf_config['cluster'])
         logger.info('Launching worker process')
-        _run_worker(env)
+        _run_worker(env, tf_config)
 
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])
