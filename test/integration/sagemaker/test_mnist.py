@@ -26,12 +26,11 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
-                           training_steps=1,
-                           evaluation_steps=1,
-                           train_instance_count=1,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
+                           framework_version='1.11.0',
+                           py_version='py3',
                            base_job_name='test-sagemaker-mnist')
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data'),
@@ -46,12 +45,12 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
     script = os.path.join(resource_path, 'mnist', 'distributed_mnist.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
-                           training_steps=1,
-                           evaluation_steps=1,
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
+                           framework_version='1.11.0',
+                           py_version='py3',
                            base_job_name='test-tf-sm-distributed-mnist')
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
@@ -67,15 +66,13 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
     script = os.path.join(resource_path, 'mnist', 'distributed_mnist.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
-                           # training_steps and evaluation_steps are legacy parameters from
-                           # framework mode. These number are not used in the training job.
-                           training_steps=1,
-                           evaluation_steps=1,
                            hyperparameters={SAGEMAKER_PARAMETER_SERVER_ENABLED: True},
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
+                           framework_version='1.11.0',
+                           py_version='py3',
                            base_job_name='test-tf-sm-distributed-mnist')
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
