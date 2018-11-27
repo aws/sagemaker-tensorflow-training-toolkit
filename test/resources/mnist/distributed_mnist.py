@@ -173,3 +173,4 @@ if __name__ == "__main__":
     tf.estimator.train_and_evaluate(mnist_classifier, train_spec, eval_spec)
 
     tf_logger.info('====== Training finished =========')
+
