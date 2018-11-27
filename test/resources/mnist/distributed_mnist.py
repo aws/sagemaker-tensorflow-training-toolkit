@@ -11,6 +11,7 @@ import argparse
 from tensorflow.python.platform import tf_logging
 import logging as _logging
 import sys as _sys
+import json
 
 
 def cnn_model_fn(features, labels, mode):
@@ -122,9 +123,8 @@ def _parse_args():
     parser.add_argument('--epochs', type=int, default=1)
     # Data, model, and output directories
     parser.add_argument('--output-data-dir', type=str, default=os.environ['SM_OUTPUT_DATA_DIR'])
-    parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
+    parser.add_argument('--model_dir', type=str, default=os.environ['SM_MODEL_DIR'])
     parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
-    parser.add_argument('--checkpoint_path', type=str, default=os.environ['SM_MODEL_DIR'])
 
     return parser.parse_known_args()
 
@@ -140,8 +140,12 @@ if __name__ == "__main__":
     eval_data, eval_labels = _load_testing_data(args.train)
 
     # Create the Estimator
+    if json.loads(os.environ['SM_TRAINING_ENV'])['additional_framework_parameters'].get('sagemaker_parameter_server_enabled'):
+        model_dir = args.model_dir
+    else:
+        model_dir = os.environ['SM_MODEL_DIR']
     mnist_classifier = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir=args.checkpoint_path)
+        model_fn=cnn_model_fn, model_dir=model_dir)
 
     # Set up logging for predictions
     # Log the values in the "Softmax" tensor with label "probabilities"

@@ -33,6 +33,7 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
         role='SageMakerRole',
         train_instance_count=1,
         train_instance_type='local',
+        image_name=docker_image,
         sagemaker_session=sagemaker_local_session,
         model_dir='/opt/ml/model',
         output_path=output_path,
@@ -41,7 +42,8 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
 
     estimator.fit()
 
-    model = serving.Model(model_data=output_path, role='SageMakerRole',
+    model = serving.Model(model_data=output_path,
+                          role='SageMakerRole',
                           framework_version='1.11.0',
                           sagemaker_session=sagemaker_local_session)
 
