@@ -141,9 +141,9 @@ if __name__ == "__main__":
 
     # Create the Estimator
     if json.loads(os.environ['SM_TRAINING_ENV'])['additional_framework_parameters'].get('sagemaker_parameter_server_enabled'):
-        model_dir = os.environ['SM_MODEL_DIR']
-    else:
         model_dir = args.model_dir
+    else:
+        model_dir = os.environ['SM_MODEL_DIR']
     mnist_classifier = tf.estimator.Estimator(
         model_fn=cnn_model_fn, model_dir=model_dir)
 
