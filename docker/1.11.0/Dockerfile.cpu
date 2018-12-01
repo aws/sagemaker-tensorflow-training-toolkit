@@ -122,9 +122,9 @@ RUN mkdir -p /root/.ssh/ && \
   printf "Host *\n  StrictHostKeyChecking no\n" >> /root/.ssh/config
 
 # Hostname Fix
-COPY ../resources/changehostname.c /
-COPY ../resources/change-hostname.sh /
-COPY ../resources/change-hostname.sh /usr/local/bin/change-hostname.sh
+COPY ../../resources/changehostname.c /
+COPY ../../resources/change-hostname.sh /
+COPY ../../resources/change-hostname.sh /usr/local/bin/change-hostname.sh
 
 RUN chmod +x /usr/local/bin/change-hostname.sh
 RUN chmod +x /change-hostname.sh

@@ -79,7 +79,6 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
     keras==2.2.4 \
-    retrying \
     $framework_support_installable \
     "sagemaker-tensorflow>=1.11,<1.12" \
     # Let's install TensorFlow separately in the end to avoid
@@ -133,6 +132,9 @@ ENV PATH=/usr/local/nvidia/bin:$PATH
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
+###### SSH
+
+RUN pip install retrying
 
 # SSH. Partially taken from https://docs.docker.com/engine/examples/running_ssh_service/
 RUN apt-get update && apt-get install -y --no-install-recommends openssh-server && \
@@ -148,13 +150,28 @@ RUN mkdir -p /root/.ssh/ && \
   printf "Host *\n  StrictHostKeyChecking no\n" >> /root/.ssh/config
 
 # Hostname Fix
-COPY ../../resources/changehostname.c /
-COPY ../../resources/change-hostname.sh /
-COPY ../../resources/change-hostname.sh /usr/local/bin/change-hostname.sh
+COPY docker/resources/changehostname.c /
+COPY docker/resources/change-hostname.sh /
+COPY docker/resources/change-hostname.sh /usr/local/bin/change-hostname.sh
 
 RUN chmod +x /usr/local/bin/change-hostname.sh
 RUN chmod +x /change-hostname.sh
-
 ##############################################################
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
+
+#####
+
+WORKDIR /root
+COPY sagemaker_containers-2.3.5.tar.gz .
+RUN tar -xvzf sagemaker_containers-2.3.5.tar.gz
+RUN cp sagemaker_containers-2.3.5/src/sagemaker_containers/_mpi.py /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
+RUN cp sagemaker_containers-2.3.5/src/sagemaker_containers/_trainer.py /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
+RUN cp sagemaker_containers-2.3.5/src/sagemaker_containers/beta/framework/__init__.py /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
+RUN cp sagemaker_containers-2.3.5/src/sagemaker_containers/_modules.py /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
+
+
+COPY sc/* /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
+#COPY sc/_timeout.py /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
+#COPY sc/_mpi.py /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
+#COPY sc/beta /usr/local/lib/python3.6/dist-packages/sagemaker_containers/
