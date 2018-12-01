@@ -53,6 +53,17 @@ def distributed_training_env():
 
 
 @pytest.fixture
+def mpi_training_env():
+    env = simple_training_env()
+
+    env.hosts = HOST_LIST
+    env.additional_framework_parameters = {
+        training.SAGEMAKER_MPI_ENABLED: True
+    }
+    return env
+
+
+@pytest.fixture
 def single_machine_training_env():
     return simple_training_env()
 
@@ -152,6 +163,17 @@ def test_train_distributed_no_ps(run, distributed_training_env):
 
     run.assert_called_with(MODULE_DIR, MODULE_NAME, distributed_training_env.to_cmd_args(),
                            distributed_training_env.to_env_vars())
+
+
+@pytest.mark.skipif(sys.version_info.major != 3,
+                    reason="Skip this for python 2 because of dict key order mismatch")
+@patch('sagemaker_containers.beta.framework.entry_point.run')
+def test_train_mpi(run, mpi_training_env):
+    training.train(mpi_training_env)
+
+    run.assert_called_with('s3://my/bucket', 'script_name',
+                           mpi_training_env.to_cmd_args(),
+                           True)
 
 
 def test_build_tf_config():

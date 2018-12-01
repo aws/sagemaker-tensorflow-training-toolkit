@@ -28,6 +28,7 @@ from sagemaker_tensorflow_container import s3_utils
 logger = logging.getLogger(__name__)
 
 SAGEMAKER_PARAMETER_SERVER_ENABLED = 'sagemaker_parameter_server_enabled'
+SAGEMAKER_MPI_ENABLED = 'sagemaker_mpi_enabled'
 
 
 def _is_host_master(hosts, current_host):
@@ -126,6 +127,9 @@ def train(env):
     """
     parameter_server_enabled = env.additional_framework_parameters.get(
         SAGEMAKER_PARAMETER_SERVER_ENABLED, False)
+    mpi_enabled = env.additional_framework_parameters.get(
+        SAGEMAKER_MPI_ENABLED, False)
+
     if len(env.hosts) > 1 and parameter_server_enabled:
 
         tf_config = _build_tf_config(hosts=env.hosts, current_host=env.current_host)
@@ -138,7 +142,10 @@ def train(env):
 
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])
-
+    elif mpi_enabled:
+        logger.info("Running training job with MPI.")
+        framework.entry_point.run(env.module_dir, env.user_entry_point,
+                                  env.to_cmd_args(), env.to_env_vars(), mpi_enabled=mpi_enabled)
     else:
         framework.entry_point.run(env.module_dir, env.user_entry_point,
                                   env.to_cmd_args(), env.to_env_vars())
