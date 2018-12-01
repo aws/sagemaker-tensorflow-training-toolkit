@@ -173,7 +173,8 @@ def test_train_mpi(run, mpi_training_env):
 
     run.assert_called_with('s3://my/bucket', 'script_name',
                            mpi_training_env.to_cmd_args(),
-                           True)
+                           mpi_training_env.to_env_vars(),
+                           mpi_enabled=True)
 
 
 def test_build_tf_config():
