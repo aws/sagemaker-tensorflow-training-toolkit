@@ -2,97 +2,131 @@
 
 from __future__ import absolute_import
 
-import argparse
+import contextlib
 import itertools
 import os
+import shutil
+import subprocess
+import tempfile
+
+import click
 
 from sagemaker import Session
-from sagemaker.estimator import Framework
 from sagemaker.tensorflow import TensorFlow
 
-default_bucket = Session().default_bucket
+default_bucket = Session().default_bucket()
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-_DEFAULT_HYPERPARAMETERS = {
-    'batch_size':           32,
-    'model':                'resnet32',
-    'num_epochs':           10,
-    'data_format':          'NHWC',
-    'summary_verbosity':    1,
-    'save_summaries_steps': 10,
-    'data_name':            'cifar10'
-}
+
+@click.group()
+def cli():
+    pass
 
 
-class ScriptModeTensorFlow(Framework):
-    """This class is temporary until the final version of Script Mode is released.
+@cli.command('train')
+@click.option('--framework-version', required=True, type=click.Choice(['1.11.0', '1.12.0']))
+@click.option('--device', required=True, type=click.Choice(['cpu', 'gpu']))
+@click.option('--py-versions', multiple=True, type=str)
+@click.option('--training-input-mode', default='File', type=click.Choice(['File', 'Pipe']))
+@click.option('--networking-isolation/--no-networking-isolation', default=False)
+@click.option('--wait/--no-wait', default=False)
+@click.option('--security-groups', multiple=True, type=str)
+@click.option('--subnets', multiple=True, type=str)
+@click.option('--role', default='SageMakerRole', type=str)
+@click.option('--instance-counts', multiple=True, type=int)
+@click.option('--batch-sizes', multiple=True, type=int)
+@click.option('--instance-types', multiple=True, type=str)
+@click.argument('script_args', nargs=-1, type=str)
+def train(framework_version,
+          device,
+          py_versions,
+          training_input_mode,
+          networking_isolation,
+          wait,
+          security_groups,
+          subnets,
+          role,
+          instance_counts,
+          batch_sizes,
+          instance_types,
+          script_args):
+
+    iterator = itertools.product(instance_types, py_versions, instance_counts, batch_sizes)
+    for instance_type, py_version, instance_count, batch_size in iterator:
+        base_name = job_name(instance_type, instance_count, device, py_version, batch_size)
+
+        template = """#!/usr/bin/env bash 
+        pip install requests py-cpuinfo psutil
+
+        PYTHONPATH="/opt/ml/code/models:$PYTHONPATH" python benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py %s \
+        --train_dir /opt/ml/model --eval_dir /opt/ml/model --benchmark_log_dir /opt/ml/model --batch_size %s\n"""
+
+        script = template % (' '.join(script_args), batch_size)
+
+        print('Creating laucher.sh:\n')
+        print(script)
+
+        with _tmpdir() as tmp:
+            entry_point = os.path.join(tmp, 'launcher.sh')
+            with open(entry_point, mode='w') as f:
+                f.write(script)
+
+            estimator = TensorFlow(
+                entry_point=entry_point,
+                role=role,
+                dependencies=[os.path.join(dir_path, 'benchmarks'), os.path.join(dir_path, 'models')],
+                base_job_name=base_name,
+                train_instance_count=instance_count,
+                train_instance_type=instance_type,
+                framework_version=framework_version,
+                py_version=py_version,
+                script_mode=True,
+                security_group_ids=security_groups,
+                subnets=subnets
+            )
+
+            estimator.fit(wait=wait)
+
+            if wait:
+                artifacts_path = os.path.join(dir_path, 'results', estimator.latest_training_job.job_name)
+                model_path = os.path.join(artifacts_path, 'model.tar.gz')
+                os.makedirs(artifacts_path)
+                subprocess.call(['aws', 's3', 'cp', estimator.model_data, model_path])
+                subprocess.call(['tar', '-xvzf', model_path], cwd=artifacts_path)
+
+                print('Model downloaded at %s' % model_path)
+
+
+def job_name(instance_type,
+             instance_count,
+             device,
+             python_version,
+             batch_size):
+    instance_typename = instance_type.replace('.', '').replace('ml', '')
+
+    return 'tf-%s-%s-%s-%s-b%s' % (instance_typename, instance_count, device, python_version, batch_size)
+
+
+@contextlib.contextmanager
+def _tmpdir(suffix='', prefix='tmp', dir=None):  # type: (str, str, str) -> None
+    """Create a temporary directory with a context manager. The file is deleted when the context exits.
+
+    The prefix, suffix, and dir arguments are the same as for mkstemp().
+
+    Args:
+        suffix (str):  If suffix is specified, the file name will end with that suffix, otherwise there will be no
+                        suffix.
+        prefix (str):  If prefix is specified, the file name will begin with that prefix; otherwise,
+                        a default prefix is used.
+        dir (str):  If dir is specified, the file will be created in that directory; otherwise, a default directory is
+                        used.
+    Returns:
+        str: path to the directory
     """
-
-    __framework_name__ = "tensorflow-scriptmode-beta"
-
-    create_model = TensorFlow.create_model
-
-    def __init__(self, py_version='py3', **kwargs):
-        super(ScriptModeTensorFlow, self).__init__(**kwargs)
-        self.py_version = py_version
-        self.image_name = None
-        self.framework_version = '1.10.0'
-
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--instance-types', nargs='+', help='<Required> Set flag', required=True)
-    parser.add_argument('-r', '--role', required=True)
-    parser.add_argument('-w', '--wait', action='store_true')
-    parser.add_argument('--region', default='us-west-2')
-    parser.add_argument('--py-versions', nargs='+', help='<Required> Set flag', default=['py3'])
-    parser.add_argument('--checkpoint-path',
-                        default=os.path.join(default_bucket(), 'benchmarks', 'checkpoints'),
-                        help='The S3 location where the model checkpoints and tensorboard events are saved after training')
-
-    return parser.parse_known_args()
-
-
-def main(args, script_args):
-    for instance_type, py_version in itertools.product(args.instance_types, args.py_versions):
-        base_name = '%s-%s-%s' % (py_version, instance_type[3:5], instance_type[6:])
-        model_dir = os.path.join(args.checkpoint_path, base_name)
-
-        job_hps = create_hyperparameters(model_dir, script_args)
-
-        print('hyperparameters:')
-        print(job_hps)
-
-        estimator = ScriptModeTensorFlow(
-            entry_point='tf_cnn_benchmarks.py',
-            role='SageMakerRole',
-            source_dir=os.path.join(dir_path, 'tf_cnn_benchmarks'),
-            base_job_name=base_name,
-            train_instance_count=1,
-            hyperparameters=job_hps,
-            train_instance_type=instance_type,
-        )
-
-        input_dir = 's3://sagemaker-sample-data-%s/spark/mnist/train/' % args.region
-        estimator.fit({'train': input_dir}, wait=args.wait)
-
-    print("To use TensorBoard, execute the following command:")
-    cmd = 'S3_USE_HTTPS=0 S3_VERIFY_SSL=0  AWS_REGION=%s tensorboard --host localhost --port 6006 --logdir %s'
-    print(cmd % (args.region, args.checkpoint_path))
-
-
-def create_hyperparameters(model_dir, script_args):
-    job_hps = _DEFAULT_HYPERPARAMETERS.copy()
-
-    job_hps.update({'train_dir': model_dir, 'eval_dir': model_dir})
-
-    script_arg_keys_without_dashes = [key[2:] if key.startswith('--') else key[1:] for key in script_args[::2]]
-    script_arg_values = script_args[1::2]
-    job_hps.update(dict(zip(script_arg_keys_without_dashes, script_arg_values)))
-
-    return job_hps
+    tmp = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
+    yield tmp
+    shutil.rmtree(tmp)
 
 
 if __name__ == '__main__':
-    args, script_args = get_args()
-    main(args, script_args)
+    cli()
