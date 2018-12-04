@@ -70,9 +70,9 @@ RUN pip install --no-cache-dir -U \
     markdown \
     tensorboard
 
-##############################################################
+###########################################################################
 # Horovod & its dependencies
-##############################################################
+###########################################################################
 
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
@@ -121,14 +121,8 @@ RUN mkdir -p /root/.ssh/ && \
   cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
   printf "Host *\n  StrictHostKeyChecking no\n" >> /root/.ssh/config
 
-# Hostname Fix
-COPY ../../resources/changehostname.c /
-COPY ../../resources/change-hostname.sh /
-COPY ../../resources/change-hostname.sh /usr/local/bin/change-hostname.sh
-
-RUN chmod +x /usr/local/bin/change-hostname.sh
-RUN chmod +x /change-hostname.sh
-
-##############################################################
+###########################################################################
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
+
+###########################################################################

@@ -92,6 +92,20 @@ def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, tmpd
     _assert_files_exist_in_tar(output_path, TF_CHECKPOINT_FILES)
 
 
+@pytest.mark.skip_gpu
+def test_distributed_training_cpu_horovod(sagemaker_local_session, docker_image, tmpdir):
+    output_path = 'file://{}'.format(tmpdir)
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
+                    instance_type='local',
+                    instance_count=1,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    output_path=output_path,
+                    hyperparameters={'sagemaker_mpi_enabled': True},
+                    training_data_path='file://{}'.format(
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
+    _assert_files_exist_in_tar(output_path, ["checkpoints/{}".format(x) for x in TF_CHECKPOINT_FILES])
+
 def run_tf_training(script,
                     instance_type,
                     instance_count,

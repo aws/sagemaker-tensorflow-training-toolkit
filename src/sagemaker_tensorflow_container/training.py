@@ -143,9 +143,10 @@ def train(env):
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])
     elif mpi_enabled:
-        logger.info("Running training job with MPI.")
-        framework.entry_point.run(env.module_dir, env.user_entry_point,
-                                  env.to_cmd_args(), env.to_env_vars(), mpi_enabled=mpi_enabled)
+        logger.info("Running training job with MPI, user entry: {} args: {} env vars; {}".format(env.user_entry_point,
+                                                                                                 str(env.to_cmd_args()),
+                                                                                                 str(env.to_env_vars())))
+        framework.entry_point.run(env.module_dir, env.user_entry_point,env.to_cmd_args(), env.to_env_vars(), mpi_enabled=mpi_enabled)
     else:
         framework.entry_point.run(env.module_dir, env.user_entry_point,
                                   env.to_cmd_args(), env.to_env_vars())
