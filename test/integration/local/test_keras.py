@@ -46,7 +46,9 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
     estimator.fit()
 
     # Use random port to avoid port collision
-    sagemaker_local_session.config = {'local': {'serving_port': randint(1025, 65535)}}
+    random_port = randint(1025, 65535)
+    sagemaker_local_session.config = {'local': {'serving_port': random_port}}
+    sagemaker_local_session.sagemaker_runtime_client.serving_port = random_port
     model = serving.Model(model_data=output_path,
                           role='SageMakerRole',
                           framework_version='1.11.0',
