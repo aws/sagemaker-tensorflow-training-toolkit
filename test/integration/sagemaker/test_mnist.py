@@ -18,7 +18,8 @@ import boto3
 from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
+from sagemaker_tensorflow_container.training import SAGEMAKER_MPI_ENABLED, \
+    SAGEMAKER_PARAMETER_SERVER_ENABLED
 
 
 def test_mnist(sagemaker_session, ecr_image, instance_type):
@@ -82,6 +83,24 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.index'))
     _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.meta'))
 
+
+def test_distributed_mnist_horovod(sagemaker_session, ecr_image, instance_type):
+    resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
+    script = os.path.join(resource_path, 'mnist', 'horovod_mnist.py')
+    estimator = TensorFlow(entry_point=script,
+                           role='SageMakerRole',
+                           hyperparameters={SAGEMAKER_MPI_ENABLED: True},
+                           train_instance_count=2,
+                           train_instance_type=instance_type,
+                           sagemaker_session=sagemaker_session,
+                           image_name=ecr_image,
+                           framework_version='1.11.0',
+                           py_version='py3',
+                           base_job_name='test-tf-sm-horovod-mnist')
+    inputs = estimator.sagemaker_session.upload_data(
+        path=os.path.join(resource_path, 'mnist', 'data-distributed'),
+        key_prefix='scriptmode/mnist-distributed')
+    estimator.fit(inputs)
 
 def _assert_s3_file_exists(s3_url):
     parsed_url = urlparse(s3_url)

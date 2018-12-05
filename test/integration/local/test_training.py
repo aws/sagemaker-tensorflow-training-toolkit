@@ -93,6 +93,44 @@ def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, tmpd
 
 
 @pytest.mark.skip_gpu
+@pytest.mark.parametrize('processes',
+                         [(1), (2)])
+def test_distributed_training_cpu_horovod_basic_single_instance(processes, sagemaker_local_session,
+                                                                docker_image, tmpdir):
+    output_path = 'file://{}'.format(tmpdir)
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'hvdbasic', 'train_hvd_basic.py'),
+                    instance_type='local',
+                    instance_count=1,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    output_path=output_path,
+                    hyperparameters={'sagemaker_mpi_enabled': True,
+                                     "sagemaker_mpi_num_of_processes_per_host": processes},
+                    training_data_path='file://{}'.format(
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
+
+
+@pytest.mark.skip(reason="Skipping it as multi nodde MPI is not working due to hostname resolution"
+                         " issue.")
+@pytest.mark.parametrize('instances, processes',
+                         [(2, 1), (2, 2)])
+def test_distributed_training_cpu_horovod_basic_multi_instance(instances, processes,
+                                                               sagemaker_local_session,
+                                                               docker_image, tmpdir):
+    output_path = 'file://{}'.format(tmpdir)
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'hvdbasic', 'train_hvd_basic.py'),
+                    instance_type='local',
+                    instance_count=instances,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    output_path=output_path,
+                    hyperparameters={'sagemaker_mpi_enabled': True,
+                                     "sagemaker_mpi_num_of_processes_per_host": processes},
+                    training_data_path='file://{}'.format(
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
+
+
+@pytest.mark.skip_gpu
 def test_distributed_training_cpu_horovod(sagemaker_local_session, docker_image, tmpdir):
     output_path = 'file://{}'.format(tmpdir)
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
@@ -101,10 +139,11 @@ def test_distributed_training_cpu_horovod(sagemaker_local_session, docker_image,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
                     output_path=output_path,
-                    hyperparameters={'sagemaker_mpi_enabled': True},
+                    hyperparameters={'sagemaker_mpi_enabled': True,
+                                     "sagemaker_mpi_num_of_processes_per_host": 2},
                     training_data_path='file://{}'.format(
                         os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
-    _assert_files_exist_in_tar(output_path, ["checkpoints/{}".format(x) for x in TF_CHECKPOINT_FILES])
+
 
 def run_tf_training(script,
                     instance_type,
@@ -112,7 +151,6 @@ def run_tf_training(script,
                     sagemaker_local_session,
                     docker_image, training_data_path, output_path=None,
                     hyperparameters=None):
-
     hyperparameters = hyperparameters or {}
 
     estimator = TensorFlow(entry_point=script,
