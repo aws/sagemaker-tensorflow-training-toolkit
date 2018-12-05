@@ -14,7 +14,6 @@ from __future__ import absolute_import
 
 import logging
 import os
-from random import randint
 
 import numpy as np
 import pytest
