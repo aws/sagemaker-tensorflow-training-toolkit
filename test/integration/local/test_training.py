@@ -110,7 +110,7 @@ def test_distributed_training_cpu_horovod_basic_single_instance(processes, sagem
                         os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
 
 
-@pytest.mark.skip(reason="Skipping it as multi nodde MPI is not working due to hostname resolution"
+@pytest.mark.skip(reason="Skipping it as multi node MPI is not working due to hostname resolution"
                          " issue.")
 @pytest.mark.parametrize('instances, processes',
                          [(2, 1), (2, 2)])

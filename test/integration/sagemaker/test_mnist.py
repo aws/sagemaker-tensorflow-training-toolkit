@@ -102,6 +102,7 @@ def test_distributed_mnist_horovod(sagemaker_session, ecr_image, instance_type):
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
 
+
 def _assert_s3_file_exists(s3_url):
     parsed_url = urlparse(s3_url)
     s3 = boto3.resource('s3')
