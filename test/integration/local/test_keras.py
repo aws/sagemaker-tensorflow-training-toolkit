@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import logging
 import os
+from random import randint
 
 import numpy as np
 import pytest
@@ -25,13 +26,8 @@ from test.integration import RESOURCE_PATH
 logging.basicConfig(level=logging.DEBUG)
 
 
-@pytest.fixture
-def local_mode_instance_type(processor):
-    instance_type = 'local' if processor == 'cpu' else 'local_gpu'
-    return instance_type
-
-
-def test_keras_training(sagemaker_local_session, docker_image, tmpdir, local_mode_instance_type):
+@pytest.mark.skip_gpu
+def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
     entry_point = os.path.join(RESOURCE_PATH, 'keras_inception.py')
     output_path = 'file://{}'.format(tmpdir)
 
@@ -39,7 +35,7 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir, local_mod
         entry_point=entry_point,
         role='SageMakerRole',
         train_instance_count=1,
-        train_instance_type=local_mode_instance_type,
+        train_instance_type='local',
         image_name=docker_image,
         sagemaker_session=sagemaker_local_session,
         model_dir='/opt/ml/model',
@@ -49,6 +45,8 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir, local_mod
 
     estimator.fit()
 
+    # Use random port to avoid port collision
+    sagemaker_local_session.config['local'] = {'serving_port': randint(1025, 65535)}
     model = serving.Model(model_data=output_path,
                           role='SageMakerRole',
                           framework_version='1.11.0',
