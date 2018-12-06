@@ -10,6 +10,7 @@
 #  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 #  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
+import os
 
 import numpy as np
 from google.protobuf import json_format
@@ -25,6 +26,8 @@ from tensorflow_serving.apis import prediction_service_pb2
 
 from tf_container.run import logger as _logger
 
+INFERENCE_ACCELERATOR_PRESENT_ENV = 'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT'
+
 REGRESSION = 'tensorflow/serving/regression'
 CLASSIFY = 'tensorflow/serving/classify'
 INFERENCE = 'tensorflow/serving/inference'
@@ -37,6 +40,9 @@ class GRPCProxyClient(object):
                  model_name=GENERIC_MODEL_NAME,
                  input_tensor_name=PREDICT_INPUTS,
                  signature_name=DEFAULT_SERVING_SIGNATURE_DEF_KEY):
+        if os.environ.get(INFERENCE_ACCELERATOR_PRESENT_ENV) == 'true':
+            request_timeout = 30.0
+
         self.tf_serving_port = tf_serving_port
         self.host = host
         self.request_timeout = request_timeout
