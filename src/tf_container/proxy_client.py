@@ -27,7 +27,7 @@ from tensorflow_serving.apis import prediction_service_pb2
 from tf_container.run import logger as _logger
 
 INFERENCE_ACCELERATOR_PRESENT_ENV = 'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT'
-TF_SERVING_REQUEST_TIMEOUT_ENV = 'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT'
+TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV = 'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT'
 
 REGRESSION = 'tensorflow/serving/regression'
 CLASSIFY = 'tensorflow/serving/classify'
@@ -41,8 +41,8 @@ class GRPCProxyClient(object):
                  model_name=GENERIC_MODEL_NAME,
                  input_tensor_name=PREDICT_INPUTS,
                  signature_name=DEFAULT_SERVING_SIGNATURE_DEF_KEY):
-        if os.environ.get(TF_SERVING_REQUEST_TIMEOUT_ENV):
-            request_timeout = int(TF_SERVING_REQUEST_TIMEOUT_ENV)
+        if os.environ.get(TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV):
+            request_timeout = int(TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV)
         elif os.environ.get(INFERENCE_ACCELERATOR_PRESENT_ENV) == 'true':
             request_timeout = 30.0
 
