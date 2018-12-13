@@ -16,6 +16,7 @@ import logging
 import os
 
 import numpy as np
+import pytest
 from sagemaker.tensorflow import serving, TensorFlow
 
 from test.integration import RESOURCE_PATH
@@ -24,6 +25,7 @@ from test.integration import RESOURCE_PATH
 logging.basicConfig(level=logging.DEBUG)
 
 
+@pytest.mark.skip_gpu
 def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
     entry_point = os.path.join(RESOURCE_PATH, 'keras_inception.py')
     output_path = 'file://{}'.format(tmpdir)
