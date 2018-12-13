@@ -15,14 +15,17 @@ from __future__ import absolute_import
 
 import json
 import logging
+import os
 import subprocess
+import threading
 import time
 
 import sagemaker_containers.beta.framework as framework
+import tensorflow as tf
 
+from sagemaker_tensorflow_container import s3_utils
 
 logger = logging.getLogger(__name__)
-
 
 SAGEMAKER_PARAMETER_SERVER_ENABLED = 'sagemaker_parameter_server_enabled'
 
@@ -85,29 +88,22 @@ def _build_tf_config(hosts, current_host, ps_task=False):
     return tf_config
 
 
-def _env_vars_with_tf_config(env, ps_task):
+def _run_ps(env, cluster):
+    logger.info('Running distributed training job with parameter servers')
+
+    cluster_spec = tf.train.ClusterSpec(cluster)
+    task_index = env.hosts.index(env.current_host)
+
+    server = tf.train.Server(cluster_spec, job_name='ps', task_index=task_index)
+
+    threading.Thread(target=lambda: server.join()).start()
+
+
+def _run_worker(env, tf_config):
     env_vars = env.to_env_vars()
-    env_vars['TF_CONFIG'] = json.dumps(_build_tf_config(
-        hosts=env.hosts,
-        current_host=env.current_host,
-        ps_task=ps_task))
-    return env_vars
+    env_vars['TF_CONFIG'] = json.dumps(tf_config)
 
-
-def _run_ps(env):
-    env_vars = _env_vars_with_tf_config(env, ps_task=True)
-    return framework.modules.run_module(
-        env.module_dir, env.to_cmd_args(), env_vars, env.module_name, wait=False)
-
-
-def _run_worker(env, install_module=False):
-    env_vars = _env_vars_with_tf_config(env, ps_task=False)
-    if install_module:
-        return framework.modules.run_module(
-            env.module_dir, env.to_cmd_args(), env_vars, env.module_name)
-    else:
-        framework.modules.write_env_vars(env_vars)
-        framework.modules.run(env.module_name, env.to_cmd_args(), env_vars)
+    framework.entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env_vars)
 
 
 def _wait_until_master_is_down(master):
@@ -132,18 +128,20 @@ def train(env):
         SAGEMAKER_PARAMETER_SERVER_ENABLED, False)
     if len(env.hosts) > 1 and parameter_server_enabled:
 
+        tf_config = _build_tf_config(hosts=env.hosts, current_host=env.current_host)
+
         logger.info('Running distributed training job with parameter servers')
         logger.info('Launching parameter server process')
-        _run_ps(env)
+        _run_ps(env, tf_config['cluster'])
         logger.info('Launching worker process')
-        _run_worker(env, install_module=False)
+        _run_worker(env, tf_config)
 
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])
 
     else:
-        framework.modules.run_module(env.module_dir, env.to_cmd_args(),
-                                     env.to_env_vars(), env.module_name)
+        framework.entry_point.run(env.module_dir, env.user_entry_point,
+                                  env.to_cmd_args(), env.to_env_vars())
 
 
 def main():
@@ -151,5 +149,6 @@ def main():
     """
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
+    s3_utils.configure(env.hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
     logger.setLevel(env.log_level)
     train(env)
