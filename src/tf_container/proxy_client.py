@@ -42,7 +42,7 @@ class GRPCProxyClient(object):
                  input_tensor_name=PREDICT_INPUTS,
                  signature_name=DEFAULT_SERVING_SIGNATURE_DEF_KEY):
         if os.environ.get(TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV):
-            request_timeout = int(TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV)
+            request_timeout = float(os.env.get(TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV))
         elif os.environ.get(INFERENCE_ACCELERATOR_PRESENT_ENV) == 'true':
             request_timeout = 30.0
 
