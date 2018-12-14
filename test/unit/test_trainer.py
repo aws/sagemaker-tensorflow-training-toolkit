@@ -186,7 +186,7 @@ def test_user_model_fn(modules, trainer):
     estimator = trainer._build_estimator(fake_run_config)
 
     estimator_mock = modules.estimator.Estimator
-    # Verify that _model_fn passed to Estimator correctly passes args through to user script model_fn 
+    # Verify that _model_fn passed to Estimator correctly passes args through to user script model_fn
     estimator_mock.assert_called_with(model_fn=ANY, params=expected_hps, config=fake_run_config)
     _, kwargs, = estimator_mock.call_args
     kwargs['model_fn'](1, 2, 3, 4)

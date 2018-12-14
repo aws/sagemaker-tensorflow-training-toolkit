@@ -16,9 +16,8 @@ import os
 
 import pytest
 from google import protobuf
-from mock import MagicMock, patch, ANY, Mock
-from tensorflow_serving.apis import prediction_service_pb2, get_model_metadata_pb2, \
-    classification_pb2, predict_pb2, inference_pb2, regression_pb2
+from mock import MagicMock, patch, ANY
+from tensorflow_serving.apis import prediction_service_pb2, get_model_metadata_pb2
 
 from tf_container.proxy_client import GRPCProxyClient
 
@@ -30,6 +29,7 @@ PREDICT = 'tensorflow/serving/predict'
 DEFAULT_PORT = 9000
 INPUT_TENSOR_NAME = 'inputs'
 
+
 @pytest.fixture()
 def proxy_client():
     proxy_client = GRPCProxyClient(DEFAULT_PORT, input_tensor_name=INPUT_TENSOR_NAME,
@@ -37,7 +37,7 @@ def proxy_client():
     proxy_client.input_type_map['sometype'] = 'somedtype'
     proxy_client.prediction_service_stub = MagicMock()
 
-    yield proxy_client
+    return proxy_client
 
 
 class PredictRequest(object):

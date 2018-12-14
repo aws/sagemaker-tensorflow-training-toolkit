@@ -12,49 +12,18 @@
 #  permissions and limitations under the License.
 
 import json
-
-import pytest
-from mock import Mock, call, patch
-from test.unit.utils import mock_import_modules
 from types import ModuleType
 
+import pytest
 from container_support.serving import UnsupportedAcceptTypeError, UnsupportedContentTypeError
+from mock import Mock, call, patch
+
+import tf_container.serve as serve
 
 JSON_CONTENT_TYPE = "application/json"
 FIRST_PORT = '1111'
 LAST_PORT = '2222'
 SAFE_PORT_RANGE = '{}-{}'.format(FIRST_PORT, LAST_PORT)
-
-
-@pytest.fixture(scope="module")
-def modules():
-    modules_to_mock = [
-        'numpy',
-        'grpc.beta',
-        'tensorflow.python.framework',
-        'tensorflow.core.framework',
-        'tensorflow_serving.apis',
-        'tensorflow.python.saved_model.signature_constants',
-        'google.protobuf.json_format',
-        'tensorflow.core.example',
-        'tensorflow.contrib.learn.python.learn.utils',
-        'tensorflow.contrib.training.HParams',
-        'tensorflow.python.estimator',
-        'grpc.framework.interfaces.face.face'
-    ]
-    mock, modules = mock_import_modules(modules_to_mock)
-
-    patcher = patch.dict('sys.modules', modules)
-    patcher.start()
-    yield mock
-    patcher.stop()
-
-
-@pytest.fixture(scope="module")
-def serve(modules):
-    # Import module here to utilize mocked dependencies in modules()
-    import tf_container.serve as serve
-    yield serve
 
 
 @pytest.fixture
@@ -73,7 +42,7 @@ def boto_session():
 
 
 @patch('os.makedirs')
-def test_export_saved_model_from_s3(makedirs, boto_session, serve):
+def test_export_saved_model_from_s3(makedirs, boto_session):
     serve.export_saved_model('s3://bucket/test', 'a/path', s3=boto_session)
 
     expected_boto_calls = [
@@ -93,7 +62,7 @@ def test_export_saved_model_from_s3(makedirs, boto_session, serve):
 
 @patch('os.path.exists')
 @patch('os.makedirs')
-def test_export_saved_model_from_filesystem(mock_exists, mock_makedirs, serve):
+def test_export_saved_model_from_filesystem(mock_exists, mock_makedirs):
     checkpoint_dir = 'a/dir'
     model_path = 'possible/another/dir'
 
@@ -108,21 +77,8 @@ def mod():
     yield m
 
 
-@pytest.fixture()
-def json_format(modules):
-    def _json_format_parse(serialized_data, tensor_proto):
-        return json.loads(serialized_data)
-
-    modules.protobuf.json_format.Parse.side_effect = _json_format_parse
-
-    def _json_format_message_to_json(data):
-        return json.dumps(data)
-
-    modules.protobuf.json_format.MessageToJson.side_effect = _json_format_message_to_json
-    return modules.protobuf.json_format
-
-
-def test_transformer_provides_default_transformer_fn(serve, mod, json_format):
+@patch('google.protobuf.json_format.MessageToJson', side_effect=json.dumps)
+def test_transformer_provides_default_transformer_fn(message):
     grpc_proxy_client = Mock()
 
     def _request(data):
@@ -136,7 +92,7 @@ def test_transformer_provides_default_transformer_fn(serve, mod, json_format):
     assert result == ('[1, 2, 3, 1, 2, 3]', 'application/json')
 
 
-def test_transformer_from_module_allows_users_to_provide_their_own_transform_fn(serve, mod):
+def test_transformer_from_module_allows_users_to_provide_their_own_transform_fn(mod):
     def _transform_fn(data, content_type, accepts):
         return """
         transform_fn:
@@ -159,7 +115,7 @@ def test_transformer_from_module_allows_users_to_provide_their_own_transform_fn(
 
 
 @patch('tf_container.proxy_client.GRPCProxyClient')
-def test_transformer_from_module_allows_users_to_provide_their_own_input_fns(proxy_client, modules, serve, mod):
+def test_transformer_from_module_allows_users_to_provide_their_own_input_fns(proxy_client, mod):
     mod.input_fn = mock_input_fn
     mod.output_fn = mock_output_fn
 
@@ -184,7 +140,7 @@ def test_transformer_from_module_allows_users_to_provide_their_own_input_fns(pro
 
 
 @patch('tf_container.proxy_client.GRPCProxyClient')
-def test_transformer_from_module_separate_fn_csv(proxy_client, serve, mod):
+def test_transformer_from_module_separate_fn_csv(proxy_client, mod):
     client = proxy_client()
     client.request.side_effect = mock_predict_fn
     mod.input_fn = mock_input_fn
@@ -230,7 +186,7 @@ def mock_output_fn(data, content_type):
 
 
 @patch('tf_container.proxy_client.GRPCProxyClient')
-def test_transformer_from_module_separate_fn_protobuf(proxy_client, modules, serve, mod):
+def test_transformer_from_module_separate_fn_protobuf(proxy_client, mod):
     client = proxy_client()
     client.request.side_effect = mock_predict_fn
     mod.input_fn = mock_input_fn
@@ -253,14 +209,14 @@ def test_transformer_from_module_separate_fn_protobuf(proxy_client, modules, ser
     assert result[1] == "application/json"
 
 
-def test_transformer_from_module_default_fns(serve, mod):
+def test_transformer_from_module_default_fns(mod):
     transformer = serve.Transformer.from_module(mod, grpc_proxy_client=Mock())
 
     assert hasattr(transformer, 'transform_fn')
 
 
 @patch('tf_container.proxy_client.GRPCProxyClient')
-def test_transformer_method(proxy_client, serve):
+def test_transformer_method(proxy_client):
     with patch('os.environ') as env:
         env['SAGEMAKER_PROGRAM'] = 'script.py'
         env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
@@ -275,7 +231,7 @@ def test_transformer_method(proxy_client, serve):
 
 @patch('subprocess.Popen')
 @patch('container_support.HostingEnvironment')
-def test_load_dependencies_with_default_port(hosting_env, popen, serve):
+def test_load_dependencies_with_default_port(hosting_env, popen):
     with patch('os.environ') as env:
         env['SAGEMAKER_PROGRAM'] = 'script.py'
         env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
@@ -294,7 +250,7 @@ def test_load_dependencies_with_default_port(hosting_env, popen, serve):
 
 @patch('subprocess.Popen')
 @patch('container_support.HostingEnvironment')
-def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
+def test_load_dependencies_with_safe_port(hosting_env, popen):
     with patch('os.environ') as env:
         env['SAGEMAKER_PROGRAM'] = 'script.py'
         env['SAGEMAKER_SUBMIT_DIRECTORY'] = 's3://what/ever'
@@ -312,21 +268,21 @@ def test_load_dependencies_with_safe_port(hosting_env, popen, serve):
 
 
 @patch('tf_container.proxy_client.GRPCProxyClient')
-def test_wait_model_to_load(proxy_client, serve):
+def test_wait_model_to_load(proxy_client):
     client = proxy_client()
 
     serve._wait_model_to_load(client, 10)
     client.cache_prediction_metadata.assert_called_once_with()
 
 
-def test_transformer_default_output_fn_unsupported_type(serve):
+def test_transformer_default_output_fn_unsupported_type():
     accept_type = 'fake/accept-type'
 
     with pytest.raises(UnsupportedAcceptTypeError):
         serve.Transformer._default_output_fn(None, accept_type)
 
 
-def test_transformer_default_input_fn_unsupported_type(serve):
+def test_transformer_default_input_fn_unsupported_type():
     content_type = 'fake/content-type'
 
     with pytest.raises(UnsupportedContentTypeError):
