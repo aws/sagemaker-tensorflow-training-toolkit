@@ -84,6 +84,13 @@ class TensorProto(object):
 
 @patch.dict(os.environ, {'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT': '300.0',
                          'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT': 'true'}, clear=True)
+def test_user_supplied_custom_tfs_timeout_with_ei():
+    client = GRPCProxyClient(DEFAULT_PORT)
+
+    assert client.request_timeout == 300.0
+
+
+@patch.dict(os.environ, {'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT': '300.0'}, clear=True)
 def test_user_supplied_custom_tfs_timeout():
     client = GRPCProxyClient(DEFAULT_PORT)
 
