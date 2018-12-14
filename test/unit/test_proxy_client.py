@@ -27,10 +27,12 @@ INFERENCE = 'tensorflow/serving/inference'
 CLASSIFY = 'tensorflow/serving/classify'
 PREDICT = 'tensorflow/serving/predict'
 
+DEFAULT_PORT = 9000
+INPUT_TENSOR_NAME = 'inputs'
 
 @pytest.fixture()
 def proxy_client():
-    proxy_client = GRPCProxyClient(9000, input_tensor_name='inputs',
+    proxy_client = GRPCProxyClient(DEFAULT_PORT, input_tensor_name=INPUT_TENSOR_NAME,
                                    signature_name='serving_default')
     proxy_client.input_type_map['sometype'] = 'somedtype'
     proxy_client.prediction_service_stub = MagicMock()
@@ -41,7 +43,7 @@ def proxy_client():
 class PredictRequest(object):
     def __init__(self):
         self.model_spec = MagicMock()
-        self.inputs = {'inputs': MagicMock()}
+        self.inputs = {INPUT_TENSOR_NAME: MagicMock()}
 
 
 class ClassificationRequest(object):
@@ -80,17 +82,17 @@ class TensorProto(object):
         self.data = data
 
 
-@patch.dict(os.environ, {'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT': '300',
+@patch.dict(os.environ, {'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT': '300.0',
                          'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT': 'true'}, clear=True)
 def test_user_supplied_custom_tfs_timeout():
-    client = GRPCProxyClient(9000)
+    client = GRPCProxyClient(DEFAULT_PORT)
 
-    assert client.request_timeout == 300
+    assert client.request_timeout == 300.0
 
 
 @patch.dict(os.environ, {'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT': 'true'}, clear=True)
 def test_default_tfs_ei_timeout():
-    client = GRPCProxyClient(9000)
+    client = GRPCProxyClient(DEFAULT_PORT)
 
     assert client.request_timeout == 30
 
@@ -195,7 +197,7 @@ def test_predict_with_tensor_proto(make_tensor_proto, proxy_client):
 
     assert predict_request_attribute.model_spec.name == 'generic_model'
     assert predict_request_attribute.model_spec.signature_name == 'serving_default'
-    predict_request_attribute.inputs['inputs'].CopyFrom.assert_called_once_with(tensor_proto)
+    predict_request_attribute.inputs[INPUT_TENSOR_NAME].CopyFrom.assert_called_once_with(tensor_proto)
 
     assert prediction == predict_fn.return_value
 
@@ -205,7 +207,7 @@ def test_predict_with_tensor_proto(make_tensor_proto, proxy_client):
 def test_predict_with_dict(make_tensor_proto, proxy_client):
     tensor_proto = TensorProto('/42-sagemaker')
     make_tensor_proto.return_value = tensor_proto
-    prediction = proxy_client.predict({'inputs': tensor_proto})
+    prediction = proxy_client.predict({INPUT_TENSOR_NAME: tensor_proto})
 
     predict_fn = proxy_client.prediction_service_stub.Predict
     predict_fn.assert_called_once()
@@ -214,7 +216,7 @@ def test_predict_with_dict(make_tensor_proto, proxy_client):
 
     assert predict_request_attribute.model_spec.name == 'generic_model'
     assert predict_request_attribute.model_spec.signature_name == 'serving_default'
-    predict_request_attribute.inputs['inputs'].CopyFrom.assert_called_once_with(tensor_proto)
+    predict_request_attribute.inputs[INPUT_TENSOR_NAME].CopyFrom.assert_called_once_with(tensor_proto)
 
     assert prediction == predict_fn.return_value
 
@@ -269,9 +271,9 @@ def test_classification_with_int_list(proxy_client):
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == [1, 2, 3, 0]
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == [1, 2, 3, 0]
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
 def test_classification_with_bytes_list(proxy_client):
@@ -281,9 +283,9 @@ def test_classification_with_bytes_list(proxy_client):
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == bytes
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == bytes
 
 
 def test_classification_with_float_list(proxy_client):
@@ -293,9 +295,9 @@ def test_classification_with_float_list(proxy_client):
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == data
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == data
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
 def test_classification_with_int(proxy_client):
@@ -304,9 +306,9 @@ def test_classification_with_int(proxy_client):
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == [1]
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == [1]
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
 def test_classification_with_bytes(proxy_client):
@@ -316,9 +318,9 @@ def test_classification_with_bytes(proxy_client):
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == [bytes]
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == [bytes]
 
 
 def test_classification_with_float(proxy_client):
@@ -329,9 +331,9 @@ def test_classification_with_float(proxy_client):
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == [data]
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == [data]
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
 def test_classification_with_invalid_payload(proxy_client):
@@ -356,7 +358,7 @@ def test_classification_protobuf(proxy_client):
 def test_cache_prediction_metadata(channel, stub, request, signature_def_map, proxy_client):
     proxy_client.cache_prediction_metadata()
 
-    channel.assert_called_once_with('localhost', 9000)
+    channel.assert_called_once_with('localhost', DEFAULT_PORT)
 
     stub = prediction_service_pb2.beta_create_PredictionService_stub
     stub.assert_called_once_with(channel())
