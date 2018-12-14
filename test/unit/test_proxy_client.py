@@ -1,77 +1,49 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import json
+import os
 
 import pytest
+from google import protobuf
 from mock import MagicMock, patch, ANY
+from tensorflow_serving.apis import prediction_service_pb2, get_model_metadata_pb2
 
-from test.unit.utils import mock_import_modules
+from tf_container.proxy_client import GRPCProxyClient
 
 REGRESSION = 'tensorflow/serving/regression'
 INFERENCE = 'tensorflow/serving/inference'
 CLASSIFY = 'tensorflow/serving/classify'
 PREDICT = 'tensorflow/serving/predict'
 
+DEFAULT_PORT = 9000
+INPUT_TENSOR_NAME = 'inputs'
+
 
 @pytest.fixture()
-def set_up():
-    modules_to_mock = [
-        'numpy',
-        'grpc.beta',
-        'tensorflow.python.framework',
-        'tensorflow.core.framework',
-        'tensorflow_serving.apis',
-        'tensorflow.python.saved_model.signature_constants',
-        'google.protobuf.json_format',
-        'tensorflow.contrib.learn.python.learn.utils',
-        'tensorflow.contrib.training.HParams',
-        'tensorflow.python.estimator',
-        'tensorflow.core.example',
-        'grpc.framework.interfaces.face.face'
-    ]
-    mock, modules = mock_import_modules(modules_to_mock)
-
-    patcher = patch.dict('sys.modules', modules)
-    patcher.start()
-    from tf_container.proxy_client import GRPCProxyClient
-    proxy_client = GRPCProxyClient(9000, input_tensor_name='inputs',
+def proxy_client():
+    proxy_client = GRPCProxyClient(DEFAULT_PORT, input_tensor_name=INPUT_TENSOR_NAME,
                                    signature_name='serving_default')
     proxy_client.input_type_map['sometype'] = 'somedtype'
     proxy_client.prediction_service_stub = MagicMock()
 
-    yield mock, proxy_client
-    patcher.stop()
-
-
-@pytest.fixture()
-def set_up_requests(set_up):
-    mock, proxy_client = set_up
-    mock.tensor_pb2.TensorProto = TensorProto
-    mock.predict_pb2.PredictRequest = PredictRequest
-    mock.classification_pb2.ClassificationRequest = ClassificationRequest
-    mock.example_pb2.Example = Example
-    mock.feature_pb2.Features = Features
-    mock.feature_pb2.Feature = Feature
-    mock.feature_pb2.Int64List = FeatureList
-    mock.feature_pb2.BytesList = FeatureList
-    mock.feature_pb2.FloatList = FeatureList
+    return proxy_client
 
 
 class PredictRequest(object):
     def __init__(self):
         self.model_spec = MagicMock()
-        self.inputs = {'inputs': MagicMock()}
+        self.inputs = {INPUT_TENSOR_NAME: MagicMock()}
 
 
 class ClassificationRequest(object):
@@ -110,59 +82,76 @@ class TensorProto(object):
         self.data = data
 
 
-def test_parse_request_predict(set_up):
-    mock, proxy_client = set_up
+@patch.dict(os.environ, {'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT': '300.0',
+                         'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT': 'true'}, clear=True)
+def test_user_supplied_custom_tfs_timeout_with_ei():
+    client = GRPCProxyClient(DEFAULT_PORT)
+
+    assert client.request_timeout == 300.0
+
+
+@patch.dict(os.environ, {'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT': '300.0'}, clear=True)
+def test_user_supplied_custom_tfs_timeout():
+    client = GRPCProxyClient(DEFAULT_PORT)
+
+    assert client.request_timeout == 300.0
+
+
+@patch.dict(os.environ, {'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT': 'true'}, clear=True)
+def test_default_tfs_ei_timeout():
+    client = GRPCProxyClient(DEFAULT_PORT)
+
+    assert client.request_timeout == 30
+
+
+@patch('tensorflow_serving.apis.predict_pb2.PredictRequest')
+def test_parse_request_predict(mock_request, proxy_client):
     proxy_client.prediction_type = PREDICT
 
-    patch_metadata_request_with(mock, PREDICT)
+    patch_metadata_request_with(PREDICT)
     proxy_client.parse_request('serialized_data')
 
-    mock_request = mock.predict_pb2.PredictRequest
     mock_request.assert_called_once()
     mock_request().ParseFromString.assert_called_once_with('serialized_data')
 
 
-def test_parse_request_classification(set_up):
-    mock, proxy_client = set_up
+@patch('tensorflow_serving.apis.classification_pb2.ClassificationRequest')
+def test_parse_request_classification(mock_request, proxy_client):
     proxy_client.prediction_type = CLASSIFY
 
-    patch_metadata_request_with(mock, CLASSIFY)
+    patch_metadata_request_with(CLASSIFY)
     proxy_client.parse_request('serialized_data')
 
-    mock_request = mock.classification_pb2.ClassificationRequest
     mock_request.assert_called_once()
     mock_request().ParseFromString.assert_called_once_with('serialized_data')
 
 
-def test_parse_request_inference(set_up):
-    mock, proxy_client = set_up
+@patch('tensorflow_serving.apis.inference_pb2.MultiInferenceRequest')
+def test_parse_request_inference(mock_request, proxy_client):
     proxy_client.prediction_type = INFERENCE
 
-    patch_metadata_request_with(mock, INFERENCE)
+    patch_metadata_request_with(INFERENCE)
     proxy_client.parse_request('serialized_data')
 
-    mock_request = mock.inference_pb2.MultiInferenceRequest
     mock_request.assert_called_once()
     mock_request().ParseFromString.assert_called_once_with('serialized_data')
 
 
-def test_parse_request_regression(set_up):
-    mock, proxy_client = set_up
+@patch('tensorflow_serving.apis.regression_pb2.RegressionRequest')
+def test_parse_request_regression(mock_request, proxy_client):
     proxy_client.prediction_type = REGRESSION
 
-    patch_metadata_request_with(mock, REGRESSION)
+    patch_metadata_request_with(REGRESSION)
     proxy_client.parse_request('serialized_data')
 
-    mock_request = mock.regression_pb2.RegressionRequest
     mock_request.assert_called_once()
     mock_request().ParseFromString.assert_called_once_with('serialized_data')
 
 
-def test_request_predict(set_up):
-    mock, proxy_client = set_up
+def test_request_predict(proxy_client):
     proxy_client.prediction_type = PREDICT
 
-    patch_metadata_request_with(mock, PREDICT)
+    patch_metadata_request_with(PREDICT)
 
     predict_fn_mock = MagicMock()
     proxy_client.request_fn_map[PREDICT] = predict_fn_mock
@@ -172,11 +161,10 @@ def test_request_predict(set_up):
     predict_fn_mock.assert_called_once_with('my_data')
 
 
-def test_request_classification(set_up):
-    mock, proxy_client = set_up
+def test_request_classification(proxy_client):
     proxy_client.prediction_type = CLASSIFY
 
-    patch_metadata_request_with(mock, CLASSIFY)
+    patch_metadata_request_with(CLASSIFY)
 
     mock = MagicMock()
     proxy_client.request_fn_map[CLASSIFY] = mock
@@ -186,26 +174,27 @@ def test_request_classification(set_up):
     mock.assert_called_once_with('my_data')
 
 
-def test_request_not_implemented(set_up):
-    mock, proxy_client = set_up
-
+def test_request_not_implemented(proxy_client):
     with pytest.raises(NotImplementedError):
-        patch_metadata_request_with(mock, INFERENCE)
+        patch_metadata_request_with(INFERENCE)
         proxy_client.prediction_type = INFERENCE
 
         proxy_client.request('my_data')
 
     with pytest.raises(NotImplementedError):
-        patch_metadata_request_with(mock, REGRESSION)
+        patch_metadata_request_with(REGRESSION)
         proxy_client.prediction_type = REGRESSION
 
         proxy_client.request('my_data')
 
 
-def test_predict_with_tensor_proto(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+@patch('tensorflow_serving.apis.predict_pb2.PredictRequest', new=PredictRequest)
+@patch('tf_container.proxy_client.make_tensor_proto')
+def test_predict_with_tensor_proto(make_tensor_proto, proxy_client):
     tensor_proto = TensorProto('/42-sagemaker')
+
+    make_tensor_proto.return_value = tensor_proto
+
     prediction = proxy_client.predict(tensor_proto)
 
     predict_fn = proxy_client.prediction_service_stub.Predict
@@ -215,16 +204,17 @@ def test_predict_with_tensor_proto(set_up, set_up_requests):
 
     assert predict_request_attribute.model_spec.name == 'generic_model'
     assert predict_request_attribute.model_spec.signature_name == 'serving_default'
-    predict_request_attribute.inputs['inputs'].CopyFrom.assert_called_once_with(tensor_proto)
+    predict_request_attribute.inputs[INPUT_TENSOR_NAME].CopyFrom.assert_called_once_with(tensor_proto)
 
     assert prediction == predict_fn.return_value
 
 
-def test_predict_with_dict(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+@patch('tensorflow_serving.apis.predict_pb2.PredictRequest', new=PredictRequest)
+@patch('tf_container.proxy_client.make_tensor_proto')
+def test_predict_with_dict(make_tensor_proto, proxy_client):
     tensor_proto = TensorProto('/42-sagemaker')
-    prediction = proxy_client.predict({'inputs': tensor_proto})
+    make_tensor_proto.return_value = tensor_proto
+    prediction = proxy_client.predict({INPUT_TENSOR_NAME: tensor_proto})
 
     predict_fn = proxy_client.prediction_service_stub.Predict
     predict_fn.assert_called_once()
@@ -233,14 +223,14 @@ def test_predict_with_dict(set_up, set_up_requests):
 
     assert predict_request_attribute.model_spec.name == 'generic_model'
     assert predict_request_attribute.model_spec.signature_name == 'serving_default'
-    predict_request_attribute.inputs['inputs'].CopyFrom.assert_called_once_with(tensor_proto)
+    predict_request_attribute.inputs[INPUT_TENSOR_NAME].CopyFrom.assert_called_once_with(tensor_proto)
 
     assert prediction == predict_fn.return_value
 
 
-def test_predict_with_predict_request(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+@patch('tensorflow_serving.apis.predict_pb2.PredictRequest', new=PredictRequest)
+@patch('tf_container.proxy_client.make_tensor_proto')
+def test_predict_with_predict_request(make_tensor_proto, proxy_client):
     request = PredictRequest()
     prediction = proxy_client.predict(request)
 
@@ -252,9 +242,7 @@ def test_predict_with_predict_request(set_up, set_up_requests):
 
 
 @patch('tf_container.proxy_client.make_tensor_proto', side_effect=Exception('tensor proto failed!'))
-def test_predict_with_invalid_payload(make_tensor_proto, set_up, set_up_requests):
-    _, proxy_client = set_up
-
+def test_predict_with_invalid_payload(make_tensor_proto, proxy_client):
     data = complex('1+2j')
 
     with pytest.raises(ValueError) as error:
@@ -264,9 +252,7 @@ def test_predict_with_invalid_payload(make_tensor_proto, set_up, set_up_requests
 
 
 @patch('tf_container.proxy_client.make_tensor_proto', return_value='MyTensorProto')
-def test_predict_create_input_map_with_dict_of_lists(make_tensor_proto, set_up, set_up_requests):
-    _, proxy_client = set_up
-
+def test_predict_create_input_map_with_dict_of_lists(make_tensor_proto, proxy_client):
     data = {'mytensor': [1, 2, 3]}
 
     result = proxy_client._create_input_map(data)
@@ -274,9 +260,8 @@ def test_predict_create_input_map_with_dict_of_lists(make_tensor_proto, set_up, 
     make_tensor_proto.assert_called_once()
 
 
-def test_classification_with_classification_request(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+@patch('tensorflow_serving.apis.classification_pb2.ClassificationRequest', new=ClassificationRequest)
+def test_classification_with_classification_request(proxy_client):
     request = ClassificationRequest()
 
     prediction = proxy_client.classification(request)
@@ -287,92 +272,78 @@ def test_classification_with_classification_request(set_up, set_up_requests):
     assert prediction == classification_fn.return_value
 
 
-def test_classification_with_int_list(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+def test_classification_with_int_list(proxy_client):
     proxy_client.classification([1, 2, 3, 0])
 
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == [1, 2, 3, 0]
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == [1, 2, 3, 0]
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
-def test_classification_with_bytes_list(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+def test_classification_with_bytes_list(proxy_client):
     bytes = ['fnenfionk4235g', 'faf']
     proxy_client.classification(bytes)
 
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == bytes
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == bytes
 
 
-def test_classification_with_float_list(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
-    data = [3.4, 0.0, 0.0]
+def test_classification_with_float_list(proxy_client):
+    data = [3.4000000953674316, 0.0, 0.0]
     proxy_client.classification(data)
 
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == data
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == data
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
-def test_classification_with_int(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+def test_classification_with_int(proxy_client):
     proxy_client.classification(1)
 
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == [1]
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == [1]
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
-def test_classification_with_bytes(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+def test_classification_with_bytes(proxy_client):
     bytes = 'fnenfionk4235g'
     proxy_client.classification(bytes)
 
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == []
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == [bytes]
+    assert feature[INPUT_TENSOR_NAME].float_list.value == []
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == [bytes]
 
 
-def test_classification_with_float(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
-    data = 3.4
+def test_classification_with_float(proxy_client):
+    data = 3.4000000953674316
     proxy_client.classification(data)
     proxy_client.prediction_service_stub.Classify.assert_called_once()
 
     classification_request = _get_classification_request(proxy_client)
     feature = _get_feature(classification_request)
 
-    assert feature['inputs'].float_list.value == [data]
-    assert feature['inputs'].int64_list.value == []
-    assert feature['inputs'].bytes_list.value == []
+    assert feature[INPUT_TENSOR_NAME].float_list.value == [data]
+    assert feature[INPUT_TENSOR_NAME].int64_list.value == []
+    assert feature[INPUT_TENSOR_NAME].bytes_list.value == []
 
 
-def test_classification_with_invalid_payload(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+def test_classification_with_invalid_payload(proxy_client):
     data = complex('1+2j')
 
     with pytest.raises(ValueError) as error:
@@ -381,26 +352,25 @@ def test_classification_with_invalid_payload(set_up, set_up_requests):
     assert 'Unsupported request data format' in str(error)
 
 
-def test_classification_protobuf(set_up, set_up_requests):
-    mock, proxy_client = set_up
-
+def test_classification_protobuf(proxy_client):
     request = MagicMock()
     proxy_client.classification(request)
     proxy_client.prediction_service_stub.Classify.assert_called_once()
 
 
-def test_cache_prediction_metadata(set_up):
-    mock, proxy_client = set_up
-
+@patch('tensorflow_serving.apis.get_model_metadata_pb2.SignatureDefMap')
+@patch('tensorflow_serving.apis.get_model_metadata_pb2.GetModelMetadataRequest')
+@patch('tensorflow_serving.apis.prediction_service_pb2.beta_create_PredictionService_stub')
+@patch('grpc.beta.implementations.insecure_channel')
+def test_cache_prediction_metadata(channel, stub, request, signature_def_map, proxy_client):
     proxy_client.cache_prediction_metadata()
 
-    channel = mock.implementations.insecure_channel
-    channel.assert_called_once_with('localhost', 9000)
+    channel.assert_called_once_with('localhost', DEFAULT_PORT)
 
-    stub = mock.prediction_service_pb2.beta_create_PredictionService_stub
+    stub = prediction_service_pb2.beta_create_PredictionService_stub
     stub.assert_called_once_with(channel())
 
-    request = mock.get_model_metadata_pb2.GetModelMetadataRequest
+    request = get_model_metadata_pb2.GetModelMetadataRequest
     request.assert_called_once()
 
     stub().GetModelMetadata.assert_called_once_with(request(), 10.0)
@@ -408,8 +378,8 @@ def test_cache_prediction_metadata(set_up):
     assert proxy_client.prediction_service_stub == stub.return_value
 
 
-def patch_metadata_request_with(mock, method_name):
-    mock.protobuf.json_format.MessageToJson.return_value = json.dumps({
+def patch_metadata_request_with(method_name):
+    protobuf.json_format.MessageToJson.return_value = json.dumps({
         'metadata': {
             'signature_def': {
                 'signatureDef': {
