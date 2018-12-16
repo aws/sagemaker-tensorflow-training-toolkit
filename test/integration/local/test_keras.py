@@ -16,6 +16,7 @@ import logging
 import os
 
 import numpy as np
+import pytest
 from sagemaker.tensorflow import serving, TensorFlow
 
 from test.integration import RESOURCE_PATH
@@ -24,7 +25,13 @@ from test.integration import RESOURCE_PATH
 logging.basicConfig(level=logging.DEBUG)
 
 
-def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
+@pytest.fixture
+def local_mode_instance_type(processor):
+    instance_type = 'local' if processor == 'cpu' else 'local_gpu'
+    return instance_type
+
+
+def test_keras_training(sagemaker_local_session, docker_image, tmpdir, local_mode_instance_type):
     entry_point = os.path.join(RESOURCE_PATH, 'keras_inception.py')
     output_path = 'file://{}'.format(tmpdir)
 
@@ -32,7 +39,7 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
         entry_point=entry_point,
         role='SageMakerRole',
         train_instance_count=1,
-        train_instance_type='local',
+        train_instance_type=local_mode_instance_type,
         image_name=docker_image,
         sagemaker_session=sagemaker_local_session,
         model_dir='/opt/ml/model',
