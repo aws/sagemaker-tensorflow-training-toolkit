@@ -27,7 +27,6 @@ def cli():
     pass
 
 
-@cli.command('generate_report')
 def generate_report():
     results_dir = os.path.join(dir_path, 'results')
 
@@ -100,6 +99,7 @@ def generate_report():
     batch_size_512 = [df[grouped_by_instance.groups[x]].T['average_examples_per_sec'].mean() for x, i in grouped_by_instance]
 
     plot_comparison([x for x, i in grouped_by_instance], batch_size_256, batch_size_512, 'batch size 256', 'batch size 523')
+    return df
 
 
 def plot_comparison(x_labels, left_group, right_group, left_label, right_label):
@@ -176,7 +176,7 @@ def train(framework_version,
         base_name = job_name(instance_type, instance_count, device, py_version, batch_size)
 
         template = """#!/usr/bin/env bash 
-        pip install requests py-cpuinfo psutil
+        pip install requests py-cpuinfo
 
         PYTHONPATH="/opt/ml/code/models:$PYTHONPATH" python benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py %s \
         --train_dir /opt/ml/model --eval_dir /opt/ml/model --benchmark_log_dir /opt/ml/model --batch_size %s\n"""
@@ -202,6 +202,12 @@ def train(framework_version,
                 framework_version=framework_version,
                 py_version=py_version,
                 script_mode=True,
+                distributions={
+                        'parameter_server':
+                        {
+                            'enabled': True
+                        }
+                    },
                 output_path=benchmark_results_dir,
                 security_group_ids=security_groups,
                 subnets=subnets
