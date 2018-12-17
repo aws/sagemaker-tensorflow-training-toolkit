@@ -1,0 +1,112 @@
+# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+from __future__ import absolute_import
+
+import json
+import os
+import tarfile
+
+import pytest
+from sagemaker.tensorflow import TensorFlow
+
+RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
+
+
+@pytest.mark.parametrize('instances, processes', [
+    [1, 2],
+    (2, 1),
+    (2, 2),
+    (5, 3)])
+def test_distributed_training_horovod_basic(instances,
+                                            processes,
+                                            sagemaker_local_session,
+                                            docker_image,
+                                            tmpdir):
+    output_path = 'file://%s' % tmpdir
+    estimator = TensorFlow(
+        entry_point=os.path.join(RESOURCE_PATH, 'hvdbasic', 'train_hvd_basic.py'),
+        role='SageMakerRole',
+        train_instance_type='local',
+        train_instance_count=instances,
+        image_name=docker_image,
+        output_path=output_path,
+        hyperparameters={'sagemaker_mpi_enabled': True,
+                         'sagemaker_network_interface_name': 'eth0',
+                         'sagemaker_mpi_num_of_processes_per_host': processes})
+
+    estimator.fit('file://{}'.format(os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
+
+    tmp = str(tmpdir)
+    extract_files(output_path.replace('file://', ''), tmp)
+
+    size = instances * processes
+
+    for rank in range(size):
+        local_rank = rank % processes
+        assert read_json('local-rank-%s-rank-%s' % (local_rank, rank), tmp) == {
+            'local-rank': local_rank, 'rank': rank, 'size': size}
+
+
+def read_json(file, tmp):
+    with open(os.path.join(tmp, file)) as f:
+        return json.load(f)
+
+
+@pytest.mark.parametrize('instances, processes', [
+    (5, 1)])
+def test_distributed_training_cpu_horovod(instances,
+                                          processes,
+                                          sagemaker_local_session,
+                                          docker_image,
+                                          tmpdir):
+    output_path = 'file://%s' % tmpdir
+    estimator = TensorFlow(
+        entry_point=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
+        role='SageMakerRole',
+        train_instance_type='ml.p3.2xlarge',
+        train_instance_count=instances,
+        image_name=docker_image,
+        # output_path=output_path,
+        hyperparameters={'sagemaker_mpi_enabled': True,
+                         'sagemaker_mpi_custom_mpi_options': '-verbose',
+                         'sagemaker_network_interface_name': 'eth0',
+                         'sagemaker_mpi_num_of_processes_per_host': processes})
+
+    inputs = estimator.sagemaker_session.upload_data(
+        path=os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed'),
+        key_prefix='scriptmode/mnist')
+
+    estimator.fit(inputs)
+    # 'file://%s' % os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed'))
+
+    tmp = str(tmpdir)
+    extract_files(output_path.replace('file://', ''), tmp)
+
+    assert_files_exist_in_tar(output_path, ['model.ckpt-50.meta', 'model.ckpt-50.data-00000-of-00001', 'model.ckpt-50.index'])
+
+    print('oi')
+
+
+def assert_files_exist_in_tar(output_path, files):
+    if output_path.startswith('file://'):
+        output_path = output_path[7:]
+    model_file = os.path.join(output_path, 'model.tar.gz')
+    with tarfile.open(model_file) as tar:
+        for f in files:
+            tar.getmember(f)
+
+
+def extract_files(output_path, tmpdir):
+    with tarfile.open(os.path.join(output_path, 'model.tar.gz')) as tar:
+        tar.extractall(tmpdir)
+
