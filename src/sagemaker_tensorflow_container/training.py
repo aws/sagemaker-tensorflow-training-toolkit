@@ -146,8 +146,13 @@ def train(env):
             _wait_until_master_is_down(env.hosts[0])
 
     else:
+
+        mpi_enabled = env.additional_framework_parameters.get('sagemaker_mpi_enabled')
+        runner_type = framework.runner.MPIRunnerType if mpi_enabled else framework.runner.ProcessRunnerType
+
         framework.entry_point.run(env.module_dir, env.user_entry_point,
-                                  env.to_cmd_args(), env.to_env_vars())
+                                  env.to_cmd_args(), env.to_env_vars(),
+                                  runner=runner_type)
 
 
 def main():
