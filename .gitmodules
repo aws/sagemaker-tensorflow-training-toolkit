@@ -1,0 +1,3 @@
+[submodule "benchmarks/models"]
+	path = benchmarks/models
+	url = https://github.com/tensorflow/models.git
