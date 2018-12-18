@@ -2,14 +2,6 @@ FROM ubuntu:16.04
 
 LABEL maintainer="Amazon AI"
 
-ARG framework_installable
-ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
-ARG py_version
-
-# Validate that arguments are specified
-RUN test $framework_installable || exit 1 \
-    && test $py_version || exit 1
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     build-essential \
@@ -20,25 +12,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && add-apt-repository ppa:deadsnakes/ppa -y \
     && rm -rf /var/lib/apt/lists/*
 
-RUN if [ $py_version -eq 3 ]; then $py_version='python3.6-dev'; else $py_version='python2.7-dev' \
-    apt-get install -y --no-install-recommends $py_version && \
-    ln -s -f /usr/bin/$($py_version) /usr/bin/python && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-
-RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
-    python get-pip.py --disable-pip-version-check --no-cache-dir "pip==18.1" && \
-    rm get-pip.py
-
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
     cd /tmp/openmpi && \
-    curl https://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.3.tar.gz && \
-    tar zxf openmpi-3.1.3.tar.gz && \
-    cd openmpi-3.1.3 && \
+    curl -fSsL -O  https://www.open-mpi.org/software/ompi/v3.0/downloads/openmpi-3.0.0.tar.gz && \
+    tar zxf openmpi-3.0.0.tar.gz && \
+    cd openmpi-3.0.0 && \
     ./configure --enable-orterun-prefix-by-default && \
-    make install all && \
+    make -j $(nproc) all && \
+    make install && \
     ldconfig && \
     rm -rf /tmp/openmpi
 
@@ -73,22 +55,46 @@ ENV KMP_AFFINITY=granularity=fine,compact,1,0 KMP_BLOCKTIME=1 KMP_SETTINGS=0
 
 WORKDIR /
 
-COPY $framework_installable .
+ARG py_version
+
+RUN if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.6; else PYTHON_VERSION=python2.7; fi && \
+        apt-get update && apt-get install -y --no-install-recommends $PYTHON_VERSION-dev --allow-unauthenticated  && \
+        ln -s -f /usr/bin/$PYTHON_VERSION /usr/bin/python && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py --disable-pip-version-check --no-cache-dir "pip==18.1" && \
+    rm get-pip.py
+
+ARG framework_installable
+ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
+
+COPY $framework_installable tensorflow-1.12.0-py2.py3-none-any.whl  
 COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
-    keras==2.2.4 \
-    horovod \
-    $framework_support_installable \
-    "sagemaker-tensorflow>=1.12,<1.13" && \
+        keras==2.2.4 \
+        $framework_support_installable \
+        "sagemaker-tensorflow>=1.12,<1.13" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
-    pip install --force-reinstall --no-cache-dir -U $framework_installable && \
-    \
-    rm -f $framework_installable && \
+    pip install --force-reinstall --no-cache-dir -U \
+        tensorflow-1.12.0-py2.py3-none-any.whl \
+        horovod && \
+    rm -f tensorflow-1.12.0-py2.py3-none-any.whl && \
     rm -f $framework_support_installable && \
-    pip uninstall -y --no-cache-dir && \
-    markdown \
-    tensorboard
+    pip uninstall -y --no-cache-dir \
+        markdown \
+        tensorboard
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
+    
+RUN apt-get update && apt-get install git -y --allow-unauthenticated 
+
+
+RUN git clone https://github.com/mvsusp/sagemaker-containers.git \
+-b uditbhatia-generic-mpi-support && cd sagemaker-containers \
+&& git checkout ccc400d03fd52913ae2c31ffef4054833bf5cab7 \
+&& pip install . --quiet --disable-pip-version-check
