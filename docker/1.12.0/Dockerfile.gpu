@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm /usr/lib/x86_64-linux-gnu/libnvparsers* \
     && if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.6; else PYTHON_VERSION=python2.7; fi \
     && apt-get install -y --no-install-recommends $PYTHON_VERSION-dev \
-                && ln -s -f /usr/bin/$PYTHON_VERSION-dev /usr/bin/python \
+                && ln -s -f /usr/bin/$PYTHON_VERSION /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
