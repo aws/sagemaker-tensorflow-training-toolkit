@@ -62,41 +62,6 @@ def read_json(file, tmp):
         return json.load(f)
 
 
-@pytest.mark.parametrize('instances, processes', [
-    (5, 1)])
-def test_distributed_training_cpu_horovod(instances,
-                                          processes,
-                                          sagemaker_local_session,
-                                          docker_image,
-                                          tmpdir):
-    output_path = 'file://%s' % tmpdir
-    estimator = TensorFlow(
-        entry_point=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
-        role='SageMakerRole',
-        train_instance_type='ml.p3.2xlarge',
-        train_instance_count=instances,
-        image_name=docker_image,
-        # output_path=output_path,
-        hyperparameters={'sagemaker_mpi_enabled': True,
-                         'sagemaker_mpi_custom_mpi_options': '-verbose',
-                         'sagemaker_network_interface_name': 'eth0',
-                         'sagemaker_mpi_num_of_processes_per_host': processes})
-
-    inputs = estimator.sagemaker_session.upload_data(
-        path=os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed'),
-        key_prefix='scriptmode/mnist')
-
-    estimator.fit(inputs)
-    # 'file://%s' % os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed'))
-
-    tmp = str(tmpdir)
-    extract_files(output_path.replace('file://', ''), tmp)
-
-    assert_files_exist_in_tar(output_path, ['model.ckpt-50.meta', 'model.ckpt-50.data-00000-of-00001', 'model.ckpt-50.index'])
-
-    print('oi')
-
-
 def assert_files_exist_in_tar(output_path, files):
     if output_path.startswith('file://'):
         output_path = output_path[7:]
