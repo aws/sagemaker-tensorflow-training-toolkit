@@ -156,3 +156,7 @@ RUN apt-get update && apt-get install git -y
 RUN git clone https://github.com/mvsusp/sagemaker-containers.git \
 -b uditbhatia-generic-mpi-support && cd sagemaker-containers \
 && pip install . --quiet --disable-pip-version-check
+
+COPY $framework_support_installable .
+
+RUN pip install --no-cache-dir $framework_support_installable
