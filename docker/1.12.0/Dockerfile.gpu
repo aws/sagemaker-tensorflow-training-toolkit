@@ -48,10 +48,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm /usr/lib/x86_64-linux-gnu/libnvinfer_plugin* \
     && rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* \
     && rm /usr/lib/x86_64-linux-gnu/libnvparsers* \
-    && if [ $py_version -eq 3 ]; \
-           then apt-get install -y --no-install-recommends python3.6 \
-                && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
-           else apt-get install -y --no-install-recommends python; fi \
+    && if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.6; else PYTHON_VERSION=python2.7; fi \
+    && apt-get install -y --no-install-recommends $PYTHON_VERSION-dev \
+                && ln -s -f /usr/bin/$PYTHON_VERSION-dev /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
@@ -80,7 +79,7 @@ COPY $framework_support_installable .
 RUN pip install --no-cache-dir -U \
     keras==2.2.4 \
     tensorflow-1.12.0-py2.py3-none-any.whl  \
-    "sagemaker-tensorflow>=1.11,<1.12" \
+    "sagemaker-tensorflow>=1.12,<1.13" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
     && pip install --force-reinstall --no-cache-dir -U tensorflow-1.12.0-py2.py3-none-any.whl  \
