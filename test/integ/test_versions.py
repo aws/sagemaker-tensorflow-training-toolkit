@@ -23,7 +23,7 @@ def required_versions(framework_version):
     elif framework_version == '1.5.0':
         return ['tensorflow-serving-api==1.5.0',
                 'tensorflow==1.5.0']
-    # We released using tensorflow serving 1.5.0 for tf 1.6, due to not finding this
+    # We released using TensorFlow Serving 1.5.0 for tf 1.6, due to not finding this
     # fix in time before launch: https://github.com/tensorflow/serving/issues/819
     elif framework_version == '1.6.0':
         return ['tensorflow-serving-api==1.5.0',
@@ -44,6 +44,9 @@ def required_versions(framework_version):
     elif framework_version == '1.11.0':
         return ['tensorflow-serving-api==1.11.0',
                 'tensorflow==1.11.0']
+    elif framework_version == '1.12.0':
+        return ['tensorflow-serving-api==1.12.0',
+                'tensorflow==1.12.0']
     else:
         raise ValueError("invalid internal test config")
 
