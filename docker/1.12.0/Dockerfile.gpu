@@ -111,8 +111,8 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
     keras==2.2.4 \
+    sagemaker-containers==2.4.0 \
     $framework_support_installable \
-    tensorflow-1.12.0-py2.py3-none-any.whl  \
     "sagemaker-tensorflow>=1.12,<1.13" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
@@ -130,11 +130,3 @@ RUN ldconfig /usr/local/cuda-9.0/targets/x86_64-linux/lib/stubs && \
     ldconfig
     
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
-
-    
-RUN apt-get update && apt-get install git -y --allow-unauthenticated 
-
-RUN git clone https://github.com/mvsusp/sagemaker-containers.git \
--b uditbhatia-generic-mpi-support && cd sagemaker-containers \
-&& git checkout e19aa6e601fbaa9ffc27458954d317c484de8362 \
-&& pip install . --quiet --disable-pip-version-check
