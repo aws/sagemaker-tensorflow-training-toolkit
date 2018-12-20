@@ -76,6 +76,7 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
         keras==2.2.4 \
+        sagemaker-containers==2.4.0 \
         $framework_support_installable \
         "sagemaker-tensorflow>=1.12,<1.13" && \
     # Let's install TensorFlow separately in the end to avoid
@@ -90,11 +91,3 @@ RUN pip install --no-cache-dir -U \
         tensorboard
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
-    
-RUN apt-get update && apt-get install git -y --allow-unauthenticated 
-
-
-RUN git clone https://github.com/mvsusp/sagemaker-containers.git \
--b uditbhatia-generic-mpi-support && cd sagemaker-containers \
-&& git checkout ccc400d03fd52913ae2c31ffef4054833bf5cab7 \
-&& pip install . --quiet --disable-pip-version-check
