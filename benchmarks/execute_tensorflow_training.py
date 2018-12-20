@@ -145,7 +145,7 @@ def _plot_column(column, grouped_by_nodes):
 
 
 @cli.command('train')
-@click.option('--framework-version', required=True, type=click.Choice(['1.11.0', '1.12.0']))
+@click.option('--framework-version', required=True, type=click.Choice(['1.11', '1.12']))
 @click.option('--device', required=True, type=click.Choice(['cpu', 'gpu']))
 @click.option('--py-versions', multiple=True, type=str)
 @click.option('--training-input-mode', default='File', type=click.Choice(['File', 'Pipe']))
@@ -176,10 +176,9 @@ def train(framework_version,
         base_name = job_name(instance_type, instance_count, device, py_version, batch_size)
 
         template = """#!/usr/bin/env bash 
-        pip install requests py-cpuinfo
 
         PYTHONPATH="/opt/ml/code/models:$PYTHONPATH" python benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py %s \
-        --train_dir /opt/ml/model --eval_dir /opt/ml/model --benchmark_log_dir /opt/ml/model --batch_size %s\n"""
+        --train_dir /opt/ml/model --eval_dir /opt/ml/model --batch_size %s\n"""
 
         script = template % (' '.join(script_args), batch_size)
 
@@ -202,12 +201,11 @@ def train(framework_version,
                 framework_version=framework_version,
                 py_version=py_version,
                 script_mode=True,
-                distributions={
-                        'parameter_server':
-                        {
-                            'enabled': True
-                        }
-                    },
+                hyperparameters={
+                    'sagemaker_mpi_enabled': True,
+                    'sagemaker_mpi_num_of_processes_per_host': 8,
+                    'sagemaker_mpi_custom_mpi_options': '-x HOROVOD_TIMELINE --output-filename /opt/ml/model/hlog'
+                },
                 output_path=benchmark_results_dir,
                 security_group_ids=security_groups,
                 subnets=subnets
