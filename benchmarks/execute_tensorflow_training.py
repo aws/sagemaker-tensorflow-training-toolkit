@@ -47,32 +47,36 @@ def generate_report():
         model_dir = os.path.join(current_dir, 'output', 'model.tar.gz')
         subprocess.call(['tar', '-xvzf', model_dir], cwd=current_dir)
 
-        with open(os.path.join(current_dir, 'benchmark_run.log')) as f:
-            data = json.load(f)
+        jobs[job_name]['instance_type'] = instance_type
+        jobs[job_name]['instance_count'] = instance_count
+        jobs[job_name]['device'] = device
+        jobs[job_name]['py_version'] = py_version
 
-            jobs[job_name]['instance_type'] = instance_type
-            jobs[job_name]['instance_count'] = instance_count
-            jobs[job_name]['device'] = device
-            jobs[job_name]['py_version'] = py_version
+        benchmark_log = os.path.join(current_dir, 'benchmark_run.log')
 
-            jobs[job_name]['dataset'] = data['dataset']['name']
-            jobs[job_name]['num_cores'] = data['machine_config']['cpu_info']['num_cores']
-            jobs[job_name]['cpu_info'] = data['machine_config']['cpu_info']['cpu_info']
-            jobs[job_name]['mhz_per_cpu'] = data['machine_config']['cpu_info']['mhz_per_cpu']
-            jobs[job_name]['gpu_count'] = data['machine_config']['gpu_info']['count']
-            jobs[job_name]['gpu_model'] = data['machine_config']['gpu_info']['model']
+        if os.path.exists(benchmark_log):
+            with open(benchmark_log) as f:
+                data = json.load(f)
 
-            def find_value(parameter):
-                other_key = [k for k in parameter if k != 'name'][0]
-                return parameter[other_key]
 
-            for parameter in data['run_parameters']:
-                jobs[job_name][parameter['name']] = find_value(parameter)
+                jobs[job_name]['dataset'] = data['dataset']['name']
+                jobs[job_name]['num_cores'] = data['machine_config']['cpu_info']['num_cores']
+                jobs[job_name]['cpu_info'] = data['machine_config']['cpu_info']['cpu_info']
+                jobs[job_name]['mhz_per_cpu'] = data['machine_config']['cpu_info']['mhz_per_cpu']
+                jobs[job_name]['gpu_count'] = data['machine_config']['gpu_info']['count']
+                jobs[job_name]['gpu_model'] = data['machine_config']['gpu_info']['model']
 
-            jobs[job_name]['model_name'] = data['model_name']
-            jobs[job_name]['run_date'] = data['run_date']
-            jobs[job_name]['tensorflow_version'] = data['tensorflow_version']['version']
-            jobs[job_name]['tensorflow_version_git_hash'] = data['tensorflow_version']['git_hash']
+                def find_value(parameter):
+                    other_key = [k for k in parameter if k != 'name'][0]
+                    return parameter[other_key]
+
+                for parameter in data['run_parameters']:
+                    jobs[job_name][parameter['name']] = find_value(parameter)
+
+                jobs[job_name]['model_name'] = data['model_name']
+                jobs[job_name]['run_date'] = data['run_date']
+                jobs[job_name]['tensorflow_version'] = data['tensorflow_version']['version']
+                jobs[job_name]['tensorflow_version_git_hash'] = data['tensorflow_version']['git_hash']
 
         with open(os.path.join(current_dir, 'metric.log')) as f:
             for line in f.readlines():

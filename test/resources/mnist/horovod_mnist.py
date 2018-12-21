@@ -10,128 +10,118 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-import argparse
-import logging
 import os
 
+import keras
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras import backend as K
 import tensorflow as tf
-import horovod.tensorflow as hvd
+import horovod.keras as hvd
 
-layers = tf.contrib.layers
-learn = tf.contrib.learn
+# Horovod: initialize Horovod.
+hvd.init()
 
-logging.basicConfig()
-tf.logging.set_verbosity(tf.logging.INFO)
+# Horovod: pin GPU to be used to process local rank (one GPU per process)
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+config.gpu_options.visible_device_list = str(hvd.local_rank())
+K.set_session(tf.Session(config=config))
 
+batch_size = 128
+num_classes = 10
 
-def _parse_args():
-    parser = argparse.ArgumentParser()
-    # Data, model, and output directories
-    parser.add_argument('--output-data-dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR'))
-    parser.add_argument('--model_dir', type=str)
+epochs = 1
 
-    return parser.parse_known_args()
+# Input image dimensions
+img_rows, img_cols = 28, 28
 
+# The data, shuffled and split between train and test sets
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-def conv_model(feature, target, mode):
-    """2-layer convolution model."""
-    # Convert the target to a one-hot tensor of shape (batch_size, 10) and
-    # with a on-value of 1 for each one-hot vector of length 10.
-    target = tf.one_hot(tf.cast(target, tf.int32), 10, 1, 0)
+x_train = x_train[:600]
+y_train = y_train[:600]
+x_test = x_test[:100]
+y_test = y_test[:100]
 
-    # Reshape feature to 4d tensor with 2nd and 3rd dimensions being
-    # image width and height final dimension being the number of color channels.
-    feature = tf.reshape(feature, [-1, 28, 28, 1])
+if K.image_data_format() == 'channels_first':
+    x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
+    x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
+    input_shape = (1, img_rows, img_cols)
+else:
+    x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+    x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+    input_shape = (img_rows, img_cols, 1)
 
-    # First conv layer will compute 32 features for each 5x5 patch
-    with tf.variable_scope('conv_layer1'):
-        h_conv1 = layers.conv2d(
-            feature, 32, kernel_size=[5, 5], activation_fn=tf.nn.relu)
-        h_pool1 = tf.nn.max_pool(
-            h_conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+x_train /= 255
+x_test /= 255
+print('x_train shape:', x_train.shape)
+print(x_train.shape[0], 'train samples')
+print(x_test.shape[0], 'test samples')
 
-    # Second conv layer will compute 64 features for each 5x5 patch.
-    with tf.variable_scope('conv_layer2'):
-        h_conv2 = layers.conv2d(
-            h_pool1, 64, kernel_size=[5, 5], activation_fn=tf.nn.relu)
-        h_pool2 = tf.nn.max_pool(
-            h_conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-        # reshape tensor into a batch of vectors
-        h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])
+# Convert class vectors to binary class matrices
+y_train = keras.utils.to_categorical(y_train, num_classes)
+y_test = keras.utils.to_categorical(y_test, num_classes)
 
-    # Densely connected layer with 1024 neurons.
-    h_fc1 = layers.dropout(
-        layers.fully_connected(
-            h_pool2_flat, 1024, activation_fn=tf.nn.relu),
-        keep_prob=0.5,
-        is_training=mode == tf.contrib.learn.ModeKeys.TRAIN)
+model = Sequential()
+model.add(Conv2D(32, kernel_size=(3, 3),
+                 activation='relu',
+                 input_shape=input_shape))
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(num_classes, activation='softmax'))
 
-    # Compute logits (1 per class) and compute loss.
-    logits = layers.fully_connected(h_fc1, 10, activation_fn=None)
-    loss = tf.losses.softmax_cross_entropy(target, logits)
+# Horovod: adjust learning rate based on number of GPUs.
+opt = keras.optimizers.Adadelta(1.0 * hvd.size())
 
-    return tf.argmax(logits, 1), loss
+# Horovod: add Horovod Distributed Optimizer.
+opt = hvd.DistributedOptimizer(opt)
 
+model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer=opt,
+              metrics=['accuracy'])
 
-def main(_):
-    args, unknown = _parse_args()
+callbacks = [
+    # Horovod: broadcast initial variable states from rank 0 to all other processes.
+    # This is necessary to ensure consistent initialization of all workers when
+    # training is started with random weights or restored from a checkpoint.
+    hvd.callbacks.BroadcastGlobalVariablesCallback(0),
+]
 
-    # Horovod: initialize Horovod.
-    hvd.init()
+# Horovod: save checkpoints only on worker 0 to prevent other workers from corrupting them.
+if hvd.rank() == 0:
+    callbacks.append(keras.callbacks.ModelCheckpoint('./checkpoint-{epoch}.h5'))
 
-    # Download and load MNIST dataset.
-    mnist = learn.datasets.mnist.read_data_sets('MNIST-data-%d' % hvd.rank())
-
-    # Build model...
-    with tf.name_scope('input'):
-        image = tf.placeholder(tf.float32, [None, 784], name='image')
-        label = tf.placeholder(tf.float32, [None], name='label')
-    predict, loss = conv_model(image, label, tf.contrib.learn.ModeKeys.TRAIN)
-
-    # Horovod: adjust learning rate based on number of GPUs.
-    opt = tf.train.RMSPropOptimizer(0.001 * hvd.size())
-
-    # Horovod: add Horovod Distributed Optimizer.
-    opt = hvd.DistributedOptimizer(opt)
-
-    global_step = tf.contrib.framework.get_or_create_global_step()
-    train_op = opt.minimize(loss, global_step=global_step)
-
-    hooks = [
-        # Horovod: BroadcastGlobalVariablesHook broadcasts initial variable states
-        # from rank 0 to all other processes. This is necessary to ensure consistent
-        # initialization of all workers when training is started with random weights
-        # or restored from a checkpoint.
-        hvd.BroadcastGlobalVariablesHook(0),
-
-        tf.train.StopAtStepHook(last_step=200 // hvd.size()),
-
-        tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss},
-                                   every_n_iter=10),
-    ]
-
-    # Horovod: pin GPU to be used to process local rank (one GPU per process)
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    config.gpu_options.visible_device_list = str(hvd.local_rank())
-
-    # Horovod: save checkpoints only on worker 0 to prevent other workers from
-    # corrupting them.
-    checkpoint_dir = os.path.join(args.model_dir, 'checkpoints') if hvd.rank() == 0 else None
-
-    # The MonitoredTrainingSession takes care of session initialization,
-    # restoring from a checkpoint, saving to a checkpoint, and closing when done
-    # or an error occurs.
-    with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
-                                           hooks=hooks,
-                                           config=config) as mon_sess:
-        while not mon_sess.should_stop():
-            # Run a training step synchronously.
-            image_, label_ = mnist.train.next_batch(100)
-            mon_sess.run(train_op, feed_dict={image: image_, label: label_})
+model.fit(x_train, y_train,
+          batch_size=batch_size,
+          callbacks=callbacks,
+          epochs=epochs,
+          verbose=1,
+          validation_data=(x_test, y_test))
+score = model.evaluate(x_test, y_test, verbose=0)
+print('Test loss:', score[0])
+print('Test accuracy:', score[1])
 
 
-if __name__ == "__main__":
-    tf.app.run()
+if hvd.rank() == 0:
+    # Exports the keras model as TensorFlow Serving Saved Model
+    with tf.Session() as session:
+
+        init = tf.global_variables_initializer()
+        session.run(init)
+
+        tf.saved_model.simple_save(
+            session,
+            os.path.join('/opt/ml/model/mnist/1'),
+            inputs={'input_image': model.input},
+            outputs={t.name: t for t in model.outputs})

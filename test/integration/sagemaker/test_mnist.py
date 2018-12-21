@@ -30,7 +30,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
-                           framework_version='1.11.0',
+                           framework_version='1.12.0',
                            py_version='py3',
                            base_job_name='test-sagemaker-mnist')
     inputs = estimator.sagemaker_session.upload_data(
@@ -50,7 +50,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
-                           framework_version='1.11.0',
+                           framework_version='1.12.0',
                            py_version='py3',
                            base_job_name='test-tf-sm-distributed-mnist')
     inputs = estimator.sagemaker_session.upload_data(
@@ -71,7 +71,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
-                           framework_version='1.11.0',
+                           framework_version='1.12.0',
                            py_version='py3',
                            base_job_name='test-tf-sm-distributed-mnist')
     inputs = estimator.sagemaker_session.upload_data(
