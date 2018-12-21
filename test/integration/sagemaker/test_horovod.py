@@ -46,7 +46,6 @@ def test_distributed_training_horovod(sagemaker_session,
                           sagemaker_session=sagemaker_local_session)
 
     predictor = model.deploy(initial_instance_count=1, instance_type='local')
-
     assert predictor.predict([[0] * 28] * 28)
 
     predictor.delete_endpoint()
