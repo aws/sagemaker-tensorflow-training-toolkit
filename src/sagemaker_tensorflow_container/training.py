@@ -142,7 +142,11 @@ def train(env):
     else:
 
         mpi_enabled = env.additional_framework_parameters.get('sagemaker_mpi_enabled')
-        runner_type = framework.runner.MPIRunnerType if mpi_enabled else framework.runner.ProcessRunnerType
+
+        if mpi_enabled:
+            runner_type = framework.runner.MPIRunnerType
+        else:
+            runner_type = framework.runner.ProcessRunnerType
 
         framework.entry_point.run(env.module_dir, env.user_entry_point,
                                   env.to_cmd_args(), env.to_env_vars(),

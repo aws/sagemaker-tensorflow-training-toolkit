@@ -75,4 +75,3 @@ def assert_files_exist_in_tar(output_path, files):
 def extract_files(output_path, tmpdir):
     with tarfile.open(os.path.join(output_path, 'model.tar.gz')) as tar:
         tar.extractall(tmpdir)
-

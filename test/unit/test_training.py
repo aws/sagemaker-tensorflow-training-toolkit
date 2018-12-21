@@ -17,6 +17,7 @@ import sys
 
 from mock import MagicMock, patch
 import pytest
+from sagemaker_containers.beta.framework import runner
 
 from sagemaker_tensorflow_container import training
 
@@ -81,7 +82,19 @@ def test_single_machine(run_module, single_machine_training_env):
     training.train(single_machine_training_env)
     run_module.assert_called_with(MODULE_DIR, MODULE_NAME,
                                   single_machine_training_env.to_cmd_args(),
-                                  single_machine_training_env.to_env_vars())
+                                  single_machine_training_env.to_env_vars(),
+                                  runner=runner.ProcessRunnerType)
+
+
+@patch('sagemaker_containers.beta.framework.entry_point.run')
+def test_train_horovod(run_module, single_machine_training_env):
+    single_machine_training_env.additional_framework_parameters['sagemaker_mpi_enabled'] = True
+
+    training.train(single_machine_training_env)
+    run_module.assert_called_with(MODULE_DIR, MODULE_NAME,
+                                  single_machine_training_env.to_cmd_args(),
+                                  single_machine_training_env.to_env_vars(),
+                                  runner=runner.MPIRunnerType)
 
 
 @pytest.mark.skipif(sys.version_info.major != 3,
@@ -151,7 +164,7 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     training.train(distributed_training_env)
 
     run.assert_called_with(MODULE_DIR, MODULE_NAME, distributed_training_env.to_cmd_args(),
-                           distributed_training_env.to_env_vars())
+                           distributed_training_env.to_env_vars(), runner=runner.ProcessRunnerType)
 
 
 def test_build_tf_config():
