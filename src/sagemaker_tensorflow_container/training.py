@@ -93,8 +93,14 @@ def _run_ps(env, cluster):
 
     cluster_spec = tf.train.ClusterSpec(cluster)
     task_index = env.hosts.index(env.current_host)
+    # Force parameter server to run on cpu. Running multiple TensorFlow processes on the same
+    # GPU is not safe:
+    # https://stackoverflow.com/questions/46145100/is-it-unsafe-to-run-multiple-tensorflow-processes-on-the-same-gpu
+    no_gpu_config = tf.ConfigProto(device_count={'GPU': 0})
 
-    server = tf.train.Server(cluster_spec, job_name='ps', task_index=task_index)
+    server = tf.train.Server(
+        cluster_spec, job_name='ps', task_index=task_index, config=no_gpu_config
+    )
 
     threading.Thread(target=lambda: server.join()).start()
 
