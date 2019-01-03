@@ -25,8 +25,7 @@ RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 @pytest.mark.parametrize('instances, processes', [
     [1, 2],
     (2, 1),
-    (2, 2),
-    (5, 2)])
+    (2, 2)])
 def test_distributed_training_horovod_basic(instances,
                                             processes,
                                             sagemaker_local_session,
