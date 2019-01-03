@@ -17,6 +17,7 @@ import sys
 
 from mock import MagicMock, patch
 import pytest
+import tensorflow as tf
 
 from sagemaker_tensorflow_container import training
 
@@ -98,7 +99,9 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                                      'master': ['host1:2222'],
                                      'ps': ['host1:2223', 'host2:2223']})
 
-    tf_server.assert_called_with(cluster_spec(), job_name='ps', task_index=0)
+    tf_server.assert_called_with(
+        cluster_spec(), job_name='ps', task_index=0, config=tf.ConfigProto(device_count={'GPU': 0})
+    )
     tf_server().join.assert_called_with()
 
     tf_config = '{"cluster": {' \
@@ -128,7 +131,9 @@ def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_trai
                                      'master': ['host1:2222'],
                                      'ps': ['host1:2223', 'host2:2223']})
 
-    tf_server.assert_called_with(cluster_spec(), job_name='ps', task_index=1)
+    tf_server.assert_called_with(
+        cluster_spec(), job_name='ps', task_index=1, config=tf.ConfigProto(device_count={'GPU': 0})
+    )
     tf_server().join.assert_called_with()
 
     tf_config = '{"cluster": {' \
