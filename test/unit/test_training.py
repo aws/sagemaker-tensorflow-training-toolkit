@@ -17,8 +17,8 @@ import sys
 
 from mock import MagicMock, patch
 import pytest
-import tensorflow as tf
 from sagemaker_containers.beta.framework import runner
+import tensorflow as tf
 
 from sagemaker_tensorflow_container import training
 
