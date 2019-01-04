@@ -13,11 +13,12 @@
 from __future__ import absolute_import
 
 import os
-import pytest
 
+import pytest
 from sagemaker.tensorflow import serving, TensorFlow
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
+
 
 @pytest.mark.skip
 def test_distributed_training_horovod(sagemaker_session,
