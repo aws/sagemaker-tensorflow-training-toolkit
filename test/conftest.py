@@ -96,8 +96,8 @@ def instance_type(request, processor):
 @pytest.fixture(autouse=True)
 def skip_by_device_type(request, processor):
     is_gpu = (processor == 'gpu')
-    if (request.node.get_marker('skip_gpu') and is_gpu) or \
-            (request.node.get_marker('skip_cpu') and not is_gpu):
+    if (request.node.get_closest_marker('skip_gpu') and is_gpu) or \
+            (request.node.get_closest_marker('skip_cpu') and not is_gpu):
         pytest.skip('Skipping because running on \'{}\' instance'.format(processor))
 
 
