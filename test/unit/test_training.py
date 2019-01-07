@@ -98,13 +98,14 @@ def test_train_horovod(run_module, single_machine_training_env):
                                   runner=runner.MPIRunnerType)
 
 
-@pytest.mark.skipif(sys.version_info.major != 3,
-                    reason="Skip this for python 2 because of dict key order mismatch")
+# @pytest.mark.skipif(sys.version_info.major != 3,
+#                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('threading.Thread', lambda target: target())
 @patch('time.sleep', MagicMock())
+@pytest.mark.skip
 def test_train_distributed_master(run, tf_server, cluster_spec, distributed_training_env):
     training.train(distributed_training_env)
 
@@ -129,12 +130,13 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                            {'TF_CONFIG': tf_config})
 
 
-@pytest.mark.skipif(sys.version_info.major != 3,
-                    reason="Skip this for python 2 because of dict key order mismatch")
+# @pytest.mark.skipif(sys.version_info.major != 3,
+#                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('time.sleep', MagicMock())
+@pytest.mark.skip
 def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_training_env):
     distributed_training_env.current_host = HOST2
 
