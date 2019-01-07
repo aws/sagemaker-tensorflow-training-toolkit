@@ -14,7 +14,6 @@ from __future__ import absolute_import
 
 import os
 
-import pytest
 from sagemaker.tensorflow import serving, TensorFlow
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
