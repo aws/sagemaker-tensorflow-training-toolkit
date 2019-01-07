@@ -14,21 +14,24 @@ from __future__ import absolute_import
 
 import os
 
+import pytest
+
 import sagemaker
 from sagemaker.tensorflow import TensorFlow
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
 
+@pytest.mark.skip_gpu
 def test_distributed_training_horovod(sagemaker_session,
                                       sagemaker_local_session,
+                                      instance_type,
                                       ecr_image,
                                       tmpdir):
-
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
         role='SageMakerRole',
-        train_instance_type='ml.c4.xlarge',
+        train_instance_type=instance_type,
         train_instance_count=2,
         image_name=ecr_image,
         framework_version='1.12',
