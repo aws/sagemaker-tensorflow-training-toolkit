@@ -14,7 +14,8 @@ from __future__ import absolute_import
 
 import os
 
-from sagemaker.tensorflow import serving, TensorFlow
+import sagemaker
+from sagemaker.tensorflow import TensorFlow
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
@@ -40,12 +41,8 @@ def test_distributed_training_horovod(sagemaker_session,
 
     estimator.fit()
 
-    model = serving.Model(model_data=estimator.model_data,
-                          role='SageMakerRole',
-                          framework_version='1.12.0',
-                          sagemaker_session=sagemaker_local_session)
+    model_data_source = sagemaker.local.data.get_data_source_instance(
+        estimator.model_data, sagemaker.session.Session())
 
-    predictor = model.deploy(initial_instance_count=1, instance_type='local')
-    assert predictor.predict([[0] * 28] * 28)
-
-    predictor.delete_endpoint()
+    for filename in model_data_source.get_file_list():
+        assert os.path.basename(filename) == 'model.tar.gz'
