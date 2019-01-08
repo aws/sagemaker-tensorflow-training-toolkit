@@ -21,7 +21,7 @@ from sagemaker.tensorflow import TensorFlow
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
 
-@pytest.mark.skip_gpu
+@pytest.mark.skip(reason="Horovod feature is not officially launched")
 def test_distributed_training_horovod(sagemaker_session,
                                       sagemaker_local_session,
                                       instance_type,
