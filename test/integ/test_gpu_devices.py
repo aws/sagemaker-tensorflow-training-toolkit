@@ -19,7 +19,7 @@ from test.integ.docker_utils import Container
 
 @pytest.fixture(autouse=True)
 def skip_cpu(request, processor):
-    if request.node.get_marker('skip_cpu') and processor == 'cpu':
+    if request.node.get_closest_marker('skip_cpu') and processor == 'cpu':
         pytest.skip('Skipping because we are running cpu image.')
 
 
