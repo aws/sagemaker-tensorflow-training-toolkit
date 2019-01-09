@@ -22,7 +22,6 @@ from sagemaker.tensorflow import TensorFlow
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
 
-@pytest.mark.skip(reason="Horovod feature is not officially launched")
 @pytest.mark.parametrize('instances, processes', [
     [1, 2],
     (2, 1),

@@ -76,7 +76,7 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
         keras==2.2.4 \
-        sagemaker-containers==2.4.0 \
+        sagemaker-containers==2.4.1 \
         $framework_support_installable \
         "sagemaker-tensorflow>=1.12,<1.13" && \
     # Let's install TensorFlow separately in the end to avoid
