@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends --allow-unauthe
         libnccl-dev=${NCCL_VERSION} \
         libgomp1 \
         wget \
+        openssh-client \
         openssh-server \
         build-essential && \
     # The 'apt-get install' of nvinfer-runtime-trt-repo-ubuntu1604-4.0.1-ga-cuda9.0
@@ -50,9 +51,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends --allow-unauthe
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
     cd /tmp/openmpi && \
-    wget https://www.open-mpi.org/software/ompi/v3.0/downloads/openmpi-3.0.0.tar.gz && \
-    tar zxf openmpi-3.0.0.tar.gz && \
-    cd openmpi-3.0.0 && \
+    curl -fSsL -O https://www.open-mpi.org/software/ompi/v3.1/downloads/openmpi-3.1.2.tar.gz && \
+    tar zxf openmpi-3.1.2.tar.gz && \
+    cd openmpi-3.1.2 && \
     ./configure --enable-orterun-prefix-by-default && \
     make -j $(nproc) all && \
     make install && \
@@ -111,7 +112,7 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
     keras==2.2.4 \
-    sagemaker-containers==2.4.0 \
+    sagemaker-containers==2.4.2 \
     $framework_support_installable \
     "sagemaker-tensorflow>=1.12,<1.13" \
     # Let's install TensorFlow separately in the end to avoid

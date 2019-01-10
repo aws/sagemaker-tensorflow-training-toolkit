@@ -14,19 +14,19 @@ from __future__ import absolute_import
 
 import os
 
-import pytest
 import sagemaker
 from sagemaker.tensorflow import TensorFlow
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
 
-@pytest.mark.skip(reason="Horovod feature is not officially launched")
 def test_distributed_training_horovod(sagemaker_session,
                                       sagemaker_local_session,
                                       instance_type,
                                       ecr_image,
                                       tmpdir):
+
+    mpi_options = '-verbose -x orte_base_help_aggregate=0'
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
         role='SageMakerRole',
@@ -37,7 +37,7 @@ def test_distributed_training_horovod(sagemaker_session,
         py_version='py3',
         script_mode=True,
         hyperparameters={'sagemaker_mpi_enabled': True,
-                         'sagemaker_mpi_custom_mpi_options': '-verbose',
+                         'sagemaker_mpi_custom_mpi_options': mpi_options,
                          'sagemaker_mpi_num_of_processes_per_host': 1})
 
     estimator.fit()
