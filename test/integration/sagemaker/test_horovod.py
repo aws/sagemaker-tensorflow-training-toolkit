@@ -25,7 +25,7 @@ def test_distributed_training_horovod(sagemaker_session,
                                       instance_type,
                                       ecr_image,
                                       tmpdir):
-    
+
     mpi_options = '-verbose -x orte_base_help_aggregate=0'
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
