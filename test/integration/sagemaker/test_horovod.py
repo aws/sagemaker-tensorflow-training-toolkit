@@ -35,7 +35,7 @@ def test_distributed_training_horovod(sagemaker_session,
         py_version='py3',
         script_mode=True,
         hyperparameters={'sagemaker_mpi_enabled': True,
-                         'sagemaker_mpi_custom_mpi_options': '-verbose',
+                         'sagemaker_mpi_custom_mpi_options': '-verbose -X orte_base_help_aggregate=0',
                          'sagemaker_mpi_num_of_processes_per_host': 1})
 
     estimator.fit()

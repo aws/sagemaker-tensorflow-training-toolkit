@@ -12,7 +12,9 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import, print_function
 
+import json
 import os
+import subprocess
 
 import keras
 from keras.datasets import mnist
@@ -22,6 +24,17 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 import tensorflow as tf
 import horovod.keras as hvd
+
+print('+++++++++++++++++++++++++ENV+++++++++++++++++++++++')
+print(json.dumps(os.environ))
+print('+++++++++++++++++++++++++ENV+++++++++++++++++++++++')
+
+
+print('+++++++++++++++++++++++++HOSTNAME+++++++++++++++++++++++')
+shost = subprocess.check_call('hostname')
+print('{%s}' % shost)
+print('+++++++++++++++++++++++++HOSTNAME+++++++++++++++++++++++')
+
 
 # Horovod: initialize Horovod.
 hvd.init()
