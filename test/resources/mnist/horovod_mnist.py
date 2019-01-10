@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import, print_function
 
-import json
 import os
 import subprocess
 
@@ -25,15 +24,31 @@ from keras import backend as K
 import tensorflow as tf
 import horovod.keras as hvd
 
+from sagemaker_containers.beta.framework import env
+
+
+print('+++++++++++++++++++++++++gethostname+++++++++++++++++++++++')
+import gethostname
+print(gethostname.call(30))
+print('+++++++++++++++++++++++++gethostname+++++++++++++++++++++++')
+
+print('+++++++++++++++++++++++++RESOURCECONFIG+++++++++++++++++++++++')
+with open(env.resource_config_file_dir, 'r') as f:
+    print(f.read())
+print('+++++++++++++++++++++++++RESOURCECONFIG+++++++++++++++++++++++')
+
 print('+++++++++++++++++++++++++ENV+++++++++++++++++++++++')
-print(json.dumps(os.environ))
+print(os.environ)
 print('+++++++++++++++++++++++++ENV+++++++++++++++++++++++')
 
 
 print('+++++++++++++++++++++++++HOSTNAME+++++++++++++++++++++++')
-shost = subprocess.check_call('hostname')
-print('{%s}' % shost)
+subprocess.check_call('hostname')
 print('+++++++++++++++++++++++++HOSTNAME+++++++++++++++++++++++')
+
+print('+++++++++++++++++++++++++WHICHHOSTNAME+++++++++++++++++++++++')
+subprocess.check_call('which hostname')
+print('+++++++++++++++++++++++++GETHOSTNAME+++++++++++++++++++++++')
 
 
 # Horovod: initialize Horovod.
