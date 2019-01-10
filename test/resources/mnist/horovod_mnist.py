@@ -24,32 +24,6 @@ from keras import backend as K
 import tensorflow as tf
 import horovod.keras as hvd
 
-from sagemaker_containers.beta.framework import env
-
-
-print('+++++++++++++++++++++++++gethostname+++++++++++++++++++++++')
-import gethostname
-print(gethostname.call(30))
-print('+++++++++++++++++++++++++gethostname+++++++++++++++++++++++')
-
-print('+++++++++++++++++++++++++RESOURCECONFIG+++++++++++++++++++++++')
-with open(env.resource_config_file_dir, 'r') as f:
-    print(f.read())
-print('+++++++++++++++++++++++++RESOURCECONFIG+++++++++++++++++++++++')
-
-print('+++++++++++++++++++++++++ENV+++++++++++++++++++++++')
-print(os.environ)
-print('+++++++++++++++++++++++++ENV+++++++++++++++++++++++')
-
-
-print('+++++++++++++++++++++++++HOSTNAME+++++++++++++++++++++++')
-subprocess.check_call('hostname')
-print('+++++++++++++++++++++++++HOSTNAME+++++++++++++++++++++++')
-
-print('+++++++++++++++++++++++++WHICHHOSTNAME+++++++++++++++++++++++')
-subprocess.check_call('which hostname')
-print('+++++++++++++++++++++++++GETHOSTNAME+++++++++++++++++++++++')
-
 
 # Horovod: initialize Horovod.
 hvd.init()
