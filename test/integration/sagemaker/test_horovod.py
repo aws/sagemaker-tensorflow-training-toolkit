@@ -25,6 +25,8 @@ def test_distributed_training_horovod(sagemaker_session,
                                       instance_type,
                                       ecr_image,
                                       tmpdir):
+    
+    mpi_options = '-verbose -x orte_base_help_aggregate=0'
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
         role='SageMakerRole',
@@ -35,7 +37,7 @@ def test_distributed_training_horovod(sagemaker_session,
         py_version='py3',
         script_mode=True,
         hyperparameters={'sagemaker_mpi_enabled': True,
-                         'sagemaker_mpi_custom_mpi_options': '-verbose -X orte_base_help_aggregate=0',
+                         'sagemaker_mpi_custom_mpi_options': mpi_options,
                          'sagemaker_mpi_num_of_processes_per_host': 1})
 
     estimator.fit()
