@@ -32,12 +32,13 @@ def test_distributed_training_horovod_basic(instances,
                                             processes,
                                             sagemaker_local_session,
                                             docker_image,
+                                            processor,
                                             tmpdir):
     output_path = 'file://%s' % tmpdir
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, 'hvdbasic', 'train_hvd_basic.py'),
         role='SageMakerRole',
-        train_instance_type='local',
+        train_instance_type='local_gpu' if processor == 'gpu' else 'local',
         sagemaker_session=sagemaker_local_session,
         train_instance_count=instances,
         image_name=docker_image,
