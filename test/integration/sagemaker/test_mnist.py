@@ -20,6 +20,8 @@ from six.moves.urllib.parse import urlparse
 
 from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
 
+MNIST_DATA_S3_PATH = 's3://sagemaker-sample-data-us-west-2/tensorflow/mnist'
+
 
 def test_mnist(sagemaker_session, ecr_image, instance_type):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
@@ -81,6 +83,22 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(os.path.join(estimator.model_dir, 'graph.pbtxt'))
     _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.index'))
     _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.meta'))
+
+
+def test_s3_plugin(sagemaker_session, ecr_image, instance_type):
+    resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
+    script = os.path.join(resource_path, 'mnist', 'checkpoint_every_step_mnist.py')
+    estimator = TensorFlow(entry_point=script,
+                           role='SageMakerRole',
+                           train_instance_count=1,
+                           train_instance_type=instance_type,
+                           sagemaker_session=sagemaker_session,
+                           image_name=ecr_image,
+                           framework_version='1.12.0',
+                           py_version='py3',
+                           base_job_name='test-tf-sm-distributed-mnist')
+    estimator.fit(MNIST_DATA_S3_PATH)
+    _assert_s3_file_exists(estimator.model_data)
 
 
 def _assert_s3_file_exists(s3_url):
