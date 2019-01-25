@@ -92,7 +92,8 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
                                'save-checkpoint-steps': 1,
                                # Disable throttling for checkpoint and model saving
                                'throttle-secs': 0,
-                               # Without the patch training jobs would fail around 100th to 150th steps
+                               # Without the patch training jobs would fail around 100th to
+                               # 150th steps
                                'max-steps': 200,
                                # Large batch size would result in a larger checkpoint file
                                'batch-size': 2048,
