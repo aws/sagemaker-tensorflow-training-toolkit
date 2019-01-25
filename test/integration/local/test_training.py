@@ -66,7 +66,7 @@ def test_gpu(sagemaker_local_session, docker_image):
 @pytest.mark.skip_gpu
 def test_distributed_training_cpu_no_ps(sagemaker_local_session, docker_image, tmpdir):
     output_path = 'file://{}'.format(tmpdir)
-    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'distributed_mnist.py'),
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist_estimator.py'),
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
@@ -80,7 +80,7 @@ def test_distributed_training_cpu_no_ps(sagemaker_local_session, docker_image, t
 @pytest.mark.skip_gpu
 def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, tmpdir):
     output_path = 'file://{}'.format(tmpdir)
-    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'distributed_mnist.py'),
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist_estimator.py'),
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,

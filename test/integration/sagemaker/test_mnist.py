@@ -20,8 +20,6 @@ from six.moves.urllib.parse import urlparse
 
 from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
 
-MNIST_DATA_S3_PATH = 's3://sagemaker-sample-data-us-west-2/tensorflow/mnist'
-
 
 def test_mnist(sagemaker_session, ecr_image, instance_type):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
@@ -45,7 +43,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
 
 def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    script = os.path.join(resource_path, 'mnist', 'distributed_mnist.py')
+    script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
                            train_instance_count=2,
@@ -59,13 +57,13 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
-    model_s3_url = estimator.create_model().model_data
-    _assert_s3_file_exists(model_s3_url)
+    _assert_checkpoint_exists(estimator.model_dir, 0)
+    _assert_s3_file_exists(estimator.model_data)
 
 
 def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
-    script = os.path.join(resource_path, 'mnist', 'distributed_mnist.py')
+    script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
                            hyperparameters={SAGEMAKER_PARAMETER_SERVER_ENABLED: True},
@@ -80,25 +78,44 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
-    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'graph.pbtxt'))
-    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.index'))
-    _assert_s3_file_exists(os.path.join(estimator.model_dir, 'model.ckpt-0.meta'))
+    _assert_checkpoint_exists(estimator.model_dir, 0)
+    _assert_s3_file_exists(estimator.model_data)
 
 
-def test_s3_plugin(sagemaker_session, ecr_image, instance_type):
+def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
-    script = os.path.join(resource_path, 'mnist', 'checkpoint_every_step_mnist.py')
+    script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
+                           hyperparameters={
+                               # Saving a checkpoint after every step to hammer the S3 plugin
+                               'save-checkpoint-steps': 1,
+                               # Disable throttling for checkpoint and model saving
+                               'throttle-secs': 0,
+                               # Without the patch training jobs would fail around 100th to 150th steps
+                               'max-steps': 200,
+                               # Large batch size would result in a larger checkpoint file
+                               'batch-size': 2048,
+                               # This makes the training job exporting model during training.
+                               # Stale model garbage collection will also be performed.
+                               'export-model-during-training': True
+                           },
                            train_instance_count=1,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
                            framework_version='1.12.0',
                            py_version='py3',
-                           base_job_name='test-tf-sm-distributed-mnist')
-    estimator.fit(MNIST_DATA_S3_PATH)
+                           base_job_name='test-tf-sm-s3-mnist')
+    estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region))
     _assert_s3_file_exists(estimator.model_data)
+    _assert_checkpoint_exists(estimator.model_dir, 200)
+
+
+def _assert_checkpoint_exists(model_dir, checkpoint_number):
+    _assert_s3_file_exists(os.path.join(model_dir, 'graph.pbtxt'))
+    _assert_s3_file_exists(os.path.join(model_dir, 'model.ckpt-{}.index'.format(checkpoint_number)))
+    _assert_s3_file_exists(os.path.join(model_dir, 'model.ckpt-{}.meta'.format(checkpoint_number)))
 
 
 def _assert_s3_file_exists(s3_url):

@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 import os
 import argparse
-
+import json
 
 def cnn_model_fn(features, labels, mode):
   """Model function for CNN."""
@@ -115,6 +115,13 @@ def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
     parser.add_argument('--model_dir', type=str)
+    parser.add_argument('--max-steps', type=int, default=1000)
+    parser.add_argument('--save-checkpoint-steps', type=int, default=1000)
+    parser.add_argument('--throttle-secs', type=int, default=60)
+    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
+    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
+    parser.add_argument('--batch-size', type=int, default=100)
+    parser.add_argument('--export-model-during-training', type=bool, default=False)
     return parser.parse_known_args()
 
 def serving_input_fn():
@@ -123,12 +130,15 @@ def serving_input_fn():
 
 if __name__ == "__main__":
     args, unknown = _parse_args()
+    for arg in vars(args):
+        print(arg, getattr(args, arg))
+
     tf.logging.set_verbosity(tf.logging.DEBUG)
     train_data, train_labels = _load_training_data(args.train)
     eval_data, eval_labels = _load_testing_data(args.train)
 
     # Saving a checkpoint after every step
-    run_config = tf.estimator.RunConfig(save_checkpoints_steps=1)
+    run_config = tf.estimator.RunConfig(save_checkpoints_steps=args.save_checkpoint_steps)
     mnist_classifier = tf.estimator.Estimator(
         model_fn=cnn_model_fn, model_dir=args.model_dir, config=run_config)
 
@@ -143,11 +153,12 @@ if __name__ == "__main__":
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": train_data},
         y=train_labels,
-        batch_size=2048,
+        batch_size=args.batch_size,
         num_epochs=None,
         shuffle=True)
 
-    exporter = tf.estimator.LatestExporter('Servo', serving_input_receiver_fn=serving_input_fn)
+    exporter = tf.estimator.LatestExporter('Servo', serving_input_receiver_fn=serving_input_fn) \
+        if args.export_model_during_training else None
     # Evaluate the model and print results
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": eval_data},
@@ -155,9 +166,9 @@ if __name__ == "__main__":
         num_epochs=1,
         shuffle=False)
 
-    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=200, hooks=[logging_hook])
-    eval_spec = tf.estimator.EvalSpec(eval_input_fn, throttle_secs=0, exporters=exporter)
+    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=args.max_steps)
+    eval_spec = tf.estimator.EvalSpec(eval_input_fn, throttle_secs=args.throttle_secs, exporters=exporter)
     tf.estimator.train_and_evaluate(mnist_classifier, train_spec, eval_spec)
 
-    mnist_classifier.export_savedmodel('/opt/ml/model', serving_input_fn)
-
+    if args.current_host == args.hosts[0]:
+        mnist_classifier.export_savedmodel('/opt/ml/model', serving_input_fn)
