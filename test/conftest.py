@@ -33,7 +33,7 @@ def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default='preprod-tensorflow')
     parser.addoption('--tag', default=None)
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--framework-version', default='1.11.0')
+    parser.addoption('--framework-version', default='1.12.0')
     parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
     parser.addoption('--py-version', default='3', choices=['2', '3'])
     parser.addoption('--account-id', default='142577830533')
