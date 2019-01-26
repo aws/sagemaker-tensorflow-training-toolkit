@@ -30,10 +30,10 @@ def cli():
 def generate_report():
     results_dir = os.path.join(dir_path, 'results')
 
-    if os.path.exists(results_dir):
-        shutil.rmtree(results_dir)
-
-    subprocess.call(['aws', 's3', 'cp', '--recursive', benchmark_results_dir, results_dir])
+    # if os.path.exists(results_dir):
+    #     shutil.rmtree(results_dir)
+#
+    # subprocess.call(['aws', 's3', 'cp', '--recursive', benchmark_results_dir, results_dir])
 
     jobs = {}
 
@@ -45,7 +45,7 @@ def generate_report():
         current_dir = os.path.join(results_dir, job_name)
 
         model_dir = os.path.join(current_dir, 'output', 'model.tar.gz')
-        subprocess.call(['tar', '-xvzf', model_dir], cwd=current_dir)
+        # subprocess.call(['tar', '-xvzf', model_dir], cwd=current_dir)
 
         jobs[job_name]['instance_type'] = instance_type
         jobs[job_name]['instance_count'] = instance_count
@@ -78,31 +78,31 @@ def generate_report():
                 jobs[job_name]['tensorflow_version'] = data['tensorflow_version']['version']
                 jobs[job_name]['tensorflow_version_git_hash'] = data['tensorflow_version']['git_hash']
 
-        with open(os.path.join(current_dir, 'metric.log')) as f:
-            for line in f.readlines():
-                metric = json.loads(line)
-                metric_name = metric['name']
-                metric_value = metric['value']
+#         with open(os.path.join(current_dir, 'metric.log')) as f:
+#             for line in f.readlines():
+#                 metric = json.loads(line)
+#                 metric_name = metric['name']
+#                 metric_value = metric['value']
 
-                current_value = jobs[job_name].get(metric_name)
-                if current_value and isinstance(current_value, list):
-                    jobs[job_name][metric_name].append(metric_value)
-                elif current_value:
-                    jobs[job_name][metric_name] = [current_value, metric_value]
-                else:
-                    jobs[job_name][metric_name] = metric_value
+#                 current_value = jobs[job_name].get(metric_name)
+#                 if current_value and isinstance(current_value, list):
+#                     jobs[job_name][metric_name].append(metric_value)
+#                 elif current_value:
+#                     jobs[job_name][metric_name] = [current_value, metric_value]
+#                 else:
+#                     jobs[job_name][metric_name] = metric_value
 
     df = pd.DataFrame(jobs)
 
-    grouped_by_instance = df[df.T.groupby(['batch_size']).groups[256]].T.groupby('instance_type')
-    [df[grouped_by_instance.groups[x]].T['average_examples_per_sec'].mean() for x, i in grouped_by_instance], [x for x, i in grouped_by_instance]
+#     grouped_by_instance = df[df.T.groupby(['batch_size']).groups[256]].T.groupby('instance_type')
+#     [df[grouped_by_instance.groups[x]].T['average_examples_per_sec'].mean() for x, i in grouped_by_instance], [x for x, i in grouped_by_instance]
 
-    batch_size_256 = [df[grouped_by_instance.groups[x]].T['average_examples_per_sec'].mean() for x, i in grouped_by_instance]
+#     batch_size_256 = [df[grouped_by_instance.groups[x]].T['average_examples_per_sec'].mean() for x, i in grouped_by_instance]
 
-    grouped_by_instance = df[df.T.groupby(['batch_size']).groups[512]].T.groupby('instance_type')
-    batch_size_512 = [df[grouped_by_instance.groups[x]].T['average_examples_per_sec'].mean() for x, i in grouped_by_instance]
+#     grouped_by_instance = df[df.T.groupby(['batch_size']).groups[512]].T.groupby('instance_type')
+#     batch_size_512 = [df[grouped_by_instance.groups[x]].T['average_examples_per_sec'].mean() for x, i in grouped_by_instance]
 
-    plot_comparison([x for x, i in grouped_by_instance], batch_size_256, batch_size_512, 'batch size 256', 'batch size 523')
+#     plot_comparison([x for x, i in grouped_by_instance], batch_size_256, batch_size_512, 'batch size 256', 'batch size 523')
     return df
 
 
