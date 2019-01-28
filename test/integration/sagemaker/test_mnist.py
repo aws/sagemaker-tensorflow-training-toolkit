@@ -37,13 +37,12 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
     estimator.fit(inputs)
-    model_s3_url = estimator.create_model().model_data
-    _assert_s3_file_exists(model_s3_url)
+    _assert_s3_file_exists(estimator.model_data)
 
 
 def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
+    script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
                            train_instance_count=2,
@@ -54,10 +53,9 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
                            py_version='py3',
                            base_job_name='test-tf-sm-distributed-mnist')
     inputs = estimator.sagemaker_session.upload_data(
-        path=os.path.join(resource_path, 'mnist', 'data-distributed'),
-        key_prefix='scriptmode/mnist-distributed')
+        path=os.path.join(resource_path, 'mnist', 'data'),
+        key_prefix='scriptmode/mnist')
     estimator.fit(inputs)
-    _assert_checkpoint_exists(estimator.model_dir, 0)
     _assert_s3_file_exists(estimator.model_data)
 
 
