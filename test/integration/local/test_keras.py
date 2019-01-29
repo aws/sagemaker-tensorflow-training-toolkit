@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 @pytest.mark.skip_gpu
-def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
+def test_keras_training(sagemaker_local_session, docker_image, tmpdir, framework_version):
     entry_point = os.path.join(RESOURCE_PATH, 'keras_inception.py')
     output_path = 'file://{}'.format(tmpdir)
 
@@ -39,14 +39,14 @@ def test_keras_training(sagemaker_local_session, docker_image, tmpdir):
         sagemaker_session=sagemaker_local_session,
         model_dir='/opt/ml/model',
         output_path=output_path,
-        framework_version='1.11.0',
+        framework_version=framework_version,
         py_version='py3')
 
     estimator.fit()
 
     model = serving.Model(model_data=output_path,
                           role='SageMakerRole',
-                          framework_version='1.11.0',
+                          framework_version=framework_version,
                           sagemaker_session=sagemaker_local_session)
 
     predictor = model.deploy(initial_instance_count=1, instance_type='local')
