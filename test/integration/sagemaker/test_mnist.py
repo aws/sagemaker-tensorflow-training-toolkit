@@ -21,7 +21,7 @@ from six.moves.urllib.parse import urlparse
 from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
 
 
-def test_mnist(sagemaker_session, ecr_image, instance_type):
+def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -30,7 +30,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
-                           framework_version='1.12.0',
+                           framework_version=framework_version,
                            py_version='py3',
                            base_job_name='test-sagemaker-mnist')
     inputs = estimator.sagemaker_session.upload_data(
@@ -40,7 +40,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(estimator.model_data)
 
 
-def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
+def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -49,7 +49,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
-                           framework_version='1.12.0',
+                           framework_version=framework_version,
                            py_version='py3',
                            base_job_name='test-tf-sm-distributed-mnist')
     inputs = estimator.sagemaker_session.upload_data(
@@ -59,7 +59,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(estimator.model_data)
 
 
-def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
+def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
@@ -69,7 +69,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
-                           framework_version='1.12.0',
+                           framework_version=framework_version,
                            py_version='py3',
                            base_job_name='test-tf-sm-distributed-mnist')
     inputs = estimator.sagemaker_session.upload_data(
@@ -80,7 +80,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(estimator.model_data)
 
 
-def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
+def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
@@ -91,7 +91,7 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
                                # Disable throttling for checkpoint and model saving
                                'throttle-secs': 0,
                                # Without the patch training jobs would fail around 100th to
-                               # 150th steps
+                               # 150th step
                                'max-steps': 200,
                                # Large batch size would result in a larger checkpoint file
                                'batch-size': 2048,
@@ -103,7 +103,7 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
-                           framework_version='1.12.0',
+                           framework_version=framework_version,
                            py_version='py3',
                            base_job_name='test-tf-sm-s3-mnist')
     estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region))
