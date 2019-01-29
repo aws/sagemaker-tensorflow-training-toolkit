@@ -26,6 +26,6 @@
 \
 --py-versions py3 \
 \
---subnets subnet-125fb674  \
+--subnets # add subnet id here  \
 \
---security-groups sg-ce5dd1b4
+--security-groups # add security-group id here
