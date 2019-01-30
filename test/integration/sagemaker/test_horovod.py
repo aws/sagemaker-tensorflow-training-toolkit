@@ -24,7 +24,8 @@ def test_distributed_training_horovod(sagemaker_session,
                                       sagemaker_local_session,
                                       instance_type,
                                       ecr_image,
-                                      tmpdir):
+                                      tmpdir,
+                                      framework_version):
 
     mpi_options = '-verbose -x orte_base_help_aggregate=0'
     estimator = TensorFlow(
@@ -33,7 +34,7 @@ def test_distributed_training_horovod(sagemaker_session,
         train_instance_type=instance_type,
         train_instance_count=2,
         image_name=ecr_image,
-        framework_version='1.12',
+        framework_version=framework_version,
         py_version='py3',
         script_mode=True,
         hyperparameters={'sagemaker_mpi_enabled': True,
