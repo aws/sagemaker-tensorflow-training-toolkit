@@ -125,9 +125,9 @@ class Container(object):
         '{}============================= container output ============================='.format(
             CYAN_COLOR))
         for line in iter(process.stdout.readline, b''):
-            sys.stdout.write(line.decode('utf-8'))
+            sys.stdout.write(line.decode(sys.stdout.encoding))
             sys.stdout.flush()
-            lines.append(line.decode('utf-8'))
+            lines.append(line.decode(sys.stdout.encoding))
         msg = '\n{}============================= end of container output ============================='
         print(msg.format(CYAN_COLOR))
 
