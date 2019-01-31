@@ -142,7 +142,7 @@ Then run:
 ::
 
     # Example
-    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2
+    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2 \
     --build-arg framework_installable=tensorflow-1.6.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
 
 The dockerfiles for 1.4 and 1.5 build from source instead, so when building those, you don't need to download the wheel beforehand:
