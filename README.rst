@@ -14,12 +14,11 @@ SDK <https://github.com/aws/sagemaker-python-sdk>`__.
 For notebook examples: `SageMaker Notebook
 Examples <https://github.com/awslabs/amazon-sagemaker-examples>`__.
 
+-----------------
 Table of Contents
 -----------------
-
-#. `Getting Started <#getting-started>`__
-#. `Building your Image <#building-your-image>`__
-#. `Running the tests <#running-the-tests>`__
+.. contents::
+    :local:
 
 Getting Started
 ---------------
@@ -143,7 +142,7 @@ Then run:
 ::
 
     # Example
-    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2
+    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2 \
     --build-arg framework_installable=tensorflow-1.6.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
 
 The dockerfiles for 1.4 and 1.5 build from source instead, so when building those, you don't need to download the wheel beforehand:
@@ -168,6 +167,43 @@ The dockerfiles for 1.4 and 1.5 build from source instead, so when building thos
     # GPU
     docker build -t preprod-tensorflow:1.4.1-gpu-py2 -f Dockerfile.gpu .
 
+Amazon Elastic Inference with TensorFlow serving in SageMaker
+-------------------------------------------------------------
+`Amazon Elastic Inference <https://aws.amazon.com/machine-learning/elastic-inference/>`__ allows you to to attach
+low-cost GPU-powered acceleration to Amazon EC2 and Amazon SageMaker instances to reduce the cost running deep
+learning inference by up to 75%. Currently, Amazon Elastic Inference supports TensorFlow, Apache MXNet, and ONNX
+models, with more frameworks coming soon.
+
+Support for using TensorFlow serving with Amazon Elastic Inference in SageMaker is supported in the public SageMaker TensorFlow containers.
+
+* For information on how to use the Python SDK to create an endpoint with Amazon Elastic Inference and TensorFlow serving in SageMaker, see `Deploying from an Estimator <https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/tensorflow/deploying_tensorflow_serving.rst#deploying-from-an-estimator>`__.
+* For information on how Amazon Elastic Inference works, see `How EI Works <https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html#ei-how-it-works>`__.
+* For more information in regards to using Amazon Elastic Inference in SageMaker, see `Amazon SageMaker Elastic Inference <https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html>`__.
+* For notebook examples on how to use Amazon Elastic Inference with TensorFlow serving through the Python SDK in SageMaker, see `EI Sample Notebooks <https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html#ei-intro-sample-nb>`__.
+
+Building the SageMaker Elastic Inference TensorFlow serving container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Amazon Elastic Inference is designed to be used with AWS enhanced versions of TensorFlow serving or Apache MXNet. These enhanced
+versions of the frameworks are automatically built into containers when you use the Amazon SageMaker Python SDK, or you can
+download them as binary files and import them into your own Docker containers. The enhanced TensorFlow serving binaries are available on Amazon S3 at https://s3.console.aws.amazon.com/s3/buckets/amazonei-tensorflow.
+
+The SageMaker TensorFlow containers with Amazon Elastic Inference support were built from the
+`EI Dockerfile <https://github.com/aws/sagemaker-tensorflow-container/blob/master/docker/1.12.0/final/py2/Dockerfile.ei>`__ starting at TensorFlow 1.12.0 and above.
+
+The instructions for building the SageMaker TensorFlow containers with Amazon Elastic Inference support are similar to the steps `above <https://github.com/aws/sagemaker-tensorflow-container#final-images>`__.
+
+The only difference is the addition of the ``tensorflow_model_server`` build-arg, in which the enhanced version of TensorFlow serving would be passed in.
+
+::
+
+    # Example
+    docker build -t preprod-tensorflow-ei:1.12.0-cpu-py2 --build-arg py_version=2 \
+    --build-arg tensorflow_model_server AmazonEI_TensorFlow_Serving_v1.12_v1 \
+    --build-arg framework_installable=tensorflow-1.12.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
+
+
+* For information about downloading the enhanced versions of TensorFlow serving, see `Using TensorFlow Models with Amazon EI <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ei-tensorflow.html>`__.
+* For information on which versions of TensorFlow serving is supported for Elastic Inference within SageMaker, see `TensorFlow SageMaker Estimators and Models <https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/tensorflow#tensorflow-sagemaker-estimators-and-models>`__.
 
 Running the tests
 -----------------
