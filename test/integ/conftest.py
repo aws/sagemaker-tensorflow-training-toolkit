@@ -1,14 +1,14 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import logging
@@ -37,7 +37,7 @@ def pytest_addoption(parser):
     parser.addoption('--tag', required=True)
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', required=True)
-    parser.addoption('--processor', required=True, choices=['gpu','cpu'])
+    parser.addoption('--processor', required=True, choices=['gpu', 'cpu'])
 
 
 @pytest.fixture(scope='session')

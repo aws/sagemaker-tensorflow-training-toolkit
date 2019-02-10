@@ -188,7 +188,7 @@ versions of the frameworks are automatically built into containers when you use 
 download them as binary files and import them into your own Docker containers. The enhanced TensorFlow serving binaries are available on Amazon S3 at https://s3.console.aws.amazon.com/s3/buckets/amazonei-tensorflow.
 
 The SageMaker TensorFlow containers with Amazon Elastic Inference support were built from the
-`EI Dockerfile <https://github.com/aws/sagemaker-tensorflow-container/blob/master/docker/1.12.0/final/py2/Dockerfile.ei>`__ starting at TensorFlow 1.12.0 and above.
+`EI Dockerfile <https://github.com/aws/sagemaker-tensorflow-container/blob/master/docker/1.11.0/final/py2/Dockerfile.ei>`__ starting at TensorFlow 1.11.0 and above.
 
 The instructions for building the SageMaker TensorFlow containers with Amazon Elastic Inference support are similar to the steps `above <https://github.com/aws/sagemaker-tensorflow-container#final-images>`__.
 
@@ -197,9 +197,9 @@ The only difference is the addition of the ``tensorflow_model_server`` build-arg
 ::
 
     # Example
-    docker build -t preprod-tensorflow-ei:1.12.0-cpu-py2 --build-arg py_version=2 \
-    --build-arg tensorflow_model_server AmazonEI_TensorFlow_Serving_v1.12_v1 \
-    --build-arg framework_installable=tensorflow-1.12.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
+    docker build -t preprod-tensorflow-ei:1.11.0-cpu-py2 --build-arg py_version=2 \
+    --build-arg tensorflow_model_server AmazonEI_TensorFlow_Serving_v1.11_v1 \
+    --build-arg framework_installable=tensorflow-1.11.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
 
 
 * For information about downloading the enhanced versions of TensorFlow serving, see `Using TensorFlow Models with Amazon EI <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ei-tensorflow.html>`__.
