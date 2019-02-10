@@ -134,16 +134,15 @@ Then run:
     # All build instructions assumes you're building from the same directory as the Dockerfile.
 
     # CPU
-    docker build -t <image_name>:<tag> --build-arg py_version=<py_version> --build-arg framework_installable=<path to tensorflow binary> -f Dockerfile.cpu .
+    docker build -t <image_name>:<tag> --build-arg framework_installable=<path to tensorflow binary> -f Dockerfile.cpu .
 
     # GPU
-    docker build -t <image_name>:<tag> --build-arg py_version=<py_version> --build-arg framework_installable=<path to tensorflow binary> -f Dockerfile.gpu .
+    docker build -t <image_name>:<tag> --build-arg framework_installable=<path to tensorflow binary> -f Dockerfile.gpu .
 
 ::
 
     # Example
-    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg py_version=2 \
-    --build-arg framework_installable=tensorflow-1.6.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
+    docker build -t preprod-tensorflow:1.6.0-cpu-py2 --build-arg framework_installable=tensorflow-1.6.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
 
 The dockerfiles for 1.4 and 1.5 build from source instead, so when building those, you don't need to download the wheel beforehand:
 
@@ -197,7 +196,7 @@ The only difference is the addition of the ``tensorflow_model_server`` build-arg
 ::
 
     # Example
-    docker build -t preprod-tensorflow-ei:1.11.0-cpu-py2 --build-arg py_version=2 \
+    docker build -t preprod-tensorflow-ei:1.11.0-cpu-py2 \
     --build-arg tensorflow_model_server AmazonEI_TensorFlow_Serving_v1.11_v1 \
     --build-arg framework_installable=tensorflow-1.11.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
 
@@ -292,7 +291,6 @@ SageMaker <https://aws.amazon.com/sagemaker/>`__, then use:
 ::
 
     # Required arguments for integration tests are found in test/functional/conftest.py
-
     pytest test/functional --aws-id <your_aws_id> \
                            --docker-base-name <your_docker_image> \
                            --instance-type <amazon_sagemaker_instance_type> \
@@ -304,6 +302,19 @@ SageMaker <https://aws.amazon.com/sagemaker/>`__, then use:
     pytest test/functional --aws-id 12345678910 \
                            --docker-base-name preprod-tensorflow \
                            --instance-type ml.m4.xlarge \
+                           --tag 1.0
+
+If you want to run a functional end to end test for your Elastic Inference container, you will need to provide an `accelerator_type` as an additional pytest argument.
+
+The `accelerator-type` is your specified `Amazon Elastic Inference Accelerator <https://aws.amazon.com/sagemaker/pricing/instance-types/>`__ type that will be attached to your instance type.
+
+::
+
+    # Example
+    pytest test/functional --aws-id 12345678910 \
+                           --docker-base-name preprod-tensorflow \
+                           --instance-type ml.m4.xlarge \
+                           --accelerator-type ml.eia1.medium \
                            --tag 1.0
 
 Contributing
