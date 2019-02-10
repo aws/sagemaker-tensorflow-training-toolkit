@@ -272,10 +272,10 @@ Functional Tests
 Functional tests require your Docker image to be within an `Amazon ECR repository <https://docs
 .aws.amazon.com/AmazonECS/latest/developerguide/ECS_Console_Repositories.html>`__.
 
-The Docker-base-name is your `ECR repository namespace <https://docs.aws.amazon
+The `docker-base-name` is your `ECR repository namespace <https://docs.aws.amazon
 .com/AmazonECR/latest/userguide/Repositories.html>`__.
 
-The instance-type is your specified `Amazon SageMaker Instance Type
+The `instance-type` is your specified `Amazon SageMaker Instance Type
 <https://aws.amazon.com/sagemaker/pricing/instance-types/>`__ that the functional test will run on.
 
 
@@ -310,12 +310,12 @@ The `accelerator-type` is your specified `Amazon Elastic Inference Accelerator <
 
 ::
 
-    # Example
-    pytest test/functional --aws-id 12345678910 \
-                           --docker-base-name preprod-tensorflow \
-                           --instance-type ml.m4.xlarge \
-                           --accelerator-type ml.eia1.medium \
-                           --tag 1.0
+    # Example for running Elastic Inference functional test
+    pytest test/functional/test_elastic_inference.py --aws-id 12345678910 \
+                                                     --docker-base-name preprod-tensorflow \
+                                                     --instance-type ml.m4.xlarge \
+                                                     --accelerator-type ml.eia1.medium \
+                                                     --tag 1.0
 
 Contributing
 ------------
