@@ -66,7 +66,7 @@ def test_deploy_elastic_inference_with_pretrained_model(pretrained_model_data, d
                                            image=docker_image_uri,
                                            sagemaker_session=sagemaker_session)
 
-        logger.info("deploy model")
+        logger.info('deploying model to endpoint: {}'.format(endpoint_name))
         predictor = tensorflow_model.deploy(initial_instance_count=1,
                                             instance_type=instance_type,
                                             accelerator_type=accelerator_type,
