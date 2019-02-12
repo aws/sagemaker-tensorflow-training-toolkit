@@ -175,7 +175,7 @@ models, with more frameworks coming soon.
 
 Support for using TensorFlow serving with Amazon Elastic Inference in SageMaker is supported in the public SageMaker TensorFlow containers.
 
-* For information on how to use the Python SDK to create an endpoint with Amazon Elastic Inference and TensorFlow serving in SageMaker, see `Deploying from an Estimator <https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/tensorflow/deploying_tensorflow_serving.rst#deploying-from-an-estimator>`__.
+* For information on how to use the Python SDK to create an endpoint with Amazon Elastic Inference and TensorFlow serving in SageMaker, see `Deploying from an Estimator <https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/tensorflow/deploying_python.rst#deploying-from-an-estimator>`__.
 * For information on how Amazon Elastic Inference works, see `How EI Works <https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html#ei-how-it-works>`__.
 * For more information in regards to using Amazon Elastic Inference in SageMaker, see `Amazon SageMaker Elastic Inference <https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html>`__.
 * For notebook examples on how to use Amazon Elastic Inference with TensorFlow serving through the Python SDK in SageMaker, see `EI Sample Notebooks <https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html#ei-intro-sample-nb>`__.
