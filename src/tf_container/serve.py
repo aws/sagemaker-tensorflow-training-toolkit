@@ -259,8 +259,7 @@ class Transformer(object):
 
     @classmethod
     def from_module(cls, m, grpc_proxy_client):
-        """Initialize a Transformer using functions supplied by the given module. The module
-        must supply a ``model_fn()`` that returns an MXNet Module.
+        """Initialize a Transformer using functions supplied by the given module.
 
         If the module contains a ``transform_fn``, it will be used to handle incoming request
         data, execute the model prediction, and generation of response content.
