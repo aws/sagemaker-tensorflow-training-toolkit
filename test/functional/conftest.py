@@ -16,6 +16,7 @@ import logging
 import boto3
 import pytest
 from sagemaker import Session
+from sagemaker.tensorflow import TensorFlow
 
 logger = logging.getLogger(__name__)
 logging.getLogger('boto').setLevel(logging.INFO)
@@ -31,7 +32,7 @@ def pytest_addoption(parser):
     parser.addoption('--instance-type')
     parser.addoption('--accelerator-type', default=None)
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--framework-version', default='1.12.0')
+    parser.addoption('--framework-version', default=TensorFlow.LATEST_VERSION)
     parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
     parser.addoption('--tag')
 
