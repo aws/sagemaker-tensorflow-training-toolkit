@@ -90,8 +90,9 @@ def account_id(request):
 
 @pytest.fixture(scope='session')
 def instance_type(request, processor):
-    return request.config.getoption('--instance-type') or \
-        'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
+    provided_instance_type = request.config.getoption('--instance-type')
+    default_instance_type = 'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
+    return provided_instance_type if provided_instance_type is not None else default_instance_type
 
 
 @pytest.fixture(autouse=True)
