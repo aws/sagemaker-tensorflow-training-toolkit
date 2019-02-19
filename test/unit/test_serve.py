@@ -77,6 +77,27 @@ def mod():
     yield m
 
 
+@patch('container_support.HostingEnvironment')
+@patch('container_support.Server.next_safe_port')
+@patch('tf_container.proxy_client.GRPCProxyClient')
+@patch('tf_container.serve._wait_model_to_load')
+def test_transformer_with_env(wait_model_to_load, grpc, next_safe_port, env):
+    test_port = '8888'
+    env.port_range = test_port
+    serve.transformer(user_module=Mock(), env=env)
+    next_safe_port.assert_called_with(test_port)
+    env.assert_not_called()
+
+
+@patch('container_support.HostingEnvironment')
+@patch('container_support.Server.next_safe_port')
+@patch('tf_container.proxy_client.GRPCProxyClient')
+@patch('tf_container.serve._wait_model_to_load')
+def test_transformer_without_env(wait_model_to_load, grpc, next_safe_port, env):
+    serve.transformer(user_module=Mock())
+    env.assert_called_once()
+
+
 @patch('google.protobuf.json_format.MessageToJson', side_effect=json.dumps)
 def test_transformer_provides_default_transformer_fn(message):
     grpc_proxy_client = Mock()

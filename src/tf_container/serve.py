@@ -95,8 +95,8 @@ def _recursive_copy(src, dst):
                 os.mkdir(os.path.join(target_path, dir))
 
 
-def transformer(user_module):
-    env = cs.HostingEnvironment()
+def transformer(user_module, env=None):
+    env = cs.HostingEnvironment() if env is None else env
 
     port = int(cs.Server.next_safe_port(env.port_range)) if env.port_range else DEFAULT_TF_SERVING_PORT
 
