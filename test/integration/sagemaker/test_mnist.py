@@ -37,7 +37,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
     estimator.fit(inputs)
-    _assert_s3_file_exists(estimator.model_data)
+    _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
 def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, framework_version):
@@ -56,7 +56,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, fr
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
     estimator.fit(inputs)
-    _assert_s3_file_exists(estimator.model_data)
+    _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
 def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, framework_version):
@@ -76,8 +76,8 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
     estimator.fit(inputs)
-    _assert_checkpoint_exists(estimator.model_dir, 0)
-    _assert_s3_file_exists(estimator.model_data)
+    _assert_checkpoint_exists(sagemaker_session.boto_region_name, estimator.model_dir, 0)
+    _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
 def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framework_version):
@@ -107,17 +107,19 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framewor
                            py_version='py3',
                            base_job_name='test-tf-sm-s3-mnist')
     estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region))
-    _assert_s3_file_exists(estimator.model_data)
-    _assert_checkpoint_exists(estimator.model_dir, 200)
+    _assert_s3_file_exists(region, estimator.model_data)
+    _assert_checkpoint_exists(region, estimator.model_dir, 200)
 
 
-def _assert_checkpoint_exists(model_dir, checkpoint_number):
-    _assert_s3_file_exists(os.path.join(model_dir, 'graph.pbtxt'))
-    _assert_s3_file_exists(os.path.join(model_dir, 'model.ckpt-{}.index'.format(checkpoint_number)))
-    _assert_s3_file_exists(os.path.join(model_dir, 'model.ckpt-{}.meta'.format(checkpoint_number)))
+def _assert_checkpoint_exists(region, model_dir, checkpoint_number):
+    _assert_s3_file_exists(region, os.path.join(model_dir, 'graph.pbtxt'))
+    _assert_s3_file_exists(region,
+                           os.path.join(model_dir, 'model.ckpt-{}.index'.format(checkpoint_number)))
+    _assert_s3_file_exists(region,
+                           os.path.join(model_dir, 'model.ckpt-{}.meta'.format(checkpoint_number)))
 
 
-def _assert_s3_file_exists(s3_url):
+def _assert_s3_file_exists(region, s3_url):
     parsed_url = urlparse(s3_url)
-    s3 = boto3.resource('s3')
+    s3 = boto3.resource('s3', region_name=region)
     s3.Object(parsed_url.netloc, parsed_url.path.lstrip('/')).load()
