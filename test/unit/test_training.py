@@ -207,8 +207,11 @@ def test_log_model_missing_warning_no_model(logger):
     if not os.path.exists(path):
         os.mkdir(path)
     training._log_model_missing_warning(path)
-    logger.warn.assert_called_with('No model artifact is saved under path {}. '
-                                   'Your training job will not save any model files to S3.'.format(path))
+    logger.warn.assert_called_with('No model artifact is saved under path {}.'
+                                   ' Your training job will not save any model files to S3.\n'
+                                   'For details of how to construct your training script see:\n'
+                                   'https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/tensorflow#adapting-your-local-tensorflow-script' # noqa
+                                   .format(path))
 
 
 @patch('sagemaker_tensorflow_container.training.logger')
