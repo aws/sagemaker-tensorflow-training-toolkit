@@ -76,14 +76,13 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
         keras==2.2.4 \
-        sagemaker-containers==2.4.2 \
-        $framework_support_installable \
         "sagemaker-tensorflow>=1.12,<1.13" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
     pip install --force-reinstall --no-cache-dir -U \
         tensorflow-1.12.0-py2.py3-none-any.whl \
         horovod && \
+    pip install --no-cache-dir -U $framework_support_installable && \
     rm -f tensorflow-1.12.0-py2.py3-none-any.whl && \
     rm -f $framework_support_installable && \
     pip uninstall -y --no-cache-dir \
