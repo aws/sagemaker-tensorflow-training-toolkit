@@ -21,7 +21,7 @@ from tensorflow_serving.apis import prediction_service_pb2, get_model_metadata_p
 
 from tf_container.proxy_client import GRPCProxyClient
 
-REGRESSION = 'tensorflow/serving/regression'
+REGRESSION = 'tensorflow/serving/regress'
 INFERENCE = 'tensorflow/serving/inference'
 CLASSIFY = 'tensorflow/serving/classify'
 PREDICT = 'tensorflow/serving/predict'
