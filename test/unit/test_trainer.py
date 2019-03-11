@@ -368,6 +368,22 @@ def test_build_tf_config_with_one_host(trainer):
     assert trainer.task_type == 'master'
 
 
+def test_build_tf_config_with_two_hosts(trainer):
+    trainer.hosts = ['algo-1', 'algo-2']
+    trainer.current_host = 'algo-2'
+
+    tf_config = trainer.build_tf_config()
+
+    expected_tf_config = {'cluster': {
+                          'master': ['algo-1:2222'],
+                          'ps': ['algo-1:2223', 'algo-2:2223'],
+                          'worker': ['algo-2:2222']},
+                          'task': {'index': 0, 'type': 'worker'}, 'environment': 'cloud'}
+
+    assert tf_config == expected_tf_config
+    assert trainer.task_type == 'worker'
+
+
 def test_build_tf_config_with_multiple_hosts(trainer):
     trainer.hosts = ['algo-1', 'algo-2', 'algo-3', 'algo-4']
     trainer.current_host = 'algo-3'
@@ -384,8 +400,43 @@ def test_build_tf_config_with_multiple_hosts(trainer):
         'task': {'index': 1, 'type': 'worker'}
     }
 
+    print(tf_config)
+
     assert tf_config == expected_tf_config
     assert trainer.task_type == 'worker'
+
+
+def test_build_tf_config_with_many_hosts(trainer):
+    trainer.hosts = ['algo-' + str(x) for x in range(1, 83)]
+    trainer.current_host = 'algo-1'
+    trainer.customer_params['num_parameter_servers'] = 31
+    trainer.customer_params['num_workers'] = 50
+
+    tf_config = trainer.build_tf_config()
+
+    expected_tf_config = \
+        {'cluster': {'master': ['algo-1:2222'],
+         'ps': ['algo-1:2223', 'algo-2:2223', 'algo-3:2223', 'algo-4:2223', 'algo-5:2223', 'algo-6:2223',
+                'algo-7:2223', 'algo-8:2223', 'algo-9:2223', 'algo-10:2223', 'algo-11:2223',
+                'algo-12:2223', 'algo-13:2223', 'algo-14:2223', 'algo-15:2223', 'algo-16:2223',
+                'algo-17:2223', 'algo-18:2223', 'algo-19:2223', 'algo-20:2223', 'algo-21:2223',
+                'algo-22:2223', 'algo-23:2223', 'algo-24:2223', 'algo-25:2223', 'algo-26:2223',
+                'algo-27:2223', 'algo-28:2223', 'algo-29:2223', 'algo-30:2223', 'algo-31:2223'],
+         'worker': ['algo-33:2222', 'algo-34:2222', 'algo-35:2222', 'algo-36:2222', 'algo-37:2222', 'algo-38:2222',
+                    'algo-39:2222', 'algo-40:2222', 'algo-41:2222', 'algo-42:2222', 'algo-43:2222', 'algo-44:2222',
+                    'algo-45:2222', 'algo-46:2222', 'algo-47:2222', 'algo-48:2222', 'algo-49:2222', 'algo-50:2222',
+                    'algo-51:2222', 'algo-52:2222', 'algo-53:2222', 'algo-54:2222', 'algo-55:2222', 'algo-56:2222',
+                    'algo-57:2222', 'algo-58:2222', 'algo-59:2222', 'algo-60:2222', 'algo-61:2222', 'algo-62:2222',
+                    'algo-63:2222', 'algo-64:2222', 'algo-65:2222', 'algo-66:2222', 'algo-67:2222', 'algo-68:2222',
+                    'algo-69:2222', 'algo-70:2222', 'algo-71:2222', 'algo-72:2222', 'algo-73:2222', 'algo-74:2222',
+                    'algo-75:2222', 'algo-76:2222', 'algo-77:2222', 'algo-78:2222', 'algo-79:2222', 'algo-80:2222',
+                    'algo-81:2222', 'algo-82:2222']},
+         'task': {'index': 0, 'type': 'master'}, 'environment': 'cloud'}
+
+    print(tf_config)
+
+    assert tf_config == expected_tf_config
+    assert trainer.task_type == 'master'
 
 
 @patch('boto3.client')

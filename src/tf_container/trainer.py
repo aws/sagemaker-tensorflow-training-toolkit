@@ -168,17 +168,23 @@ class Trainer(object):
         /python/learn/estimators/run_config.py#L77
         :return: task_type and tf_config dictionary
         """
+        num_parameter_servers = int(self.customer_params.get('num_parameter_servers', len(self.hosts)))
+        num_workers = int(self.customer_params.get('num_workers', len(self.hosts) - 1))
 
         masters = self.hosts[:1]
-        workers = self.hosts[1:]
-        ps = self.hosts[:] if len(self.hosts) > 1 else None
+        ps = self.hosts[:num_parameter_servers] if len(self.hosts) > 1 else []
+        workers = self.hosts[:-num_workers-1:-1] if len(self.hosts) > 1 else []
+        workers.reverse()
 
-        self.task_type = self._get_task_type(masters)
-
-        task_map = {'master': masters, 'worker': workers}
-
-        if ps:
+        task_map = {'master': masters}
+        if len(workers) > 0:
+            task_map['worker'] = workers
+        if len(ps) > 0:
             task_map['ps'] = ps
+        self.task_type = 'master' if self.current_host in masters else 'worker' if self.current_host in workers else \
+            'ps' if self.current_host in ps else None
+
+        assert self.task_type
 
         task_id = task_map[self.task_type].index(self.current_host)
 
@@ -196,11 +202,13 @@ class Trainer(object):
             'environment': 'cloud'
         }
 
-        if ps:
+        if len(ps) > 0:
             tf_config['cluster']['ps'] = build_host_addresses(ps, port='2223')
 
         if len(workers) > 0:
             tf_config['cluster']['worker'] = build_host_addresses(workers)
+
+        logger.info("TF config: " + str(tf_config))
 
         return tf_config
 
