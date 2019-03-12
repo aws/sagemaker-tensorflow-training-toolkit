@@ -163,18 +163,24 @@ def train():
     tf_config = train_wrapper.build_tf_config()
 
     # only creating a parameter servers for distributed runs
-    if len(env.hosts) > 1:
+    if len(env.hosts) > 1 and (env.current_host == env.hosts[0] or train_wrapper.task_type == 'ps'):
         _run_ps_server(env.current_host, env.hosts, tf_config)
 
     save_tf_config_env_var(tf_config)
 
     configure_mkl()
 
-    train_wrapper.train()
+    _logger.info('Start training')
+    if train_wrapper.task_type != 'ps':
+        train_wrapper.train()
+    else:
+        _logger.info("Skip calling train_and_evaluate for ps instance")
+    _logger.info('Training finished')
 
     # only the master should export the model at the end of the execution
     if checkpoint_dir != env.model_dir and train_wrapper.task_type == 'master' and train_wrapper.saves_training():
         serve.export_saved_model(checkpoint_dir, env.model_dir)
 
     if train_wrapper.task_type != 'master':
+        _logger.info('task_type is {}, waiting for master to exit'.format(train_wrapper.task_type))
         _wait_until_master_is_down(_get_master(tf_config))
