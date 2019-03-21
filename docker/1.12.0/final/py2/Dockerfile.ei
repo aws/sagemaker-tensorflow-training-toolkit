@@ -9,7 +9,7 @@ ARG tensorflow_model_server
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    python \
+    python-dev \
     curl \
     nginx \
  && rm -rf /var/lib/apt/lists/*

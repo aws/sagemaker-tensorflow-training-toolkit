@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libcudnn7=${CUDNN_VERSION} \
         libnccl2=${NCCL_VERSION} \
         libgomp1 \
-        python \
+        python-dev \
         curl \
         nginx \
         && \
