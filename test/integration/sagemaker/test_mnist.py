@@ -15,6 +15,7 @@ from __future__ import absolute_import
 import os
 
 import boto3
+import pytest
 from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
@@ -80,6 +81,8 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
+# TODO: Enable this test when new binary fixing the s3 plugin released
+@pytest.mark.skip(reason='Skip the test until new binary released')
 def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
