@@ -31,7 +31,7 @@ TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV = 'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT'
 
 DEFAULT_GRPC_REQUEST_TIMEOUT_FOR_INFERENCE_ACCELERATOR = 30.0
 
-REGRESSION = 'tensorflow/serving/regression'
+REGRESSION = 'tensorflow/serving/regress'
 CLASSIFY = 'tensorflow/serving/classify'
 INFERENCE = 'tensorflow/serving/inference'
 PREDICT = 'tensorflow/serving/predict'
