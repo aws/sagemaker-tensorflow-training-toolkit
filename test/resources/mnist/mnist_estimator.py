@@ -8,11 +8,7 @@ import numpy as np
 import tensorflow as tf
 import os
 import argparse
-from tensorflow.python.platform import tf_logging
-import logging as _logging
-import sys as _sys
 import json
-
 
 def cnn_model_fn(features, labels, mode):
   """Model function for CNN."""
@@ -116,51 +112,53 @@ def _load_testing_data(base_dir):
     return x_test, y_test
 
 def _parse_args():
-
     parser = argparse.ArgumentParser()
-
-    # hyperparameters sent by the client are passed as command-line arguments to the script.
-    parser.add_argument('--epochs', type=int, default=1)
-    # Data, model, and output directories
-    parser.add_argument('--output-data-dir', type=str, default=os.environ['SM_OUTPUT_DATA_DIR'])
-    parser.add_argument('--model_dir', type=str, default=os.environ['SM_MODEL_DIR'])
     parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
-
+    parser.add_argument('--model_dir', type=str)
+    parser.add_argument('--max-steps', type=int, default=1000)
+    parser.add_argument('--save-checkpoint-steps', type=int, default=1000)
+    parser.add_argument('--throttle-secs', type=int, default=60)
+    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
+    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
+    parser.add_argument('--batch-size', type=int, default=100)
+    parser.add_argument('--export-model-during-training', type=bool, default=False)
     return parser.parse_known_args()
 
+def serving_input_fn():
+    inputs = {'x': tf.placeholder(tf.float32, [None, 784])}
+    return tf.estimator.export.ServingInputReceiver(inputs, inputs)
 
 if __name__ == "__main__":
     args, unknown = _parse_args()
-    tf.logging.set_verbosity(tf.logging.DEBUG)
-    _handler = _logging.StreamHandler(_sys.stdout)
-    tf_logger = tf_logging._get_logger()
-    tf_logger.handlers = [_handler]
+    for arg in vars(args):
+        print(arg, getattr(args, arg))
 
+    tf.logging.set_verbosity(tf.logging.DEBUG)
     train_data, train_labels = _load_training_data(args.train)
     eval_data, eval_labels = _load_testing_data(args.train)
 
-    # Create the Estimator
-    if json.loads(os.environ['SM_TRAINING_ENV'])['additional_framework_parameters'].get('sagemaker_parameter_server_enabled'):
-        model_dir = args.model_dir
-    else:
-        model_dir = os.environ['SM_MODEL_DIR']
+    # Saving a checkpoint after every step
+    run_config = tf.estimator.RunConfig(save_checkpoints_steps=args.save_checkpoint_steps)
     mnist_classifier = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir=model_dir)
+        model_fn=cnn_model_fn, model_dir=args.model_dir, config=run_config)
 
     # Set up logging for predictions
     # Log the values in the "Softmax" tensor with label "probabilities"
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log, every_n_iter=50)
+        tensors=tensors_to_log, every_n_iter=50
+    )
 
     # Train the model
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": train_data},
         y=train_labels,
-        batch_size=100,
+        batch_size=args.batch_size,
         num_epochs=None,
         shuffle=True)
 
+    exporter = tf.estimator.LatestExporter('Servo', serving_input_receiver_fn=serving_input_fn) \
+        if args.export_model_during_training else None
     # Evaluate the model and print results
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": eval_data},
@@ -168,8 +166,9 @@ if __name__ == "__main__":
         num_epochs=1,
         shuffle=False)
 
-    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=1000)
-    eval_spec = tf.estimator.EvalSpec(eval_input_fn)
+    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=args.max_steps)
+    eval_spec = tf.estimator.EvalSpec(eval_input_fn, throttle_secs=args.throttle_secs, exporters=exporter)
     tf.estimator.train_and_evaluate(mnist_classifier, train_spec, eval_spec)
 
-    tf_logger.info('====== Training finished =========')
+    if args.current_host == args.hosts[0]:
+        mnist_classifier.export_savedmodel('/opt/ml/model', serving_input_fn)

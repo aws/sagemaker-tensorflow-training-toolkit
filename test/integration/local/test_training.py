@@ -39,13 +39,14 @@ def test_py_versions(docker_image, processor, py_full_version):
 
 
 @pytest.mark.skip_gpu
-def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir):
+def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir, framework_version):
     output_path = 'file://{}'.format(tmpdir)
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist.py'),
                     instance_type='local',
                     instance_count=1,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
+                    framework_version=framework_version,
                     output_path=output_path,
                     training_data_path='file://{}'.format(
                         os.path.join(RESOURCE_PATH, 'mnist', 'data')))
@@ -53,24 +54,29 @@ def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir):
 
 
 @pytest.mark.skip_cpu
-def test_gpu(sagemaker_local_session, docker_image):
+def test_gpu(sagemaker_local_session, docker_image, framework_version):
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'gpu_device_placement.py'),
                     instance_type='local_gpu',
                     instance_count=1,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
+                    framework_version=framework_version,
                     training_data_path='file://{}'.format(
                         os.path.join(RESOURCE_PATH, 'mnist', 'data')))
 
 
 @pytest.mark.skip_gpu
-def test_distributed_training_cpu_no_ps(sagemaker_local_session, docker_image, tmpdir):
+def test_distributed_training_cpu_no_ps(sagemaker_local_session,
+                                        docker_image,
+                                        tmpdir,
+                                        framework_version):
     output_path = 'file://{}'.format(tmpdir)
-    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'distributed_mnist.py'),
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist_estimator.py'),
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
+                    framework_version=framework_version,
                     output_path=output_path,
                     training_data_path='file://{}'.format(
                         os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
@@ -78,13 +84,17 @@ def test_distributed_training_cpu_no_ps(sagemaker_local_session, docker_image, t
 
 
 @pytest.mark.skip_gpu
-def test_distributed_training_cpu_ps(sagemaker_local_session, docker_image, tmpdir):
+def test_distributed_training_cpu_ps(sagemaker_local_session,
+                                     docker_image,
+                                     tmpdir,
+                                     framework_version):
     output_path = 'file://{}'.format(tmpdir)
-    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'distributed_mnist.py'),
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist_estimator.py'),
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
                     docker_image=docker_image,
+                    framework_version=framework_version,
                     output_path=output_path,
                     hyperparameters={'sagemaker_parameter_server_enabled': True},
                     training_data_path='file://{}'.format(
@@ -96,7 +106,10 @@ def run_tf_training(script,
                     instance_type,
                     instance_count,
                     sagemaker_local_session,
-                    docker_image, training_data_path, output_path=None,
+                    docker_image,
+                    framework_version,
+                    training_data_path,
+                    output_path=None,
                     hyperparameters=None):
 
     hyperparameters = hyperparameters or {}
@@ -111,7 +124,7 @@ def run_tf_training(script,
                            output_path=output_path,
                            hyperparameters=hyperparameters,
                            base_job_name='test-tf',
-                           framework_version='1.11.0',
+                           framework_version=framework_version,
                            py_version='py3')
 
     estimator.fit(training_data_path)

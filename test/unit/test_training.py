@@ -41,6 +41,7 @@ PS_TASK_1 = {'index': 0, 'type': 'ps'}
 PS_TASK_2 = {'index': 1, 'type': 'ps'}
 MODEL_DIR = 's3://bucket/prefix'
 REGION = 'us-west-2'
+RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', 'resources')
 
 
 @pytest.fixture
@@ -200,18 +201,54 @@ def test_build_tf_config_error():
     assert 'Cannot have a ps task if there are no parameter servers in the cluster' in str(error)
 
 
+@patch('sagemaker_tensorflow_container.training.logger')
+def test_log_model_missing_warning_no_model(logger):
+    path = os.path.join(RESOURCE_PATH, 'test_dir_empty')
+    if not os.path.exists(path):
+        os.mkdir(path)
+    training._log_model_missing_warning(path)
+    logger.warn.assert_called_with('No model artifact is saved under path {}.'
+                                   ' Your training job will not save any model files to S3.\n'
+                                   'For details of how to construct your training script see:\n'
+                                   'https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/tensorflow#adapting-your-local-tensorflow-script' # noqa
+                                   .format(path))
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
+def test_log_model_missing_warning_wrong_format(logger):
+    training._log_model_missing_warning(os.path.join(RESOURCE_PATH, 'test_dir_wrong_model'))
+    logger.warn.assert_called_with('Your model will NOT be servable with SageMaker TensorFlow Serving container.'
+                                   'The model artifact was not saved in the TensorFlow '
+                                   'SavedModel directory structure:\n'
+                                   'https://www.tensorflow.org/guide/saved_model#structure_of_a_savedmodel_directory')
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
+def test_log_model_missing_warning_wrong_parent_dir(logger):
+    training._log_model_missing_warning(os.path.join(RESOURCE_PATH, 'test_dir_wrong_parent_dir'))
+    logger.warn.assert_called_with('Your model will NOT be servable with SageMaker TensorFlow Serving containers.'
+                                   'The SavedModel bundle is under directory \"{}\", not a numeric name.'
+                                   .format('not-digit'))
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
+def test_log_model_missing_warning_correct(logger):
+    training._log_model_missing_warning(os.path.join(RESOURCE_PATH, 'test_dir_correct_model'))
+    logger.warn.assert_not_called()
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
 @patch('sagemaker_tensorflow_container.training.train')
 @patch('logging.Logger.setLevel')
 @patch('sagemaker_containers.beta.framework.training_env')
 @patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={})
 @patch('sagemaker_tensorflow_container.s3_utils.configure')
 def test_main(configure_s3_env, read_hyperparameters, training_env,
-              set_level, train, single_machine_training_env):
+              set_level, train, logger, single_machine_training_env):
     training_env.return_value = single_machine_training_env
     os.environ['SAGEMAKER_REGION'] = REGION
     training.main()
     read_hyperparameters.assert_called_once_with()
     training_env.assert_called_once_with(hyperparameters={})
-    set_level.assert_called_once_with(LOG_LEVEL)
     train.assert_called_once_with(single_machine_training_env)
     configure_s3_env.assert_called_once()

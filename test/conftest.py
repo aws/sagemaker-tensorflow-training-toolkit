@@ -18,6 +18,7 @@ import os
 import boto3
 import pytest
 from sagemaker import LocalSession, Session
+from sagemaker.tensorflow import TensorFlow
 
 logger = logging.getLogger(__name__)
 logging.getLogger('boto').setLevel(logging.INFO)
@@ -33,7 +34,7 @@ def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default='preprod-tensorflow')
     parser.addoption('--tag', default=None)
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--framework-version', default='1.11.0')
+    parser.addoption('--framework-version', default=TensorFlow.LATEST_VERSION)
     parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
     parser.addoption('--py-version', default='3', choices=['2', '3'])
     parser.addoption('--account-id', default='142577830533')
@@ -89,8 +90,9 @@ def account_id(request):
 
 @pytest.fixture(scope='session')
 def instance_type(request, processor):
-    return request.config.getoption('--instance-type') or \
-        'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
+    provided_instance_type = request.config.getoption('--instance-type')
+    default_instance_type = 'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
+    return provided_instance_type if provided_instance_type is not None else default_instance_type
 
 
 @pytest.fixture(autouse=True)

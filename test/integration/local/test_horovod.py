@@ -32,7 +32,8 @@ def test_distributed_training_horovod_basic(instances,
                                             processes,
                                             sagemaker_local_session,
                                             docker_image,
-                                            tmpdir):
+                                            tmpdir,
+                                            framework_version):
     output_path = 'file://%s' % tmpdir
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, 'hvdbasic', 'train_hvd_basic.py'),
@@ -42,6 +43,7 @@ def test_distributed_training_horovod_basic(instances,
         train_instance_count=instances,
         image_name=docker_image,
         output_path=output_path,
+        framework_version=framework_version,
         hyperparameters={'sagemaker_mpi_enabled': True,
                          'sagemaker_network_interface_name': 'eth0',
                          'sagemaker_mpi_num_of_processes_per_host': processes})

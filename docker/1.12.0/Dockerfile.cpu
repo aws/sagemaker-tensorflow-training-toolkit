@@ -62,7 +62,7 @@ RUN if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.6; else PYTHON_VERSION
         ln -s -f /usr/bin/$PYTHON_VERSION /usr/bin/python && \
     rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py --disable-pip-version-check --no-cache-dir "pip==18.1" && \
@@ -76,14 +76,13 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
         keras==2.2.4 \
-        sagemaker-containers==2.4.2 \
-        $framework_support_installable \
         "sagemaker-tensorflow>=1.12,<1.13" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
     pip install --force-reinstall --no-cache-dir -U \
         tensorflow-1.12.0-py2.py3-none-any.whl \
         horovod && \
+    pip install --no-cache-dir -U $framework_support_installable && \
     rm -f tensorflow-1.12.0-py2.py3-none-any.whl && \
     rm -f $framework_support_installable && \
     pip uninstall -y --no-cache-dir \

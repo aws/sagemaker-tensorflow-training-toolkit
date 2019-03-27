@@ -2,6 +2,7 @@ import tensorflow as tf
 import argparse
 import os
 import numpy as np
+import json
 
 
 def _parse_args():
@@ -11,10 +12,11 @@ def _parse_args():
     # hyperparameters sent by the client are passed as command-line arguments to the script.
     parser.add_argument('--epochs', type=int, default=1)
     # Data, model, and output directories
-    parser.add_argument('--output-data-dir', type=str, default=os.environ['SM_OUTPUT_DATA_DIR'])
     parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
     parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
-    
+    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
+    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
+
     return parser.parse_known_args()
 
 
@@ -46,4 +48,5 @@ x_train, y_train = _load_training_data(args.train)
 x_test, y_test = _load_testing_data(args.train)
 model.fit(x_train, y_train, epochs=args.epochs)
 model.evaluate(x_test, y_test)
-model.save(os.path.join(args.model_dir, 'my_model.h5'))
+if args.current_host == args.hosts[0]:
+    model.save(os.path.join('/opt/ml/model', 'my_model.h5'))

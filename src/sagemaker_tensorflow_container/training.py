@@ -28,6 +28,7 @@ from sagemaker_tensorflow_container import s3_utils
 logger = logging.getLogger(__name__)
 
 SAGEMAKER_PARAMETER_SERVER_ENABLED = 'sagemaker_parameter_server_enabled'
+MODEL_DIR = '/opt/ml/model'
 
 
 def _is_host_master(hosts, current_host):
@@ -159,6 +160,33 @@ def train(env):
                                   runner=runner_type)
 
 
+def _log_model_missing_warning(model_dir):
+    pb_file_exists = False
+    file_exists = False
+    for dirpath, dirnames, filenames in os.walk(model_dir):
+        if filenames:
+            file_exists = True
+        for f in filenames:
+            if 'saved_model.pb' in f or 'saved_model.pbtxt' in f:
+                pb_file_exists = True
+                path, direct_parent_dir = os.path.split(dirpath)
+                if not str.isdigit(direct_parent_dir):
+                    logger.warn('Your model will NOT be servable with SageMaker TensorFlow Serving containers.'
+                                'The SavedModel bundle is under directory \"{}\", not a numeric name.'
+                                .format(direct_parent_dir))
+
+    if not file_exists:
+        logger.warn('No model artifact is saved under path {}.'
+                    ' Your training job will not save any model files to S3.\n'
+                    'For details of how to construct your training script see:\n'
+                    'https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/tensorflow#adapting-your-local-tensorflow-script' # noqa
+                    .format(model_dir))
+    elif not pb_file_exists:
+        logger.warn('Your model will NOT be servable with SageMaker TensorFlow Serving container.'
+                    'The model artifact was not saved in the TensorFlow SavedModel directory structure:\n'
+                    'https://www.tensorflow.org/guide/saved_model#structure_of_a_savedmodel_directory')
+
+
 def main():
     """Training entry point
     """
@@ -167,3 +195,4 @@ def main():
     s3_utils.configure(env.hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
     logger.setLevel(env.log_level)
     train(env)
+    _log_model_missing_warning(MODEL_DIR)
