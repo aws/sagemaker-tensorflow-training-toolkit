@@ -81,23 +81,21 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-# TODO: Enable this test when new binary fixing the s3 plugin released
-@pytest.mark.skip(reason='Skip the test until new binary released')
 def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
                            hyperparameters={
-                               # Saving a checkpoint after every step to hammer the S3 plugin
-                               'save-checkpoint-steps': 1,
+                               # Saving a checkpoint after every 5 steps to hammer the S3 plugin
+                               'save-checkpoint-steps': 10,
                                # Disable throttling for checkpoint and model saving
                                'throttle-secs': 0,
                                # Without the patch training jobs would fail around 100th to
                                # 150th step
                                'max-steps': 200,
                                # Large batch size would result in a larger checkpoint file
-                               'batch-size': 2048,
+                               'batch-size': 1024,
                                # This makes the training job exporting model during training.
                                # Stale model garbage collection will also be performed.
                                'export-model-during-training': True
