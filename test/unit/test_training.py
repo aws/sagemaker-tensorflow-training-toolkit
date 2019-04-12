@@ -254,6 +254,7 @@ def test_main(configure_s3_env, read_hyperparameters, training_env,
     train.assert_called_once_with(single_machine_training_env)
     configure_s3_env.assert_called_once()
 
+
 @patch('sagemaker_tensorflow_container.training.logger')
 @patch('sagemaker_tensorflow_container.training.train')
 @patch('logging.Logger.setLevel')
@@ -280,4 +281,5 @@ def test_main_tunning_model_dir(configure_s3_env, read_hyperparameters, training
     training_env.return_value = single_machine_training_env
     os.environ['SAGEMAKER_REGION'] = REGION
     training.main()
-    configure_s3_env.assert_called_once_with(single_machine_training_env.job_name, REGION)
+    expected_model_dir = '{}-{}'.format(MODEL_DIR, single_machine_training_env.job_name)
+    configure_s3_env.assert_called_once_with(expected_model_dir, REGION)

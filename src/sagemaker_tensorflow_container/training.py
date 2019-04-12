@@ -193,8 +193,10 @@ def main():
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
 
+    # If the training job is part of the multiple training jobs for tuning, we need to append the training job name to
+    # model_dir in case they read from/write to the same object
     if '_tuning_objective_metric' in hyperparameters:
-        env.hyperparameters['model_dir'] = env.job_name
+        env.hyperparameters['model_dir'] = '{}-{}'.format(hyperparameters.get('model_dir'), env.job_name)
 
     s3_utils.configure(env.hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
     logger.setLevel(env.log_level)
