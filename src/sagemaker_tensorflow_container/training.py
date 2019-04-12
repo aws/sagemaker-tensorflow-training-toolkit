@@ -24,7 +24,6 @@ import sagemaker_containers.beta.framework as framework
 import tensorflow as tf
 
 from sagemaker_tensorflow_container import s3_utils
-from sagemaker.utils import sagemaker_timestamp
 
 logger = logging.getLogger(__name__)
 
