@@ -281,5 +281,5 @@ def test_main_tunning_model_dir(configure_s3_env, read_hyperparameters, training
     training_env.return_value = single_machine_training_env
     os.environ['SAGEMAKER_REGION'] = REGION
     training.main()
-    expected_model_dir = '{}/{}/checkpoints'.format(MODEL_DIR, single_machine_training_env.job_name)
+    expected_model_dir = os.path.join(MODEL_DIR, single_machine_training_env.job_name, 'checkpoints')
     configure_s3_env.assert_called_once_with(expected_model_dir, REGION)
