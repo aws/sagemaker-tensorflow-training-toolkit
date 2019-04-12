@@ -70,6 +70,7 @@ def simple_training_env():
     env.hosts = CURRENT_HOST
     env.current_host = CURRENT_HOST
     env.to_env_vars = lambda: {}
+    env.job_name = 'test-training-job'
     return env
 
 
@@ -252,3 +253,31 @@ def test_main(configure_s3_env, read_hyperparameters, training_env,
     training_env.assert_called_once_with(hyperparameters={})
     train.assert_called_once_with(single_machine_training_env)
     configure_s3_env.assert_called_once()
+
+@patch('sagemaker_tensorflow_container.training.logger')
+@patch('sagemaker_tensorflow_container.training.train')
+@patch('logging.Logger.setLevel')
+@patch('sagemaker_containers.beta.framework.training_env')
+@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': MODEL_DIR})
+@patch('sagemaker_tensorflow_container.s3_utils.configure')
+def test_main_simple_training_model_dir(configure_s3_env, read_hyperparameters, training_env,
+                                        set_level, train, logger, single_machine_training_env):
+    training_env.return_value = single_machine_training_env
+    os.environ['SAGEMAKER_REGION'] = REGION
+    training.main()
+    configure_s3_env.assert_called_once_with(MODEL_DIR, REGION)
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
+@patch('sagemaker_tensorflow_container.training.train')
+@patch('logging.Logger.setLevel')
+@patch('sagemaker_containers.beta.framework.training_env')
+@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': MODEL_DIR,
+                                                                                     '_tuning_objective_metric': 'auc'})
+@patch('sagemaker_tensorflow_container.s3_utils.configure')
+def test_main_tunning_model_dir(configure_s3_env, read_hyperparameters, training_env,
+                                set_level, train, logger, single_machine_training_env):
+    training_env.return_value = single_machine_training_env
+    os.environ['SAGEMAKER_REGION'] = REGION
+    training.main()
+    configure_s3_env.assert_called_once_with(single_machine_training_env.job_name, REGION)

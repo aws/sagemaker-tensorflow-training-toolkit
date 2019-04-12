@@ -24,6 +24,7 @@ import sagemaker_containers.beta.framework as framework
 import tensorflow as tf
 
 from sagemaker_tensorflow_container import s3_utils
+from sagemaker.utils import sagemaker_timestamp
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +193,10 @@ def main():
     """
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
+
+    if '_tuning_objective_metric' in hyperparameters:
+        env.hyperparameters['model_dir'] = env.job_name
+
     s3_utils.configure(env.hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
     logger.setLevel(env.log_level)
     train(env)
