@@ -41,7 +41,7 @@ def create_model(export_dir):
         builder.save()
 
 
-def test_large_grpc_message(docker_image, opt_ml, processor):
+def test_large_grpc_message(docker_image, opt_ml, processor, region):
     resource_path = os.path.join(SCRIPT_PATH, '../resources/large_grpc_message')
     copy_resource(resource_path, opt_ml, 'code', 'code')
     export_dir = os.path.join(opt_ml, 'model', 'export', 'Servo', '1')
@@ -49,5 +49,6 @@ def test_large_grpc_message(docker_image, opt_ml, processor):
 
     with HostingContainer(opt_ml=opt_ml, image=docker_image,
                           script_name='inference.py',
-                          processor=processor) as c:
+                          processor=processor,
+                          region=region) as c:
         c.execute_pytest('test/integ/container_tests/large_grpc_message.py')
