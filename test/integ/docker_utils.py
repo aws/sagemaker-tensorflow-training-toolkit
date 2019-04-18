@@ -156,7 +156,7 @@ class Container(object):
 
 class HostingContainer(Container):
     def __init__(self, image, opt_ml, script_name, processor, requirements_file=None,
-                 startup_delay=5):
+                 startup_delay=5, region=None):
         super(HostingContainer, self).__init__(image=image,
                                                processor=processor,
                                                startup_delay=startup_delay)
@@ -164,6 +164,7 @@ class HostingContainer(Container):
         self.script_name = script_name
         self.opt_ml = opt_ml
         self.requirements_file = requirements_file
+        self.region = region
 
     def __enter__(self):
         cmd = [self.docker,
@@ -174,6 +175,7 @@ class HostingContainer(Container):
                '-e', 'AWS_ACCESS_KEY_ID',
                '-e', 'AWS_SECRET_ACCESS_KEY',
                '-e', 'AWS_SESSION_TOKEN',
+               '-e', 'SAGEMAKER_REGION={}'.format(self.region if self.region else ''),
                '-e', 'SAGEMAKER_CONTAINER_LOG_LEVEL=20',
                '-e', 'SAGEMAKER_PROGRAM={}'.format(self.script_name),
                '-e', 'SAGEMAKER_REQUIREMENTS={}'.format(self.requirements_file),

@@ -14,7 +14,7 @@ import os
 
 import numpy as np
 from google.protobuf import json_format
-from grpc.beta import implementations
+import grpc
 from tensorflow import make_tensor_proto
 from tensorflow.core.example import example_pb2, feature_pb2
 from tensorflow.core.framework import tensor_pb2
@@ -22,13 +22,14 @@ from tensorflow.python.saved_model.signature_constants import DEFAULT_SERVING_SI
     PREDICT_INPUTS
 from tensorflow_serving.apis import get_model_metadata_pb2
 from tensorflow_serving.apis import predict_pb2, classification_pb2, inference_pb2, regression_pb2
-from tensorflow_serving.apis import prediction_service_pb2
+from tensorflow_serving.apis import prediction_service_pb2_grpc
 
 from tf_container.run import logger as _logger
 
 INFERENCE_ACCELERATOR_PRESENT_ENV = 'SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT'
 TF_SERVING_GRPC_REQUEST_TIMEOUT_ENV = 'SAGEMAKER_TFS_GRPC_REQUEST_TIMEOUT'
 
+MAX_GRPC_MESSAGE_SIZE = 1024 ** 3 * 2 - 1  # 2GB - 1
 DEFAULT_GRPC_REQUEST_TIMEOUT_FOR_INFERENCE_ACCELERATOR = 30.0
 
 REGRESSION = 'tensorflow/serving/regress'
@@ -82,8 +83,12 @@ class GRPCProxyClient(object):
         return request_fn(data)
 
     def cache_prediction_metadata(self):
-        channel = implementations.insecure_channel(self.host, self.tf_serving_port)
-        stub = prediction_service_pb2.beta_create_PredictionService_stub(channel)
+        channel = grpc.insecure_channel(
+            '{}:{}'.format(self.host, self.tf_serving_port),
+            options=[
+              ('grpc.max_send_message_length', MAX_GRPC_MESSAGE_SIZE),
+              ('grpc.max_receive_message_length', MAX_GRPC_MESSAGE_SIZE)])
+        stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
         request = get_model_metadata_pb2.GetModelMetadataRequest()
 
         request.model_spec.name = self.model_name
