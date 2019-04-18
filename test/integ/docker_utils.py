@@ -164,6 +164,7 @@ class HostingContainer(Container):
         self.script_name = script_name
         self.opt_ml = opt_ml
         self.requirements_file = requirements_file
+        self.region = region
 
     def __enter__(self):
         cmd = [self.docker,
