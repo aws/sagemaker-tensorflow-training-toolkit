@@ -14,7 +14,6 @@ import os
 
 import tensorflow as tf
 
-
 from test.integ.docker_utils import HostingContainer
 from test.integ.utils import copy_resource
 from test.integ.conftest import SCRIPT_PATH
