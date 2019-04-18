@@ -17,9 +17,9 @@ import os
 import pytest
 from google import protobuf
 from mock import MagicMock, patch, ANY
-from tensorflow_serving.apis import prediction_service_pb2, get_model_metadata_pb2
+from tensorflow_serving.apis import prediction_service_pb2_grpc, get_model_metadata_pb2
 
-from tf_container.proxy_client import GRPCProxyClient
+from tf_container.proxy_client import GRPCProxyClient, MAX_GRPC_MESSAGE_SIZE
 
 REGRESSION = 'tensorflow/serving/regress'
 INFERENCE = 'tensorflow/serving/inference'
@@ -360,14 +360,16 @@ def test_classification_protobuf(proxy_client):
 
 @patch('tensorflow_serving.apis.get_model_metadata_pb2.SignatureDefMap')
 @patch('tensorflow_serving.apis.get_model_metadata_pb2.GetModelMetadataRequest')
-@patch('tensorflow_serving.apis.prediction_service_pb2.beta_create_PredictionService_stub')
-@patch('grpc.beta.implementations.insecure_channel')
+@patch('tensorflow_serving.apis.prediction_service_pb2_grpc.PredictionServiceStub')
+@patch('grpc.insecure_channel')
 def test_cache_prediction_metadata(channel, stub, request, signature_def_map, proxy_client):
     proxy_client.cache_prediction_metadata()
 
-    channel.assert_called_once_with('localhost', DEFAULT_PORT)
+    channel.assert_called_once_with('localhost:{}'.format(DEFAULT_PORT), options=[
+              ('grpc.max_send_message_length', MAX_GRPC_MESSAGE_SIZE),
+              ('grpc.max_receive_message_length', MAX_GRPC_MESSAGE_SIZE)])
 
-    stub = prediction_service_pb2.beta_create_PredictionService_stub
+    stub = prediction_service_pb2_grpc.PredictionServiceStub
     stub.assert_called_once_with(channel())
 
     request = get_model_metadata_pb2.GetModelMetadataRequest
