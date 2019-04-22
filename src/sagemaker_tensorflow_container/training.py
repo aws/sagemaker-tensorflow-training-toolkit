@@ -105,11 +105,11 @@ def _run_ps(env, cluster):
     threading.Thread(target=lambda: server.join()).start()
 
 
-def _run_worker(env, model_dir, tf_config):
+def _run_worker(env, cmd_args, tf_config):
     env_vars = env.to_env_vars()
     env_vars['TF_CONFIG'] = json.dumps(tf_config)
 
-    framework.entry_point.run(env.module_dir, env.user_entry_point, _cmd_args(env, model_dir), env_vars)
+    framework.entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env_vars)
 
 
 def _wait_until_master_is_down(master):
@@ -124,13 +124,7 @@ def _wait_until_master_is_down(master):
             return
 
 
-def _cmd_args(env, model_dir):
-    hyperparameters = env.hyperparameters
-    hyperparameters['model_dir'] = model_dir
-    return framework.mapping.to_cmd_args(hyperparameters)
-
-
-def train(env, model_dir):
+def train(env, cmd_args):
     """Get training job environment from env and run the training job.
 
     Args:
@@ -146,7 +140,7 @@ def train(env, model_dir):
         logger.info('Launching parameter server process')
         _run_ps(env, tf_config['cluster'])
         logger.info('Launching worker process')
-        _run_worker(env, model_dir, tf_config)
+        _run_worker(env, cmd_args, tf_config)
 
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])
@@ -160,8 +154,7 @@ def train(env, model_dir):
         else:
             runner_type = framework.runner.ProcessRunnerType
 
-        framework.entry_point.run(env.module_dir, env.user_entry_point,
-                                  _cmd_args(env, model_dir), env.to_env_vars(),
+        framework.entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env.to_env_vars(),
                                   runner=runner_type)
 
 
@@ -205,14 +198,15 @@ def main():
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
 
+    user_hyperparameters = env.hyperparameters
+
     # If the training job is part of the multiple training jobs for tuning, we need to append the training job name to
     # model_dir in case they read from/write to the same object
     if '_tuning_objective_metric' in hyperparameters:
         model_dir = _model_dir_with_training_job(hyperparameters.get('model_dir'), env.job_name)
         logger.info('Appending the training job name to model_dir: {}'.format(model_dir))
-    else:
-        model_dir = hyperparameters.get('model_dir')
+        user_hyperparameters['model_dir'] = model_dir
 
-    s3_utils.configure(model_dir, os.environ.get('SAGEMAKER_REGION'))
-    train(env, model_dir)
+    s3_utils.configure(user_hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
+    train(env, framework.mapping.to_cmd_args(user_hyperparameters))
     _log_model_missing_warning(MODEL_DIR)
