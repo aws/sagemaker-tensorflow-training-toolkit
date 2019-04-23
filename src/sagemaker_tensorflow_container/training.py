@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -10,7 +10,6 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-
 from __future__ import absolute_import
 
 import json
@@ -106,11 +105,11 @@ def _run_ps(env, cluster):
     threading.Thread(target=lambda: server.join()).start()
 
 
-def _run_worker(env, tf_config):
+def _run_worker(env, cmd_args, tf_config):
     env_vars = env.to_env_vars()
     env_vars['TF_CONFIG'] = json.dumps(tf_config)
 
-    framework.entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env_vars)
+    framework.entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env_vars)
 
 
 def _wait_until_master_is_down(master):
@@ -125,7 +124,7 @@ def _wait_until_master_is_down(master):
             return
 
 
-def train(env):
+def train(env, cmd_args):
     """Get training job environment from env and run the training job.
 
     Args:
@@ -141,7 +140,7 @@ def train(env):
         logger.info('Launching parameter server process')
         _run_ps(env, tf_config['cluster'])
         logger.info('Launching worker process')
-        _run_worker(env, tf_config)
+        _run_worker(env, cmd_args, tf_config)
 
         if not _is_host_master(env.hosts, env.current_host):
             _wait_until_master_is_down(env.hosts[0])
@@ -155,8 +154,7 @@ def train(env):
         else:
             runner_type = framework.runner.ProcessRunnerType
 
-        framework.entry_point.run(env.module_dir, env.user_entry_point,
-                                  env.to_cmd_args(), env.to_env_vars(),
+        framework.entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env.to_env_vars(),
                                   runner=runner_type)
 
 
@@ -187,12 +185,28 @@ def _log_model_missing_warning(model_dir):
                     'https://www.tensorflow.org/guide/saved_model#structure_of_a_savedmodel_directory')
 
 
+def _model_dir_with_training_job(model_dir, job_name):
+    if model_dir.startswith('/opt/ml'):
+        return model_dir
+    else:
+        return '{}/{}/model'.format(model_dir, job_name)
+
+
 def main():
     """Training entry point
     """
     hyperparameters = framework.env.read_hyperparameters()
     env = framework.training_env(hyperparameters=hyperparameters)
-    s3_utils.configure(env.hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
-    logger.setLevel(env.log_level)
-    train(env)
+
+    user_hyperparameters = env.hyperparameters
+
+    # If the training job is part of the multiple training jobs for tuning, we need to append the training job name to
+    # model_dir in case they read from/write to the same object
+    if '_tuning_objective_metric' in hyperparameters:
+        model_dir = _model_dir_with_training_job(hyperparameters.get('model_dir'), env.job_name)
+        logger.info('Appending the training job name to model_dir: {}'.format(model_dir))
+        user_hyperparameters['model_dir'] = model_dir
+
+    s3_utils.configure(user_hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
+    train(env, framework.mapping.to_cmd_args(user_hyperparameters))
     _log_model_missing_warning(MODEL_DIR)

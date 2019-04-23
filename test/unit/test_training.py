@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -40,6 +40,7 @@ WORKER_TASK = {'index': 0, 'type': 'worker'}
 PS_TASK_1 = {'index': 0, 'type': 'ps'}
 PS_TASK_2 = {'index': 1, 'type': 'ps'}
 MODEL_DIR = 's3://bucket/prefix'
+MODEL_DIR_CMD_LIST = ['--model_dir', MODEL_DIR]
 REGION = 'us-west-2'
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', 'resources')
 
@@ -70,6 +71,7 @@ def simple_training_env():
     env.hosts = CURRENT_HOST
     env.current_host = CURRENT_HOST
     env.to_env_vars = lambda: {}
+    env.job_name = 'test-training-job'
     return env
 
 
@@ -81,9 +83,8 @@ def test_is_host_master():
 
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 def test_single_machine(run_module, single_machine_training_env):
-    training.train(single_machine_training_env)
-    run_module.assert_called_with(MODULE_DIR, MODULE_NAME,
-                                  single_machine_training_env.to_cmd_args(),
+    training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
+    run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
                                   single_machine_training_env.to_env_vars(),
                                   runner=runner.ProcessRunnerType)
 
@@ -92,9 +93,8 @@ def test_single_machine(run_module, single_machine_training_env):
 def test_train_horovod(run_module, single_machine_training_env):
     single_machine_training_env.additional_framework_parameters['sagemaker_mpi_enabled'] = True
 
-    training.train(single_machine_training_env)
-    run_module.assert_called_with(MODULE_DIR, MODULE_NAME,
-                                  single_machine_training_env.to_cmd_args(),
+    training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
+    run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
                                   single_machine_training_env.to_env_vars(),
                                   runner=runner.MPIRunnerType)
 
@@ -107,7 +107,7 @@ def test_train_horovod(run_module, single_machine_training_env):
 @patch('threading.Thread', lambda target: target())
 @patch('time.sleep', MagicMock())
 def test_train_distributed_master(run, tf_server, cluster_spec, distributed_training_env):
-    training.train(distributed_training_env)
+    training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
     cluster_spec.assert_called_with({'worker': ['host2:2222'],
                                      'master': ['host1:2222'],
@@ -125,8 +125,7 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                 '"environment": "cloud", ' \
                 '"task": {"index": 0, "type": "master"}}'
 
-    run.assert_called_with('s3://my/bucket', 'script_name',
-                           distributed_training_env.to_cmd_args(),
+    run.assert_called_with('s3://my/bucket', 'script_name', MODEL_DIR_CMD_LIST,
                            {'TF_CONFIG': tf_config})
 
 
@@ -139,7 +138,7 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
 def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_training_env):
     distributed_training_env.current_host = HOST2
 
-    training.train(distributed_training_env)
+    training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
     cluster_spec.assert_called_with({'worker': ['host2:2222'],
                                      'master': ['host1:2222'],
@@ -157,8 +156,7 @@ def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_trai
                 '"environment": "cloud", ' \
                 '"task": {"index": 0, "type": "worker"}}'
 
-    run.assert_called_with('s3://my/bucket', 'script_name',
-                           distributed_training_env.to_cmd_args(),
+    run.assert_called_with('s3://my/bucket', 'script_name', MODEL_DIR_CMD_LIST,
                            {'TF_CONFIG': tf_config})
 
 
@@ -167,9 +165,9 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     distributed_training_env.additional_framework_parameters[
         training.SAGEMAKER_PARAMETER_SERVER_ENABLED] = False
     distributed_training_env.current_host = HOST2
-    training.train(distributed_training_env)
+    training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
-    run.assert_called_with(MODULE_DIR, MODULE_NAME, distributed_training_env.to_cmd_args(),
+    run.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
                            distributed_training_env.to_env_vars(), runner=runner.ProcessRunnerType)
 
 
@@ -250,5 +248,50 @@ def test_main(configure_s3_env, read_hyperparameters, training_env,
     training.main()
     read_hyperparameters.assert_called_once_with()
     training_env.assert_called_once_with(hyperparameters={})
-    train.assert_called_once_with(single_machine_training_env)
+    train.assert_called_once_with(single_machine_training_env, MODEL_DIR_CMD_LIST)
     configure_s3_env.assert_called_once()
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
+@patch('sagemaker_tensorflow_container.training.train')
+@patch('logging.Logger.setLevel')
+@patch('sagemaker_containers.beta.framework.training_env')
+@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': MODEL_DIR})
+@patch('sagemaker_tensorflow_container.s3_utils.configure')
+def test_main_simple_training_model_dir(configure_s3_env, read_hyperparameters, training_env,
+                                        set_level, train, logger, single_machine_training_env):
+    training_env.return_value = single_machine_training_env
+    os.environ['SAGEMAKER_REGION'] = REGION
+    training.main()
+    configure_s3_env.assert_called_once_with(MODEL_DIR, REGION)
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
+@patch('sagemaker_tensorflow_container.training.train')
+@patch('logging.Logger.setLevel')
+@patch('sagemaker_containers.beta.framework.training_env')
+@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': MODEL_DIR,
+                                                                                     '_tuning_objective_metric': 'auc'})
+@patch('sagemaker_tensorflow_container.s3_utils.configure')
+def test_main_tuning_model_dir(configure_s3_env, read_hyperparameters, training_env,
+                               set_level, train, logger, single_machine_training_env):
+    training_env.return_value = single_machine_training_env
+    os.environ['SAGEMAKER_REGION'] = REGION
+    training.main()
+    expected_model_dir = '{}/{}/model'.format(MODEL_DIR, single_machine_training_env.job_name)
+    configure_s3_env.assert_called_once_with(expected_model_dir, REGION)
+
+
+@patch('sagemaker_tensorflow_container.training.logger')
+@patch('sagemaker_tensorflow_container.training.train')
+@patch('logging.Logger.setLevel')
+@patch('sagemaker_containers.beta.framework.training_env')
+@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': '/opt/ml/model',
+                                                                                     '_tuning_objective_metric': 'auc'})
+@patch('sagemaker_tensorflow_container.s3_utils.configure')
+def test_main_tuning_mpi_model_dir(configure_s3_env, read_hyperparameters, training_env,
+                                   set_level, train, logger, single_machine_training_env):
+    training_env.return_value = single_machine_training_env
+    os.environ['SAGEMAKER_REGION'] = REGION
+    training.main()
+    configure_s3_env.assert_called_once_with('/opt/ml/model', REGION)
