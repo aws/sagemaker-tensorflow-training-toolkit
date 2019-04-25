@@ -34,7 +34,7 @@ def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance
     tuner = HyperparameterTuner(estimator=estimator,
                                 objective_metric_name='accuracy',
                                 hyperparameter_ranges={'arbitrary_value': IntegerParameter(0, 1)},
-                                metric_definitions=[{'Name': 'accuracy', 'Regex': 'accuracy=[01]'}],
+                                metric_definitions=[{'Name': 'accuracy', 'Regex': 'accuracy=([01])'}],
                                 max_jobs=1,
                                 max_parallel_jobs=1,
                                 base_tuning_job_name='test-tf-tuning-model-dir')

@@ -23,4 +23,4 @@ args = parser.parse_args()
 assert os.environ['TRAINING_JOB_NAME'] in args.model_dir, 'model_dir not unique to training job: %s' % args.model_dir
 
 # For the "hyperparameter tuning" to work
-print('acurracy=1')
+print('accuracy=1')
