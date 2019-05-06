@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import json
 import logging
+import multiprocessing
 import os
 import subprocess
-import multiprocessing
 import time
 
 import sagemaker_containers.beta.framework as framework
