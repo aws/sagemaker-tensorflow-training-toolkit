@@ -77,6 +77,7 @@ COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
         keras==2.2.4 \
+        mpi4py==3.0.1 \
         "sagemaker-tensorflow>=1.13,<1.14" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
