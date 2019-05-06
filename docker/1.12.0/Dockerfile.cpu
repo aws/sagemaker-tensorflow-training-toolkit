@@ -71,11 +71,12 @@ RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
 ARG framework_installable
 ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 
-COPY $framework_installable tensorflow-1.12.0-py2.py3-none-any.whl  
+COPY $framework_installable tensorflow-1.12.0-py2.py3-none-any.whl
 COPY $framework_support_installable .
 
 RUN pip install --no-cache-dir -U \
         keras==2.2.4 \
+        mpi4py==3.0.1 \
         "sagemaker-tensorflow>=1.12,<1.13" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
