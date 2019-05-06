@@ -295,4 +295,5 @@ def test_main_tuning_mpi_model_dir(configure_s3_env, read_hyperparameters, train
     training_env.return_value = single_machine_training_env
     os.environ['SAGEMAKER_REGION'] = REGION
     training.main()
+
     configure_s3_env.assert_called_once_with('/opt/ml/model', REGION)
