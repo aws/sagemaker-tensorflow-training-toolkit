@@ -46,7 +46,7 @@ def test_py_versions(sagemaker_local_session, docker_image, py_full_version, fra
         tar.extractall(path=str(tmpdir), members=[output_file])
 
     with open(os.path.join(str(tmpdir), 'py_version')) as f:
-        assert f.read().strip().startswith('Python {}'.format(py_full_version))
+        assert f.read().strip() == py_full_version
 
 
 @pytest.mark.skip_gpu
