@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -18,8 +18,6 @@ import tarfile
 import pytest
 from sagemaker.tensorflow import TensorFlow
 
-from test.integration.docker_utils import Container
-
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 TF_CHECKPOINT_FILES = ['graph.pbtxt', 'model.ckpt-0.index', 'model.ckpt-0.meta']
 
@@ -32,10 +30,23 @@ def py_full_version(py_version):
         return '3.6'
 
 
-def test_py_versions(docker_image, processor, py_full_version):
-    with Container(docker_image, processor) as c:
-        output = c.execute_command(['python', '--version'])
-        assert output.strip().startswith('Python {}'.format(py_full_version))
+def test_py_versions(sagemaker_local_session, docker_image, py_full_version, framework_version, tmpdir):
+    output_path = 'file://{}'.format(tmpdir)
+    run_tf_training(script=os.path.join(RESOURCE_PATH, 'test_py_version', 'entry.py'),
+                    instance_type='local',
+                    instance_count=1,
+                    sagemaker_local_session=sagemaker_local_session,
+                    docker_image=docker_image,
+                    framework_version=framework_version,
+                    output_path=output_path,
+                    training_data_path=None)
+
+    with tarfile.open(os.path.join(str(tmpdir), 'output.tar.gz')) as tar:
+        output_file = tar.getmember('py_version')
+        tar.extractall(path=str(tmpdir), members=[output_file])
+
+    with open(os.path.join(str(tmpdir), 'py_version')) as f:
+        assert f.read().strip().startswith('Python {}'.format(py_full_version))
 
 
 @pytest.mark.skip_gpu
