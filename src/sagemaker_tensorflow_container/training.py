@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import json
 import logging
+import multiprocessing
 import os
 import subprocess
-import threading
 import time
 
 import sagemaker_containers.beta.framework as framework
@@ -102,7 +102,7 @@ def _run_ps(env, cluster):
         cluster_spec, job_name='ps', task_index=task_index, config=no_gpu_config
     )
 
-    threading.Thread(target=lambda: server.join()).start()
+    multiprocessing.Process(target=lambda: server.join()).start()
 
 
 def _run_worker(env, cmd_args, tf_config):

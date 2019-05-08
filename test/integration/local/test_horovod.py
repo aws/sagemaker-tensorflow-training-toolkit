@@ -27,7 +27,7 @@ RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     [1, 2],
     (2, 1),
     (2, 2),
-    (5, 3)])
+    (5, 2)])
 def test_distributed_training_horovod_basic(instances,
                                             processes,
                                             sagemaker_local_session,
