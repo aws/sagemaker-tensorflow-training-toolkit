@@ -53,7 +53,7 @@ setup(
                       'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker>=1.19.1', 'tensorflow', 'docker-compose'],
+                 'sagemaker==1.19.1', 'tensorflow', 'docker-compose'],
         'benchmark': ['click']
     },
 )

@@ -61,6 +61,8 @@ RUN mkdir /tmp/openmpi && \
     rm -rf /tmp/openmpi
 
 ARG py_version
+ARG framework_installable
+ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 
 RUN if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.6; else PYTHON_VERSION=python2.7; fi && \
         apt-get update && apt-get install -y --no-install-recommends $PYTHON_VERSION-dev --allow-unauthenticated  && \
@@ -103,9 +105,6 @@ RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
     rm get-pip.py
 
 WORKDIR /
-
-ARG framework_installable
-ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 
 COPY $framework_installable tensorflow-1.13.1-py2.py3-none-any.whl
 COPY $framework_support_installable .
