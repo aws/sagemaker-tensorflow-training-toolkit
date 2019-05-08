@@ -14,7 +14,6 @@ env:
     SETUP_FILE: 'setup_cmds.sh'
     SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
 
-
 phases:
   pre_build:
     commands:
@@ -65,7 +64,6 @@ phases:
       - cd $build_dir
       - docker build -f $gpu_dockerfile --build-arg py_version=$GPU_PY_VERSION --build-arg framework_installable=$gpu_fw_binary -t $PREPROD_IMAGE:$GPU_TAG .
       - cd ../../
-
 
       # push images to ecr
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
