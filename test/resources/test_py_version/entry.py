@@ -12,17 +12,11 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import argparse
 import os
 import subprocess
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--output-dir', default=os.environ['SM_OUTPUT_DIR'])
-parser.add_argument('--model_dir')
-args = parser.parse_args()
-
 py_version = subprocess.check_output(['python', '--version']).decode('utf-8')
 
-with open(os.path.join(args.output_dir, 'py_version'), 'a') as f:
+with open(os.path.join(os.environ['SM_OUTPUT_DIR'], 'py_version'), 'a') as f:
     f.write(py_version)
