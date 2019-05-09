@@ -104,7 +104,7 @@ def test_train_horovod(run_module, single_machine_training_env):
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
-@patch('threading.Thread', lambda target: target())
+@patch('multiprocessing.Process', lambda target: target())
 @patch('time.sleep', MagicMock())
 def test_train_distributed_master(run, tf_server, cluster_spec, distributed_training_env):
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
@@ -134,6 +134,7 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('multiprocessing.Process', lambda target: target())
 @patch('time.sleep', MagicMock())
 def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_training_env):
     distributed_training_env.current_host = HOST2
