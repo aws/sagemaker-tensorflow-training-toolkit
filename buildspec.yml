@@ -49,7 +49,7 @@ phases:
       - CPU_TAG="$FRAMEWORK_VERSION-cpu-py$CPU_PY_VERSION-$build_id"
 
       - cd $build_dir
-      - docker build -f $cpu_dockerfile --build-arg py_version=$CPU_PY_VERSION --build-arg framework_installable=$cpu_fw_binary -t $PREPROD_IMAGE:$CPU_TAG .
+      - docker build -f $cpu_dockerfile --build-arg framework_support_installable=$tar_name --build-arg py_version=$CPU_PY_VERSION --build-arg framework_installable=$cpu_fw_binary -t $PREPROD_IMAGE:$CPU_TAG .
       - cd ../../
 
       # build gpu image
@@ -62,7 +62,7 @@ phases:
       - GPU_TAG="$FRAMEWORK_VERSION-gpu-py$GPU_PY_VERSION-$build_id"
 
       - cd $build_dir
-      - docker build -f $gpu_dockerfile --build-arg py_version=$GPU_PY_VERSION --build-arg framework_installable=$gpu_fw_binary -t $PREPROD_IMAGE:$GPU_TAG .
+      - docker build -f $gpu_dockerfile --build-arg framework_support_installable=$tar_name --build-arg py_version=$GPU_PY_VERSION --build-arg framework_installable=$gpu_fw_binary -t $PREPROD_IMAGE:$GPU_TAG .
       - cd ../../
 
       # push images to ecr
