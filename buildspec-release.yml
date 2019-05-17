@@ -1,0 +1,68 @@
+version: 0.2
+
+env:
+  variables:
+    FRAMEWORK_VERSION: '1.13.1'
+
+phases:
+  pre_build:
+    commands:
+      - start-dockerd
+      - ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
+
+  build:
+    commands:
+      # prepare the release (update versions, changelog etc.)
+      - git-release --prepare
+
+      # run linter
+      - tox -e flake8
+
+      # run unit tests
+      - tox -e py36 test/unit
+
+      # Create pip archive
+      - build_dir="docker/$FRAMEWORK_VERSION"
+      - python3 setup.py sdist
+      - tar_name=$(ls dist)
+      - cp dist/$tar_name $build_dir
+
+      # Build all images
+      - python3 scripts/build_all.py --account $ACCOUNT --region $AWS_DEFAULT_REGION
+
+      # run local cpu integ tests
+      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --framework-version $FRAMEWORK_VERSION --processor cpu
+
+      # Publish all images
+      - python3 scripts/publish_all.py --account $ACCOUNT --region $AWS_DEFAULT_REGION
+
+      - |
+        echo '[{
+          "repository": "sagemaker-tensorflow-scriptmode",
+          "tags": [{
+            "source": "1.13.1-cpu-py2",
+            "dest": ["1.13.1-cpu-py2", "1.13-cpu-py2", "1.13.1-cpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.13.1-cpu-py3",
+            "dest": ["1.13.1-cpu-py3", "1.13-cpu-py3", "1.13.1-cpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.13.1-gpu-py2",
+            "dest": ["1.13.1-gpu-py2", "1.13-gpu-py2", "1.13.1-gpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.13.1-gpu-py3",
+            "dest": ["1.13.1-gpu-py3", "1.13-gpu-py3", "1.13.1-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
+          }],
+          "test": [
+            "tox -e py36 -- test/integration/sagemaker -n 8 --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu",
+            "tox -e py36 -- test/integration/sagemaker -n 8 --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor gpu"
+          ]
+        }]' > deployments.json
+
+      # publish the release to github
+      - git-release --publish
+
+artifacts:
+  files:
+    - deployments.json
+  name: ARTIFACT_1

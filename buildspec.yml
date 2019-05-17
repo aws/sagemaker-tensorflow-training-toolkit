@@ -2,11 +2,11 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.12.0'
-    CPU_FRAMEWORK_BINARY: 'https://s3.amazonaws.com/inferno-dlami/tensorflow/1.12.0/with_intel_patch_mkl_on_off/tensorflow-1.12.0-cp27-cp27mu-linux_x86_64.whl'
-    CPU_PY_VERSION: '2'
+    FRAMEWORK_VERSION: '1.13.1'
+    CPU_FRAMEWORK_BINARY: 'https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/AmazonLinux/cpu/latest-patch-latest-patch/tensorflow-1.13.1-cp36-cp36m-linux_x86_64.whl'
+    CPU_PY_VERSION: '3'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
-    GPU_FRAMEWORK_BINARY: 'https://s3.amazonaws.com/inferno-dlami/tensorflow/1.12.0/gpu/tensorflow-1.12.0-cp36-cp36m-linux_x86_64.whl'
+    GPU_FRAMEWORK_BINARY: 'https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/AmazonLinux/gpu/latest-patch-latest-patch/tensorflow-1.13.1-cp36-cp36m-linux_x86_64.whl'
     GPU_PY_VERSION: '3'
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     ECR_REPO: 'sagemaker-test'
@@ -97,7 +97,7 @@ phases:
       # run cpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG --py-version $CPU_PY_VERSION --instance-type $CPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG --py-version $CPU_PY_VERSION --instance-type $CPU_INSTANCE_TYPE
         else
           echo "skipping cpu sagemaker tests"
         fi
@@ -105,7 +105,7 @@ phases:
       # run gpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG --py-version $GPU_PY_VERSION --instance-type $GPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG --py-version $GPU_PY_VERSION --instance-type $GPU_INSTANCE_TYPE
         else
           echo "skipping gpu sagemaker tests"
         fi
