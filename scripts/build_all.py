@@ -63,7 +63,7 @@ for arch in ['cpu', 'gpu']:
         binary_url = binaries['py{}-{}'.format(py_version, arch)]
         binary_file = os.path.basename(binary_url)
         cmd = 'wget -O {}/{} {}'.format(build_dir, binary_file, binary_url)
-        print('Downloading binary file {}: '.format(cmd))
+        print('Downloading binary file: {}'.format(cmd))
         subprocess.check_call(cmd.split())
         
         tag = '{}-{}-py{}'.format(args.version, arch, py_version)
