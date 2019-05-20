@@ -3,6 +3,8 @@ version: 0.2
 env:
   variables:
     FRAMEWORK_VERSION: '1.13.1'
+    GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
+    SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
 
 phases:
   pre_build:
@@ -33,9 +35,19 @@ phases:
       # run local cpu integ tests
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --framework-version $FRAMEWORK_VERSION --processor cpu
-      - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --framework-version $FRAMEWORK_VERSION --processor gpu
       - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version $FRAMEWORK_VERSION --processor cpu
-      - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version $FRAMEWORK_VERSION --processor gpu
+
+      # launch remote gpu instance
+      - prefix='ml.'
+      - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
+      - create-key-pair
+      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
+
+      - printf "$SETUP_CMDS" > $SETUP_FILE
+      - py2_cmd="tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version $FRAMEWORK_VERSION --processor gpu"
+      - remote-test --github-repo $GITHUB_REPO --test-cmd "$py2_cmd" --setup-file $SETUP_FILE
+      - py3_cmd="tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --framework-version $FRAMEWORK_VERSION --processor gpu"
+      - remote-test --github-repo $GITHUB_REPO --test-cmd "$py3_cmd" --setup-file $SETUP_FILE
 
       # Publish all images
       - python3 scripts/publish_all.py --account $ACCOUNT --region $AWS_DEFAULT_REGION
@@ -66,6 +78,11 @@ phases:
 
       # publish the release to github
       - git-release --publish
+
+    finally:
+      # shut down remote gpu instance
+      - cleanup-gpu-instances
+      - cleanup-key-pairs
 
 artifacts:
   files:
