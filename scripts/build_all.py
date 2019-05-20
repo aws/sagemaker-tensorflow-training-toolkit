@@ -59,27 +59,27 @@ subprocess.check_call(login_cmd.split())
 
 for arch in ['cpu', 'gpu']:
     for py_version in ['2', '3']:
-        
+
         binary_url = binaries['py{}-{}'.format(py_version, arch)]
         binary_file = os.path.basename(binary_url)
         cmd = 'wget -O {}/{} {}'.format(build_dir, binary_file, binary_url)
         print('Downloading binary file: {}'.format(cmd))
         subprocess.check_call(cmd.split())
-        
+
         tag = '{}-{}-py{}'.format(args.version, arch, py_version)
         prev_image_uri = '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(args.account, args.region, args.repo, tag)
         dockerfile = os.path.join(build_dir, 'Dockerfile.{}'.format(arch))
-        
+
         tar_file_name = subprocess.check_output('ls {}/sagemaker_tensorflow_container*'.format(build_dir),
                                                 shell=True).strip().decode('ascii')
         print('framework_support_installable is {}'.format(os.path.basename(tar_file_name)))
-        
+
         build_cmd = 'docker build -f {} --cache-from {} --build-arg framework_support_installable={} ' \
                     '--build-arg py_version={} --build-arg framework_installable={} ' \
                     '-t {}:{} {}'.format(dockerfile, prev_image_uri, os.path.basename(tar_file_name), py_version,
                                          binary_file, args.repo, tag, build_dir)
         print('Building docker image: {}'.format(build_cmd))
         subprocess.check_call(build_cmd.split())
-        
+
         print('Deleting binary file {}'.format(binary_file))
         subprocess.check_call('rm {}'.format(os.path.join(build_dir, binary_file)).split())
