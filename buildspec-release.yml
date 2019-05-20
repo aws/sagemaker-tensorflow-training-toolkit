@@ -19,7 +19,7 @@ phases:
       - tox -e flake8
 
       # run unit tests
-      - tox -e py36 test/unit
+      - tox -e py36,py27 test/unit
 
       # Create pip archive
       - build_dir="docker/$FRAMEWORK_VERSION"
@@ -33,6 +33,9 @@ phases:
       # run local cpu integ tests
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --framework-version $FRAMEWORK_VERSION --processor cpu
+      - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --framework-version $FRAMEWORK_VERSION --processor gpu
+      - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version $FRAMEWORK_VERSION --processor cpu
+      - tox -e py36 -- test/integration/local --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version $FRAMEWORK_VERSION --processor gpu
 
       # Publish all images
       - python3 scripts/publish_all.py --account $ACCOUNT --region $AWS_DEFAULT_REGION
@@ -54,8 +57,10 @@ phases:
             "dest": ["1.13.1-gpu-py3", "1.13-gpu-py3", "1.13.1-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- test/integration/sagemaker -n 8 --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu",
-            "tox -e py36 -- test/integration/sagemaker -n 8 --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor gpu"
+            "tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu",
+            "tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version 1.13.1 --processor cpu",
+            "tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor gpu",
+            "tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version 1.13.1 --processor gpu"
           ]
         }]' > deployments.json
 

@@ -10,6 +10,8 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
+
 import argparse
 import subprocess
 
@@ -38,12 +40,13 @@ for arch in ['cpu', 'gpu']:
         source = '{}:{}-{}-py{}'.format(args.repo, args.version, arch, py_version)
         dest = '{}.dkr.ecr.{}.amazonaws.com/{}'.format(args.account, args.region, source)
         tag_cmd = 'docker tag {} {}'.format(source, dest)
-        print(tag_cmd)
+        print('Tagging image: {}'.format(tag_cmd))
         subprocess.check_call(tag_cmd.split())
         login_cmd = subprocess.check_output(
-            'aws ecr get-login --no-include-email --registry-id {}'.format(args.account).split())
-        print(login_cmd)
+            'aws ecr get-login --no-include-email --registry-id {} --region {}'
+            .format(args.account, args.region).split())
+        print('Executing docker login command: {}'.format(login_cmd))
         subprocess.check_call(login_cmd.split())
         push_cmd = 'docker push {}'.format(dest)
-        print(push_cmd)
+        print('Pushing image: {}'.format(push_cmd))
         subprocess.check_call(push_cmd.split())
