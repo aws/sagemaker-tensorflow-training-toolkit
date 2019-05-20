@@ -67,9 +67,13 @@ for arch in ['cpu', 'gpu']:
         tag = '{}-{}-py{}'.format(args.version, arch, py_version)
         prev_image_uri = '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(args.account, args.region, args.repo, tag)
         dockerfile = os.path.join(build_dir, 'Dockerfile.{}'.format(arch))
-        build_cmd = 'docker build -f {} --cache-from {} ' \
+        tar_file_name = subprocess.check_output('ls {}/sagemaker_tensorflow_container*'.format(build_dir),
+                                                shell=True).strip().decode('ascii')
+        print('framework_support_installable is {}'.format(os.path.basename(tar_file_name)))
+        build_cmd = 'docker build -f {} --cache-from {} --build-arg framework_support_installable={} ' \
                     '--build-arg py_version={} --build-arg framework_installable={} ' \
-                    '-t {}:{} {}'.format(dockerfile, prev_image_uri, py_version, binary_file, args.repo, tag, build_dir)
+                    '-t {}:{} {}'.format(dockerfile, prev_image_uri, os.path.basename(tar_file_name), py_version,
+                                         binary_file, args.repo, tag, build_dir)
         print('Building docker image: {}'.format(build_cmd))
         subprocess.check_call(build_cmd.split())
         print('Deleting binary file {}'.format(binary_file))
