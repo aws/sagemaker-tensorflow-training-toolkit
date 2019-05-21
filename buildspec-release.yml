@@ -52,7 +52,7 @@ phases:
       - py2_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --docker-base-name $base_name --py-version 2 --framework-version $FRAMEWORK_VERSION --processor gpu"
       - remote-test --github-repo sagemaker-tensorflow-container --setup-file $SETUP_FILE --branch script-mode --test-cmd "$py2_cmd"
       - py3_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --docker-base-name $base_name --framework-version $FRAMEWORK_VERSION --processor gpu"
-      - remote-test --github-repo sagemaker-tensorflow-container --setup-file $SETUP_FILE --branch script-mode --test-cmd "$py3_cmd"
+      - remote-test --github-repo sagemaker-tensorflow-container --branch script-mode --test-cmd "$py3_cmd" --skip-setup
 
       - |
         echo '[{
