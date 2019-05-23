@@ -29,8 +29,11 @@ phases:
       - pip3 install -U -e .
       - pip3 install -U -e .[test]
 
+      # run flake8
+      - tox -e flake8
+
       # run unit tests
-      - pytest test/unit
+      - tox -e py36,py27 test/unit
 
       # Create pip archive
       - build_dir="docker/$FRAMEWORK_VERSION"
