@@ -107,8 +107,8 @@ def skip_by_device_type(request, processor):
 
 @pytest.fixture(autouse=True)
 def skip_gpu_instance_restricted_regions(region, instance_type):
-    if((region in NO_P2_REGIONS and instance_type.startswith('ml.p2')) or
-       (region in NO_P3_REGIONS and instance_type.startswith('ml.p3'))):
+    if (region in NO_P2_REGIONS and instance_type.startswith('ml.p2')) or \
+            (region in NO_P3_REGIONS and instance_type.startswith('ml.p3')):
         pytest.skip('Skipping GPU test in region {}'.format(region))
 
 
