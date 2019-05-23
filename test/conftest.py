@@ -20,6 +20,8 @@ import pytest
 from sagemaker import LocalSession, Session
 from sagemaker.tensorflow import TensorFlow
 
+from test.integration import NO_P2_REGIONS, NO_P3_REGIONS
+
 logger = logging.getLogger(__name__)
 logging.getLogger('boto').setLevel(logging.INFO)
 logging.getLogger('botocore').setLevel(logging.INFO)
@@ -101,6 +103,13 @@ def skip_by_device_type(request, processor):
     if (request.node.get_closest_marker('skip_gpu') and is_gpu) or \
             (request.node.get_closest_marker('skip_cpu') and not is_gpu):
         pytest.skip('Skipping because running on \'{}\' instance'.format(processor))
+
+
+@pytest.fixture(autouse=True)
+def skip_gpu_instance_restricted_regions(region, instance_type):
+    if((region in NO_P2_REGIONS and instance_type.startswith('ml.p2')) or
+       (region in NO_P3_REGIONS and instance_type.startswith('ml.p3'))):
+        pytest.skip('Skipping GPU test in region {}'.format(region))
 
 
 @pytest.fixture(scope='session')
