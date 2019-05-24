@@ -58,13 +58,13 @@ print('Executing docker login command: '.format(login_cmd))
 subprocess.check_call(login_cmd.split())
 
 for arch in ['cpu', 'gpu']:
-    for py_version in ['2', '3']:
+    for py_version in ['3']:
 
         binary_url = binaries['py{}-{}'.format(py_version, arch)]
         binary_file = os.path.basename(binary_url)
         cmd = 'wget -O {}/{} {}'.format(build_dir, binary_file, binary_url)
         print('Downloading binary file: {}'.format(cmd))
-        subprocess.check_call(cmd.split())
+        # subprocess.check_call(cmd.split())
 
         tag = '{}-{}-py{}'.format(args.version, arch, py_version)
         prev_image_uri = '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(args.account, args.region, args.repo, tag)

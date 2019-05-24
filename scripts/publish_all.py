@@ -36,7 +36,7 @@ def _parse_args():
 args = _parse_args()
 
 for arch in ['cpu', 'gpu']:
-    for py_version in ['2', '3']:
+    for py_version in ['3']:
         source = '{}:{}-{}-py{}'.format(args.repo, args.version, arch, py_version)
         dest = '{}.dkr.ecr.{}.amazonaws.com/{}'.format(args.account, args.region, source)
         tag_cmd = 'docker tag {} {}'.format(source, dest)

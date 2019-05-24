@@ -9,7 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     ca-certificates \
     curl \
-    && add-apt-repository ppa:deadsnakes/ppa -y \
+    git \
+    wget \
+    vim \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Open MPI
@@ -54,39 +57,54 @@ ENV KMP_AFFINITY=granularity=fine,compact,1,0 KMP_BLOCKTIME=1 KMP_SETTINGS=0
 
 WORKDIR /
 
-ARG py_version
-ARG framework_installable
-ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
+ARG PYTHON=python3
+ARG PYTHON_PIP=python3-pip
+ARG PIP=pip3
+ARG PYTHON_VERSION=3.6.6
 
-RUN if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.6; else PYTHON_VERSION=python2.7; fi && \
-        apt-get update && apt-get install -y --no-install-recommends $PYTHON_VERSION-dev --allow-unauthenticated  && \
-        ln -s -f /usr/bin/$PYTHON_VERSION /usr/bin/python && \
-        ln -s -f /usr/bin/$PYTHON_VERSION /usr/local/bin/python && \
-    rm -rf /var/lib/apt/lists/*
+RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz && \
+    tar -xvf Python-$PYTHON_VERSION.tgz && cd Python-$PYTHON_VERSION && \
+    ./configure && make && make install && \
+    apt-get update && apt-get install -y --no-install-recommends libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev && \
+    make && make install && rm -rf ../Python-$PYTHON_VERSION* && \
+    ln -s /usr/local/bin/pip3 /usr/bin/pip
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8
 
-RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \
-    python get-pip.py --disable-pip-version-check --no-cache-dir "pip==18.1" && \
-    rm get-pip.py
-
-COPY $framework_installable tensorflow-1.13.1-py2.py3-none-any.whl
+ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 COPY $framework_support_installable .
+ARG TF_URL="https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/AmazonLinux/cpu/latest-patch-s3_testcopy.patch/tensorflow-1.13.1-cp36-cp36m-linux_x86_64.whl"
 
-RUN pip install --no-cache-dir -U \
-        keras==2.2.4 \
-        mpi4py==3.0.1 \
-        "sagemaker-tensorflow>=1.13,<1.14" && \
+RUN ${PIP} --no-cache-dir install  --upgrade pip setuptools
+
+# Some TF tools expect a "python" binary
+RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
+
+RUN ${PIP} install --no-cache-dir -U \
+           numpy==1.16.2 \
+           scipy==1.2.1 \
+           scikit-learn==0.20.3 \
+           pandas==0.24.2 \
+           Pillow==5.4.1 \
+           h5py==2.9.0 \
+           keras_applications==1.0.7 \
+           keras_preprocessing==1.0.9 \
+           keras==2.2.4 \
+           requests==2.21.0 \
+           awscli==1.16.130 \
+           mpi4py==3.0.1 \
+           "sagemaker-tensorflow>=1.13,<1.14" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
-    pip install --force-reinstall --no-cache-dir -U \
-        tensorflow-1.13.1-py2.py3-none-any.whl \
-        horovod && \
-    pip install --no-cache-dir -U $framework_support_installable && \
-    rm -f tensorflow-1.13.1-py2.py3-none-any.whl && \
-    rm -f $framework_support_installable && \
-    pip uninstall -y --no-cache-dir \
-        markdown \
-        tensorboard
+    ${PIP} install --force-reinstall --no-cache-dir -U \
+           ${TF_URL} \
+           horovod && \
+    ${PIP} install --no-cache-dir -U $framework_support_installable && \
+           rm -f $framework_support_installable && \
+    ${PIP} uninstall -y --no-cache-dir \
+           markdown \
+           tensorboard
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
+
+CMD ["bin/bash"]
