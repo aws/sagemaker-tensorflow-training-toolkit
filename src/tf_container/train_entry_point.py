@@ -16,7 +16,7 @@ import json
 import os
 import subprocess
 import time
-from threading import Thread
+from multiprocessing import Process
 
 import tensorflow as tf
 
@@ -67,8 +67,8 @@ def _run_ps_server(current_host, hosts, tf_config):
         server = tf.train.Server(cluster_spec, job_name='ps', task_index=task_index)
         server.join()
 
-    t = Thread(target=start_ps_server, args=(current_host, hosts, tf_config))
-    t.start()
+    p = Process(target=start_ps_server, args=(current_host, hosts, tf_config))
+    p.start()
 
 
 def _get_default_training_params(env):
