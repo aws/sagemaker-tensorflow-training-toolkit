@@ -14,12 +14,23 @@ from __future__ import absolute_import
 
 import os
 
+import pytest
 import sagemaker
 from sagemaker.tensorflow import TensorFlow
 
 from utils import unique_name_from_base
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
+
+
+@pytest.fixture(params=os.environ['TEST_PY_VERSIONS'].split(','))
+def py_version(request):
+    return request.param
+
+
+@pytest.fixture(params=os.environ['TEST_PROCESSORS'].split(','))
+def processor(request):
+    return request.param
 
 
 def test_distributed_training_horovod(sagemaker_session,

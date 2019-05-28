@@ -15,11 +15,22 @@ from __future__ import absolute_import
 import os
 
 import boto3
+import pytest
 from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
 from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
 from utils import unique_name_from_base
+
+
+@pytest.fixture(params=os.environ['TEST_PY_VERSIONS'].split(','))
+def py_version(request):
+    return request.param
+
+
+@pytest.fixture(params=os.environ['TEST_PROCESSORS'].split(','))
+def processor(request):
+    return request.param
 
 
 def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):

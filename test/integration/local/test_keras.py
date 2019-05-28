@@ -25,6 +25,16 @@ from test.integration import RESOURCE_PATH
 logging.basicConfig(level=logging.DEBUG)
 
 
+@pytest.fixture(params=os.environ['TEST_PY_VERSIONS'].split(','))
+def py_version(request):
+    return request.param
+
+
+@pytest.fixture(params=os.environ['TEST_PROCESSORS'].split(','))
+def processor(request):
+    return request.param
+
+
 @pytest.mark.skip(reason="Serving part fails because of version mismatch.")
 def test_keras_training(sagemaker_local_session, docker_image, tmpdir, framework_version):
     entry_point = os.path.join(RESOURCE_PATH, 'keras_inception.py')

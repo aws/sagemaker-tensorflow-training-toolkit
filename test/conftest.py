@@ -1,4 +1,4 @@
-#  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
@@ -33,14 +33,19 @@ SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 def pytest_addoption(parser):
-    parser.addoption('--docker-base-name', default='preprod-tensorflow')
+    parser.addoption('--docker-base-name', default='sagemaker-tensorflow-scriptmode')
     parser.addoption('--tag', default=None)
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default=TensorFlow.LATEST_VERSION)
-    parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
-    parser.addoption('--py-version', default='3', choices=['2', '3'])
+    parser.addoption('--processor', default='cpu', choices=['cpu', 'gpu', 'cpu,gpu'])
+    parser.addoption('--py-version', default='3', choices=['2', '3', '2,3'])
     parser.addoption('--account-id', default='142577830533')
     parser.addoption('--instance-type', default=None)
+
+
+def pytest_configure(config):
+    os.environ['TEST_PY_VERSIONS'] = config.getoption('--py-version')
+    os.environ['TEST_PROCESSORS'] = config.getoption('--processor')
 
 
 @pytest.fixture(scope='session')
@@ -49,18 +54,8 @@ def docker_base_name(request):
 
 
 @pytest.fixture(scope='session')
-def processor(request):
-    return request.config.getoption('--processor')
-
-
-@pytest.fixture(scope='session')
 def region(request):
     return request.config.getoption('--region')
-
-
-@pytest.fixture(scope='session')
-def py_version(request):
-    return request.config.getoption('--py-version')
 
 
 @pytest.fixture(scope='session')
@@ -68,7 +63,7 @@ def framework_version(request):
     return request.config.getoption('--framework-version')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def tag(request, framework_version, processor, py_version):
     provided_tag = request.config.getoption('--tag')
     default_tag = '{}-{}-py{}'.format(framework_version, processor, py_version)
@@ -90,7 +85,7 @@ def account_id(request):
     return request.config.getoption('--account-id')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def instance_type(request, processor):
     provided_instance_type = request.config.getoption('--instance-type')
     default_instance_type = 'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
@@ -112,12 +107,12 @@ def skip_gpu_instance_restricted_regions(region, instance_type):
         pytest.skip('Skipping GPU test in region {}'.format(region))
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def docker_image(docker_base_name, tag):
     return '{}:{}'.format(docker_base_name, tag)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def ecr_image(account_id, docker_base_name, tag, region):
     return '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(
         account_id, region, docker_base_name, tag)
