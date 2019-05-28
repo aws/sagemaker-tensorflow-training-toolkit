@@ -16,7 +16,7 @@ import json
 import os
 import subprocess
 import time
-from threading import Thread
+from multiprocessing import Process
 
 import tensorflow as tf
 
@@ -64,11 +64,15 @@ def _run_ps_server(current_host, hosts, tf_config):
     def start_ps_server(current_host, hosts, tf_config):
         cluster_spec = tf.train.ClusterSpec(tf_config['cluster'])
         task_index = hosts.index(current_host)
-        server = tf.train.Server(cluster_spec, job_name='ps', task_index=task_index)
+        # Force parameter server to run on cpu. Running multiple TensorFlow processes on the same
+        # GPU is not safe:
+        # https://stackoverflow.com/questions/46145100/is-it-unsafe-to-run-multiple-tensorflow-processes-on-the-same-gpu
+        no_gpu_config = tf.ConfigProto(device_count={'GPU': 0})
+        server = tf.train.Server(cluster_spec, job_name='ps', task_index=task_index, config=no_gpu_config)
         server.join()
 
-    t = Thread(target=start_ps_server, args=(current_host, hosts, tf_config))
-    t.start()
+    p = Process(target=start_ps_server, args=(current_host, hosts, tf_config))
+    p.start()
 
 
 def _get_default_training_params(env):
