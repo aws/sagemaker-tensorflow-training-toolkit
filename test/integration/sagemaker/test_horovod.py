@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -16,6 +16,8 @@ import os
 
 import sagemaker
 from sagemaker.tensorflow import TensorFlow
+
+from utils import unique_name_from_base
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
@@ -41,7 +43,7 @@ def test_distributed_training_horovod(sagemaker_session,
                          'sagemaker_mpi_num_of_processes_per_host': 1},
         sagemaker_session=sagemaker_session)
 
-    estimator.fit()
+    estimator.fit(job_name=unique_name_from_base('test-tf-horovod'))
 
     model_data_source = sagemaker.local.data.get_data_source_instance(
         estimator.model_data, sagemaker_session)

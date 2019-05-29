@@ -13,11 +13,11 @@
 from __future__ import absolute_import
 
 import os
-import random
-import time
 
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
+
+from utils import unique_name_from_base
 
 
 def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance_type, framework_version):
@@ -41,11 +41,5 @@ def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance
                                 max_parallel_jobs=1)
 
     # User script has logic to check for the correct model_dir
-    tuner.fit(job_name=_unique_job_name())
+    tuner.fit(job_name=unique_name_from_base('test-tf-model-dir', max_length=32))
     tuner.wait()
-
-
-def _unique_job_name():
-    unique = '%04x' % random.randrange(16**4)  # 4-digit hex
-    ts = str(int(time.time()))
-    return '{}-{}-{}'.format('test-tf-model-dir', ts, unique)
