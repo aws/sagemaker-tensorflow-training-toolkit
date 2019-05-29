@@ -13,6 +13,8 @@
 from __future__ import absolute_import
 
 import os
+import random
+import time
 
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
@@ -36,9 +38,14 @@ def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance
                                 hyperparameter_ranges={'arbitrary_value': IntegerParameter(0, 1)},
                                 metric_definitions=[{'Name': 'accuracy', 'Regex': 'accuracy=([01])'}],
                                 max_jobs=1,
-                                max_parallel_jobs=1,
-                                base_tuning_job_name='test-tf-tuning-model-dir')
+                                max_parallel_jobs=1)
 
     # User script has logic to check for the correct model_dir
-    tuner.fit()
+    tuner.fit(job_name=_unique_job_name())
     tuner.wait()
+
+
+def _unique_job_name():
+    unique = '%04x' % random.randrange(16**4)  # 4-digit hex
+    ts = str(int(time.time()))
+    return '{}-{}-{}'.format('test-tf-model-dir', ts, unique)
