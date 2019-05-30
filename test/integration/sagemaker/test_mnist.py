@@ -22,7 +22,7 @@ from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_E
 from utils import unique_name_from_base
 
 
-def test_mnist(sagemaker_session, ecr_image, instance_type):
+def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -31,6 +31,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
+                           framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data'),
@@ -39,7 +40,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
+def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -48,6 +49,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
+                           framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data'),
@@ -56,7 +58,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
+def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
@@ -66,6 +68,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
+                           framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
@@ -75,7 +78,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
+def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
@@ -98,6 +101,7 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
+                           framework_version=framework_version,
                            script_mode=True)
     estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region),
                   job_name=unique_name_from_base('test-tf-sm-s3-mnist'))
