@@ -63,7 +63,7 @@ def framework_version(request):
     return request.config.getoption('--framework-version')
 
 
-@pytest.fixture()
+@pytest.fixture
 def tag(request, framework_version, processor, py_version):
     provided_tag = request.config.getoption('--tag')
     default_tag = '{}-{}-py{}'.format(framework_version, processor, py_version)
@@ -85,7 +85,7 @@ def account_id(request):
     return request.config.getoption('--account-id')
 
 
-@pytest.fixture()
+@pytest.fixture
 def instance_type(request, processor):
     provided_instance_type = request.config.getoption('--instance-type')
     default_instance_type = 'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
@@ -107,12 +107,12 @@ def skip_gpu_instance_restricted_regions(region, instance_type):
         pytest.skip('Skipping GPU test in region {}'.format(region))
 
 
-@pytest.fixture()
+@pytest.fixture
 def docker_image(docker_base_name, tag):
     return '{}:{}'.format(docker_base_name, tag)
 
 
-@pytest.fixture()
+@pytest.fixture
 def ecr_image(account_id, docker_base_name, tag, region):
     return '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(
         account_id, region, docker_base_name, tag)

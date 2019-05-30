@@ -25,7 +25,7 @@ TF_CHECKPOINT_FILES = ['graph.pbtxt', 'model.ckpt-0.index', 'model.ckpt-0.meta']
 
 
 @pytest.fixture  # noqa: F811
-def py_full_version(py_version):
+def py_full_version(py_version):  # noqa: F811
     if py_version == '2':
         return '2.7'
     else:
