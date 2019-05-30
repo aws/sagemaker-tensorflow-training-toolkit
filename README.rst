@@ -197,8 +197,8 @@ The only difference is the addition of the ``tensorflow_model_server`` build-arg
 
     # Example
     docker build -t preprod-tensorflow-ei:1.11.0-cpu-py2 \
-    --build-arg tensorflow_model_server AmazonEI_TensorFlow_Serving_v1.11_v1 \
-    --build-arg framework_installable=tensorflow-1.11.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.cpu .
+    --build-arg tensorflow_model_server=AmazonEI_TensorFlow_Serving_v1.11_v1 \
+    --build-arg framework_installable=tensorflow-1.11.0-cp27-cp27mu-manylinux1_x86_64.whl -f Dockerfile.ei .
 
 
 * For information about downloading the enhanced versions of TensorFlow serving, see `Using TensorFlow Models with Amazon EI <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ei-tensorflow.html>`__.
