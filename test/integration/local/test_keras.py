@@ -20,19 +20,10 @@ import pytest
 from sagemaker.tensorflow import serving, TensorFlow
 
 from test.integration import RESOURCE_PATH
+from test.integration.sagemaker.utils import processor, py_version  # noqa: F401
 
 
 logging.basicConfig(level=logging.DEBUG)
-
-
-@pytest.fixture(params=os.environ['TEST_PY_VERSIONS'].split(','))
-def py_version(request):
-    return request.param
-
-
-@pytest.fixture(params=os.environ['TEST_PROCESSORS'].split(','))
-def processor(request):
-    return request.param
 
 
 @pytest.mark.skip(reason="Serving part fails because of version mismatch.")
