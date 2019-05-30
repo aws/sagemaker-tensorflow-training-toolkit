@@ -30,7 +30,8 @@ def test_mnist(sagemaker_session, ecr_image, instance_type):
                            train_instance_type=instance_type,
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image)
+                           image_name=ecr_image,
+                           script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
@@ -46,7 +47,8 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image)
+                           image_name=ecr_image,
+                           script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
@@ -63,7 +65,8 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type):
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image)
+                           image_name=ecr_image,
+                           script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
@@ -94,7 +97,8 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region):
                            train_instance_count=1,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image)
+                           image_name=ecr_image,
+                           script_mode=True)
     estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region),
                   job_name=unique_name_from_base('test-tf-sm-s3-mnist'))
     _assert_s3_file_exists(region, estimator.model_data)
