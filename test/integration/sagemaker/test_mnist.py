@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -19,6 +19,7 @@ from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
 from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
+from utils import unique_name_from_base
 
 
 def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
@@ -31,12 +32,11 @@ def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
                            framework_version=framework_version,
-                           py_version='py3',
-                           base_job_name='test-sagemaker-mnist')
+                           script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
-    estimator.fit(inputs)
+    estimator.fit(inputs, job_name=unique_name_from_base('test-sagemaker-mnist'))
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
@@ -50,12 +50,11 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, fr
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
                            framework_version=framework_version,
-                           py_version='py3',
-                           base_job_name='test-tf-sm-distributed-mnist')
+                           script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data'),
         key_prefix='scriptmode/mnist')
-    estimator.fit(inputs)
+    estimator.fit(inputs, job_name=unique_name_from_base('test-tf-sm-distributed-mnist'))
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
@@ -70,12 +69,11 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
                            framework_version=framework_version,
-                           py_version='py3',
-                           base_job_name='test-tf-sm-distributed-mnist')
+                           script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
         path=os.path.join(resource_path, 'mnist', 'data-distributed'),
         key_prefix='scriptmode/mnist-distributed')
-    estimator.fit(inputs)
+    estimator.fit(inputs, job_name=unique_name_from_base('test-tf-sm-distributed-mnist'))
     _assert_checkpoint_exists(sagemaker_session.boto_region_name, estimator.model_dir, 0)
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
@@ -104,9 +102,9 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framewor
                            sagemaker_session=sagemaker_session,
                            image_name=ecr_image,
                            framework_version=framework_version,
-                           py_version='py3',
-                           base_job_name='test-tf-sm-s3-mnist')
-    estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region))
+                           script_mode=True)
+    estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region),
+                  job_name=unique_name_from_base('test-tf-sm-s3-mnist'))
     _assert_s3_file_exists(region, estimator.model_data)
     _assert_checkpoint_exists(region, estimator.model_dir, 200)
 
