@@ -72,8 +72,7 @@ phases:
       - docker push $PREPROD_IMAGE:$GPU_TAG
 
       # launch remote gpu instance
-      - prefix='ml.'
-      - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
+      - instance_type='p2.xlarge'
       - create-key-pair
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
