@@ -64,6 +64,11 @@ phases:
           cd $build_dir
           docker build -f $gpu_dockerfile --build-arg framework_support_installable=$tar_name --build-arg py_version=$GPU_PY_VERSION --build-arg framework_installable=$gpu_fw_binary -t $PREPROD_IMAGE:$GPU_TAG .
           cd ../../
+          
+          # Upload images here because remote gpu tests pulls the gpu image from ecr
+          $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+          docker push $PREPROD_IMAGE:$CPU_TAG
+          docker push $PREPROD_IMAGE:$GPU_TAG
 
           # launch remote gpu instance
           instance_type='p2.xlarge'
@@ -76,9 +81,6 @@ phases:
           remote-test --github-repo $GITHUB_REPO --test-cmd "$cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
 
           ################################ Run SageMaker integtration tests ################################
-          $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-          docker push $PREPROD_IMAGE:$CPU_TAG
-          docker push $PREPROD_IMAGE:$GPU_TAG
 
           pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG --py-version $CPU_PY_VERSION --processor cpu
           pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG --py-version $GPU_PY_VERSION --processor gpu
