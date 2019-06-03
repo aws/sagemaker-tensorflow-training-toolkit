@@ -71,7 +71,7 @@ phases:
             "dest": ["1.13.1-gpu-py3", "1.13-gpu-py3", "1.13.1-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 32 --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu,gpu --py-version 2,3",
+            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 32 --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu,gpu --py-version 2,3"
           ]
         }]' > deployments.json
 
