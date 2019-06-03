@@ -19,7 +19,7 @@ from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
 from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
-from utils import unique_name_from_base
+from utils import processor, py_version, unique_name_from_base  # noqa: F401
 
 
 def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):

@@ -16,7 +16,7 @@ phases:
   build:
     commands:
       # prepare the release (update versions, changelog etc.)
-      - git-release --prepare
+      - git-release --min-version 2.0.0 --prepare
 
       # run linter
       - tox -e flake8
@@ -71,10 +71,7 @@ phases:
             "dest": ["1.13.1-gpu-py3", "1.13-gpu-py3", "1.13.1-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version 1.13.1 --processor cpu",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor gpu",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version 1.13.1 --processor gpu"
+            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 32 --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu,gpu --py-version 2,3",
           ]
         }]' > deployments.json
 

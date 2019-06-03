@@ -20,6 +20,7 @@ import pytest
 from sagemaker.tensorflow import serving, TensorFlow
 
 from test.integration import RESOURCE_PATH
+from test.integration.sagemaker.utils import processor, py_version  # noqa: F401
 
 
 logging.basicConfig(level=logging.DEBUG)
