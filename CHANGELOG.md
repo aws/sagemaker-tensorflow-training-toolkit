@@ -7,7 +7,7 @@
  * Parameterize processor and py_version for test runs
  * use unique name for integration job hyperparameter tuning job
  * fix flake8 errors and add flake8 run in buildspec.yml
- * skip gpu SageMaker test in regions with limited amount of p2/3 i…
+ * skip gpu SageMaker test in regions with limited amount of p2/3 instances
  * skip setup on second remote run
  * add setup file back
  * add branch name to remote gpu test run command
