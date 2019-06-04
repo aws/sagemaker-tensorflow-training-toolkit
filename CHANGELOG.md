@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.2 (2019-06-04)
+
+### Bug fixes and other changes
+
+ * resolve pluggy version conflict
+
 ## v2.0.1 (2019-06-03)
 
 ### Bug fixes and other changes
