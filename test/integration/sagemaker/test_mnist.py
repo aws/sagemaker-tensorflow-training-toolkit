@@ -18,7 +18,6 @@ import boto3
 from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_tensorflow_container.training import SAGEMAKER_PARAMETER_SERVER_ENABLED
 from utils import processor, py_version, unique_name_from_base  # noqa: F401
 
 
@@ -63,7 +62,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
-                           hyperparameters={SAGEMAKER_PARAMETER_SERVER_ENABLED: True},
+                           hyperparameters={'sagemaker_parameter_server_enabled': True},
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
