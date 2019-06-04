@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.0.1 (2019-06-03)
+
+### Bug fixes and other changes
+
+ * remove non-ascii character in CHANGELOG
+ * remove extra comma in buildspec-release.yml
+
 ## v2.0.0 (2019-06-03)
 
 ### Bug fixes and other changes
