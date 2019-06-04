@@ -33,59 +33,74 @@ phases:
       # run unit tests
       - tox -e py36,py27 test/unit
 
+      # Create pip archive
+      - build_dir="docker/$FRAMEWORK_VERSION"
+      - build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
+      - python3 setup.py sdist
+      - tar_name=$(ls dist)
+      - cp dist/$tar_name $build_dir
+
+      # build cpu image
+      - cpu_dockerfile="Dockerfile.cpu"
+
+      # Download framework binary
+      - cpu_fw_binary=$(basename $CPU_FRAMEWORK_BINARY)
+      - wget -O $build_dir/$cpu_fw_binary $CPU_FRAMEWORK_BINARY
+
+      - CPU_TAG="$FRAMEWORK_VERSION-cpu-py$CPU_PY_VERSION-$build_id"
+
+      - cd $build_dir
+      - docker build -f $cpu_dockerfile --build-arg framework_support_installable=$tar_name --build-arg py_version=$CPU_PY_VERSION --build-arg framework_installable=$cpu_fw_binary -t $PREPROD_IMAGE:$CPU_TAG .
+      - cd ../../
+
+      # build gpu image
+      - gpu_dockerfile="Dockerfile.gpu"
+
+      # Download framework binary
+      - gpu_fw_binary=$(basename $GPU_FRAMEWORK_BINARY)
+      - wget -O $build_dir/$gpu_fw_binary $GPU_FRAMEWORK_BINARY
+
+      - GPU_TAG="$FRAMEWORK_VERSION-gpu-py$GPU_PY_VERSION-$build_id"
+
+      - cd $build_dir
+      - docker build -f $gpu_dockerfile --build-arg framework_support_installable=$tar_name --build-arg py_version=$GPU_PY_VERSION --build-arg framework_installable=$gpu_fw_binary -t $PREPROD_IMAGE:$GPU_TAG .
+      - cd ../../
+
+      # push images to ecr
+      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker push $PREPROD_IMAGE:$CPU_TAG
+      - docker push $PREPROD_IMAGE:$GPU_TAG
+
+      # launch remote gpu instance
+      - instance_type='p2.xlarge'
+      - create-key-pair
+      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
+
       # run cpu integration tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          # Create pip archive
-          build_dir="docker/$FRAMEWORK_VERSION"
-          build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
-          python3 setup.py sdist
-          tar_name=$(ls dist)
-          cp dist/$tar_name $build_dir
-
-          ################################ Build CPU image and run local CPU integtration tests ################################
-          cpu_fw_binary=$(basename $CPU_FRAMEWORK_BINARY)
-          wget -O $build_dir/$cpu_fw_binary $CPU_FRAMEWORK_BINARY
-
-          CPU_TAG="$FRAMEWORK_VERSION-cpu-py$CPU_PY_VERSION-$build_id"
-          cpu_dockerfile="Dockerfile.cpu"
-          cd $build_dir
-          docker build -f $cpu_dockerfile --build-arg framework_support_installable=$tar_name --build-arg py_version=$CPU_PY_VERSION --build-arg framework_installable=$cpu_fw_binary -t $PREPROD_IMAGE:$CPU_TAG .
-          cd ../../
-
           pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY_VERSION --processor cpu
+        else
+          echo "skipping cpu integration tests"
+        fi
 
-          ################################ Build GPU image and run local GPU integtration tests ################################
-          gpu_fw_binary=$(basename $GPU_FRAMEWORK_BINARY)
-          wget -O $build_dir/$gpu_fw_binary $GPU_FRAMEWORK_BINARY
-
-          gpu_dockerfile="Dockerfile.gpu"
-          GPU_TAG="$FRAMEWORK_VERSION-gpu-py$GPU_PY_VERSION-$build_id"
-          cd $build_dir
-          docker build -f $gpu_dockerfile --build-arg framework_support_installable=$tar_name --build-arg py_version=$GPU_PY_VERSION --build-arg framework_installable=$gpu_fw_binary -t $PREPROD_IMAGE:$GPU_TAG .
-          cd ../../
-          
-          # Upload images here because remote gpu tests pulls the gpu image from ecr
-          $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-          docker push $PREPROD_IMAGE:$CPU_TAG
-          docker push $PREPROD_IMAGE:$GPU_TAG
-
-          # launch remote gpu instance
-          instance_type='p2.xlarge'
-          create-key-pair
-          launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
-
-          # run gpu integration tests
+      # run gpu integration tests
+      - |
+        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
           printf "$SETUP_CMDS" > $SETUP_FILE
           cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY_VERSION --processor gpu"
           remote-test --github-repo $GITHUB_REPO --test-cmd "$cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
+        else
+          echo "skipping gpu integration tests"
+        fi
 
-          ################################ Run SageMaker integtration tests ################################
-
+      # run sagemaker tests
+      - |
+        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
           pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG --py-version $CPU_PY_VERSION --processor cpu
           pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG --py-version $GPU_PY_VERSION --processor gpu
         else
-          echo "skipping all integration tests"
+          echo "skipping sagemaker tests"
         fi
 
     finally:
