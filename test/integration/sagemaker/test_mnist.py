@@ -14,6 +14,8 @@ from __future__ import absolute_import
 
 import os
 
+import pytest
+
 import boto3
 from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
@@ -21,6 +23,7 @@ from six.moves.urllib.parse import urlparse
 from utils import processor, py_version, unique_name_from_base  # noqa: F401
 
 
+@pytest.mark.deploytest
 def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
