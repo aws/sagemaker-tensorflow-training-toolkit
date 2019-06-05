@@ -22,7 +22,7 @@ from six.moves.urllib.parse import urlparse
 from utils import processor, py_version, unique_name_from_base  # noqa: F401
 
 
-@pytest.mark.deploytest
+@pytest.mark.deploy_test
 def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
