@@ -19,7 +19,7 @@ import pytest
 from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
-from utils import processor, py_version, unique_name_from_base  # noqa: F401
+from test.integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
 
 
 @pytest.mark.deploy_test
