@@ -14,9 +14,8 @@ from __future__ import absolute_import
 
 import os
 
-import pytest
-
 import boto3
+import pytest
 from sagemaker.tensorflow import TensorFlow
 from six.moves.urllib.parse import urlparse
 
