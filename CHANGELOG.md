@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.3 (2019-06-06)
+
+### Bug fixes and other changes
+
+ * only run one test during deployment
+
 ## v2.0.2 (2019-06-04)
 
 ### Bug fixes and other changes
