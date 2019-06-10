@@ -36,7 +36,7 @@ setup(
 
     install_requires=['sagemaker-container-support'],
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker', 'tensorflow', 'tensorflow-serving-api']
+        'test': ['tox', 'flake8', 'pytest==4.5.0', 'pytest-cov', 'pytest-xdist', 'mock',
+                 'pluggy==0.11', 'sagemaker', 'tensorflow', 'tensorflow-serving-api']
     },
 )
