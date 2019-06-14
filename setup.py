@@ -53,7 +53,7 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['sagemaker-containers>=2.4.6', 'numpy', 'scipy', 'sklearn',
+    install_requires=['sagemaker-containers>=2.4.10', 'numpy', 'scipy', 'sklearn',
                       'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest==4.4.1', 'pytest-cov', 'pytest-xdist', 'mock',
