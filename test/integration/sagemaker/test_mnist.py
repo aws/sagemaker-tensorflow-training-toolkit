@@ -19,14 +19,14 @@ import pytest
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
 from six.moves.urllib.parse import urlparse
-from timeout import timeout
 
 from test.integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
+from timeout import timeout
 
 
 @pytest.mark.deploy_test
 def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
+    resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
@@ -44,7 +44,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
 
 
 def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, framework_version):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
+    resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
@@ -113,7 +113,7 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framewor
 
 
 def test_tuning(sagemaker_session, ecr_image, instance_type, framework_version):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
+    resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
 
     estimator = TensorFlow(entry_point=script,
