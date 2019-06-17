@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.0.5 (2019-06-17)
+
+### Bug fixes and other changes
+
+ * bump sagemaker-containers version to 2.4.10
+ * add hyperparameter tuning test
+
 ## v2.0.4 (2019-06-06)
 
 ### Bug fixes and other changes
