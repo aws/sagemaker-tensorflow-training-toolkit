@@ -75,7 +75,7 @@ ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 COPY $framework_support_installable .
 ARG TF_URL="https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/AmazonLinux/cpu/latest-patch-s3_testcopy.patch/tensorflow-1.13.1-cp36-cp36m-linux_x86_64.whl"
 
-RUN ${PIP} --no-cache-dir install  --upgrade pip setuptools
+RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
@@ -98,7 +98,7 @@ RUN ${PIP} install --no-cache-dir -U \
     # the library version to be overwritten
     ${PIP} install --force-reinstall --no-cache-dir -U \
            ${TF_URL} \
-           horovod && \
+           horovod==0.16.4 && \
     ${PIP} install --no-cache-dir -U $framework_support_installable && \
            rm -f $framework_support_installable && \
     ${PIP} uninstall -y --no-cache-dir \
