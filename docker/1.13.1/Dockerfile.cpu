@@ -73,7 +73,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.U
 
 ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 COPY $framework_support_installable .
-ARG TF_URL="https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/AmazonLinux/cpu/latest-patch-s3_testcopy.patch/tensorflow-1.13.1-cp36-cp36m-linux_x86_64.whl"
+ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.13/AmazonLinux/cpu/latest-patch-latest-patch/tensorflow-1.13.1-cp36-cp36m-linux_x86_64.whl"
 
 RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 
