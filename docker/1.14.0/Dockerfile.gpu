@@ -119,18 +119,18 @@ ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 COPY $framework_support_installable .
 
 RUN ${PIP} install --no-cache-dir -U \
-    numpy==1.16.2 \
-    scipy==1.2.1 \
+    numpy==1.16.4 \
+    scipy==1.2.2 \
     scikit-learn==0.20.3 \
     pandas==0.24.2 \
-    Pillow==5.4.1 \
+    Pillow==6.1.0 \
     h5py==2.9.0 \
-    keras_applications==1.0.7 \
-    keras_preprocessing==1.0.9 \
-    requests==2.21.0 \
+    keras_applications==1.0.8 \
+    keras_preprocessing==1.1.0 \
+    requests==2.22.0 \
     keras==2.2.4 \
-    awscli==1.16.130 \
-    mpi4py==3.0.1 \
+    awscli==1.16.196 \
+    mpi4py==3.0.2 \
     "sagemaker-tensorflow>=1.13,<1.14" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
@@ -138,8 +138,7 @@ RUN ${PIP} install --no-cache-dir -U \
     && ${PIP} install --no-cache-dir -U $framework_support_installable && \
            rm -f $framework_support_installable \
     && ${PIP} uninstall -y --no-cache-dir \
-    markdown \
-    tensorboard
+    markdown
 
 
 # Pin GCC to 4.9 (priority 200) to compile correctly against TensorFlow, PyTorch, and MXNet with horovod
