@@ -131,7 +131,7 @@ RUN ${PIP} install --no-cache-dir -U \
     keras==2.2.4 \
     awscli==1.16.196 \
     mpi4py==3.0.2 \
-    "sagemaker-tensorflow>=1.13,<1.14" \
+    "sagemaker-tensorflow>=1.14,<1.15" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
     && ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
