@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.6 (2019-08-01)
+
+### Bug fixes and other changes
+
+ * fix horovod mnist script
+
 ## v2.0.5 (2019-06-17)
 
 ### Bug fixes and other changes
