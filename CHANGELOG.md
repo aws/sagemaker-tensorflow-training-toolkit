@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.7 (2019-08-15)
+
+### Bug fixes and other changes
+
+ * update no-p2 and no-p3 regions.
+
 ## v2.0.6 (2019-08-01)
 
 ### Bug fixes and other changes
