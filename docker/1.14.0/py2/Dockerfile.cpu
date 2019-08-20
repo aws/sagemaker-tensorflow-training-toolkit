@@ -71,7 +71,9 @@ RUN apt-get update && apt-get install -y \
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
+ARG sagemaker_tensorflow_extensions=sagemaker_tensorflow-1.14.0.1.0.0-cp27-cp27mu-manylinux1_x86_64.whl
 COPY $framework_support_installable .
+COPY $sagemaker_tensorflow_extensions .
 ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.14/AmazonLinux/cpu/final/tensorflow-1.14.0-cp27-cp27mu-linux_x86_64.whl"
 
 # Pin GCC to 4.9 (priority 200) to compile correctly against TensorFlow, PyTorch, and MXNet with horovod
@@ -103,15 +105,15 @@ RUN ${PIP} install --no-cache-dir -U \
             keras==2.2.4 \
             awscli==1.16.196 \
             mpi4py==3.0.2 \
-            # "sagemaker-tensorflow>=1.14,<1.15" \ # we will uncomment this after sagemaker-tensorflow-extensions py2 release is unblocked
+            $sagemaker_tensorflow_extensions \
             # Let's install TensorFlow separately in the end to avoid
             # the library version to be overwritten
-            && ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
-            && ${PIP} install --no-cache-dir -U $framework_support_installable && \
-                rm -f $framework_support_installable \
-            && ${PIP} install --no-cache-dir -U horovod==0.16.4 \
-            && ${PIP} uninstall -y --no-cache-dir \
-            markdown
+    && ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
+    && ${PIP} install --no-cache-dir -U $framework_support_installable && \
+        rm -f $framework_support_installable \
+    && ${PIP} install --no-cache-dir -U horovod==0.16.4 \
+    && ${PIP} uninstall -y --no-cache-dir \
+        markdown
 
 # Remove GCC pinning
 RUN update-alternatives --remove gcc /usr/bin/gcc-4.9 && \

@@ -108,7 +108,9 @@ RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
 
 ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
+ARG sagemaker_tensorflow_extensions=sagemaker_tensorflow-1.14.0.1.0.0-cp27-cp27mu-manylinux1_x86_64.whl
 COPY $framework_support_installable .
+COPY $sagemaker_tensorflow_extensions .
 
 RUN ${PIP} install --no-cache-dir -U \
             numpy==1.16.4 \
@@ -123,7 +125,7 @@ RUN ${PIP} install --no-cache-dir -U \
             keras==2.2.4 \
             awscli==1.16.196 \
             mpi4py==3.0.2 \
-            # "sagemaker-tensorflow>=1.14,<1.15" \ # we will uncomment this after sagemaker-tensorflow-extensions py2 release is unblocked
+            $sagemaker_tensorflow_extensions \
             # Let's install TensorFlow separately in the end to avoid
             # the library version to be overwritten
             && ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
