@@ -81,7 +81,7 @@ RUN pip install --no-cache-dir -U \
     # the library version to be overwritten
     pip install --force-reinstall --no-cache-dir -U \
         tensorflow-1.13.1-py2.py3-none-any.whl \
-        horovod && \
+        horovod==0.16.4 && \
     pip install --no-cache-dir -U $framework_support_installable && \
     rm -f tensorflow-1.13.1-py2.py3-none-any.whl && \
     rm -f $framework_support_installable && \
