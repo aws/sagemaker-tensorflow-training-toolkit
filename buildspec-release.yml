@@ -16,7 +16,7 @@ phases:
   build:
     commands:
       # prepare the release (update versions, changelog etc.)
-      - git-release --prepare
+      - git-release --min-version 2.0.0 --prepare
 
       # run linter
       - tox -e flake8
@@ -54,6 +54,8 @@ phases:
       - py3_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --docker-base-name $base_name --framework-version $FRAMEWORK_VERSION --processor gpu"
       - remote-test --github-repo sagemaker-tensorflow-container --branch script-mode --test-cmd "$py3_cmd" --skip-setup
 
+      - IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 24 --region $AWS_DEFAULT_REGION --account-id 142577830533 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version $FRAMEWORK_VERSION --processor cpu,gpu --py-version 2,3
+
       - |
         echo '[{
           "repository": "sagemaker-tensorflow-scriptmode",
@@ -71,10 +73,8 @@ phases:
             "dest": ["1.13.1-gpu-py3", "1.13-gpu-py3", "1.13.1-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version 1.13.1 --processor cpu",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor gpu",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --region {region} --account-id 520713654638 --docker-base-name sagemaker-tensorflow-scriptmode --py-version 2 --framework-version 1.13.1 --processor gpu"
+            "IGNORE_COVERAGE=- tox -e py36 -- -m deploy_test test/integration/sagemaker -n 4 --region {region} --account-id {aws-id} --instance-type {cpu-instance-type} --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor cpu --py-version 2,3",
+            "IGNORE_COVERAGE=- tox -e py36 -- -m deploy_test test/integration/sagemaker -n 4 --region {region} --account-id {aws-id} --docker-base-name sagemaker-tensorflow-scriptmode --framework-version 1.13.1 --processor gpu --py-version 2,3"
           ]
         }]' > deployments.json
 

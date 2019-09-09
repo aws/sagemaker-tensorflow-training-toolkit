@@ -17,6 +17,8 @@ import os
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
 
+from test.integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
+
 
 def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
@@ -36,9 +38,8 @@ def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance
                                 hyperparameter_ranges={'arbitrary_value': IntegerParameter(0, 1)},
                                 metric_definitions=[{'Name': 'accuracy', 'Regex': 'accuracy=([01])'}],
                                 max_jobs=1,
-                                max_parallel_jobs=1,
-                                base_tuning_job_name='test-tf-tuning-model-dir')
+                                max_parallel_jobs=1)
 
     # User script has logic to check for the correct model_dir
-    tuner.fit()
+    tuner.fit(job_name=unique_name_from_base('test-tf-model-dir', max_length=32))
     tuner.wait()
