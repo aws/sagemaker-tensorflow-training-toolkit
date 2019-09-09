@@ -35,9 +35,10 @@ def _s3_region(job_region, model_dir):
         # the region this container is currently running in.
         parsed_url = urlparse(model_dir)
         bucket_name = parsed_url.netloc
-
-        bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
-
-        return bucket_location or job_region
+        bucket_location = None
+        try:
+            bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
+        finally:
+            return bucket_location or job_region
     else:
         return job_region

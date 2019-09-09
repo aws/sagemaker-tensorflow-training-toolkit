@@ -46,3 +46,15 @@ def test_configure_local_dir():
     assert os.environ['S3_REGION'] == JOB_REGION
     assert os.environ['TF_CPP_MIN_LOG_LEVEL'] == '1'
     assert os.environ['S3_USE_HTTPS'] == '1'
+
+
+@patch('boto3.client')
+def test_configure_network_isolation(client):
+    s3_client = client('s3', region_name=JOB_REGION)
+    s3_client.get_bucket_location.side_effect = ValueError()
+
+    s3_utils.configure(MODEL_DIR, JOB_REGION)
+
+    assert os.environ['S3_REGION'] == JOB_REGION
+    assert os.environ['TF_CPP_MIN_LOG_LEVEL'] == '1'
+    assert os.environ['S3_USE_HTTPS'] == '1'
