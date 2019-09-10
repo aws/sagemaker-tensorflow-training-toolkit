@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends --allow-unauthe
         libcudnn7=7.4.1.5-1+cuda10.0 \
         # TensorFlow doesn't require libnccl anymore but Open MPI still depends on it
         libnccl2 \
+        # TensorFlow/Horovod requires GCC 4.8 to compile
+        g++-4.8 \
         libnccl-dev \
         libfreetype6-dev \
         libhdf5-serial-dev \
@@ -43,6 +45,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends --allow-unauthe
     rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* && \
     rm /usr/lib/x86_64-linux-gnu/libnvparsers* && \
     rm -rf /var/lib/apt/lists/*
+
+# TensorFlow/Horovod requires GCC 4.8 to compile
+ENV CXX=g++-4.8
 
 ###########################################################################
 # Horovod & its dependencies
