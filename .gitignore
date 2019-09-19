@@ -4,3 +4,7 @@ dist
 .DS_Store
 .idea/
 *.iml
+**/.ipynb_checkpoints
+**/.python-version
+.tox
+*~
