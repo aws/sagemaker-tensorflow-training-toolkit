@@ -7,3 +7,4 @@ dist
 **/.ipynb_checkpoints
 **/.python-version
 .tox
+*~

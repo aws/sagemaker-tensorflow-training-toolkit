@@ -18,12 +18,14 @@ import tarfile
 import pytest
 from sagemaker.tensorflow import TensorFlow
 
+from test.integration.utils import processor, py_version  # noqa: F401
+
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 TF_CHECKPOINT_FILES = ['graph.pbtxt', 'model.ckpt-0.index', 'model.ckpt-0.meta']
 
 
-@pytest.fixture
-def py_full_version(py_version):
+@pytest.fixture  # noqa: F811
+def py_full_version(py_version):  # noqa: F811
     if py_version == '2':
         return '2.7'
     else:
