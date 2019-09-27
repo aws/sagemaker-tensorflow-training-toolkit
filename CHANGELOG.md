@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.0 (2019-05-22)
+
+### Bug fixes and other changes
+
 ## v2.0.7 (2019-08-15)
 
 ### Bug fixes and other changes

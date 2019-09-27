@@ -197,7 +197,7 @@ def test_build_tf_config():
 def test_build_tf_config_error():
     with pytest.raises(ValueError) as error:
         training._build_tf_config([HOST1], HOST1, ps_task=True)
-    assert 'Cannot have a ps task if there are no parameter servers in the cluster' in str(error)
+    assert 'Cannot have a ps task if there are no parameter servers in the cluster' in str(error.value)
 
 
 @patch('sagemaker_tensorflow_container.training.logger')

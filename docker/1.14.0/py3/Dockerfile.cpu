@@ -12,15 +12,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     vim \
+    gcc-4.9 \
+    g++-4.9 \
+    gcc-4.9-base \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
     cd /tmp/openmpi && \
-    curl -fSsL -O https://www.open-mpi.org/software/ompi/v3.1/downloads/openmpi-3.1.2.tar.gz && \
-    tar zxf openmpi-3.1.2.tar.gz && \
-    cd openmpi-3.1.2 && \
+    curl -fSsL -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.1.tar.gz && \
+    tar zxf openmpi-4.0.1.tar.gz && \
+    cd openmpi-4.0.1 && \
     ./configure --enable-orterun-prefix-by-default && \
     make -j $(nproc) all && \
     make install && \
@@ -73,7 +76,18 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.U
 
 ARG framework_support_installable=sagemaker_tensorflow_container-2.0.0.tar.gz
 COPY $framework_support_installable .
-ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.13/AmazonLinux/cpu/latest-patch-latest-patch/tensorflow-1.13.1-cp36-cp36m-linux_x86_64.whl"
+ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.14/AmazonLinux/cpu/final/tensorflow-1.14.0-cp36-cp36m-linux_x86_64.whl"
+
+# Pin GCC to 4.9 (priority 200) to compile correctly against TensorFlow, PyTorch, and MXNet with horovod
+# Backup existing GCC installation as priority 100, so that it can be recovered later.
+RUN update-alternatives --install /usr/bin/gcc gcc $(readlink -f $(which gcc)) 100 && \
+    update-alternatives --install /usr/bin/x86_64-linux-gnu-gcc x86_64-linux-gnu-gcc $(readlink -f $(which gcc)) 100 && \
+    update-alternatives --install /usr/bin/g++ g++ $(readlink -f $(which g++)) 100 && \
+    update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ $(readlink -f $(which g++)) 100
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 200 && \
+    update-alternatives --install /usr/bin/x86_64-linux-gnu-gcc x86_64-linux-gnu-gcc /usr/bin/gcc-4.9 200 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 200 && \
+    update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/g++-4.9 200
 
 RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 
@@ -81,19 +95,19 @@ RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
 
 RUN ${PIP} install --no-cache-dir -U \
-           numpy==1.16.2 \
-           scipy==1.2.1 \
+           numpy==1.16.4 \
+           scipy==1.2.2 \
            scikit-learn==0.20.3 \
            pandas==0.24.2 \
-           Pillow==5.4.1 \
+           Pillow==6.1.0 \
            h5py==2.9.0 \
-           keras_applications==1.0.7 \
-           keras_preprocessing==1.0.9 \
+           keras_applications==1.0.8 \
+           keras_preprocessing==1.1.0 \
            keras==2.2.4 \
-           requests==2.21.0 \
-           awscli==1.16.130 \
-           mpi4py==3.0.1 \
-           "sagemaker-tensorflow>=1.13,<1.14" && \
+           requests==2.22.0 \
+           awscli==1.16.196 \
+           mpi4py==3.0.2 \
+           "sagemaker-tensorflow>=1.14,<1.15" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
     ${PIP} install --force-reinstall --no-cache-dir -U \
@@ -102,8 +116,14 @@ RUN ${PIP} install --no-cache-dir -U \
     ${PIP} install --no-cache-dir -U $framework_support_installable && \
            rm -f $framework_support_installable && \
     ${PIP} uninstall -y --no-cache-dir \
-           markdown \
-           tensorboard
+           markdown
+
+# Remove GCC pinning
+RUN update-alternatives --remove gcc /usr/bin/gcc-4.9 && \
+    update-alternatives --remove x86_64-linux-gnu-gcc /usr/bin/gcc-4.9 && \
+    update-alternatives --remove g++ /usr/bin/g++-4.9 && \
+    update-alternatives --remove x86_64-linux-gnu-g++ /usr/bin/g++-4.9
+
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 
