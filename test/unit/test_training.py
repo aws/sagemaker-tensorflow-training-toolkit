@@ -86,6 +86,7 @@ def test_single_machine(run_module, single_machine_training_env):
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
     run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
                                   single_machine_training_env.to_env_vars(),
+                                  capture_error=True,
                                   runner=runner.ProcessRunnerType)
 
 
@@ -96,6 +97,7 @@ def test_train_horovod(run_module, single_machine_training_env):
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
     run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
                                   single_machine_training_env.to_env_vars(),
+                                  capture_error=True,
                                   runner=runner.MPIRunnerType)
 
 
@@ -126,7 +128,8 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                 '"task": {"index": 0, "type": "master"}}'
 
     run.assert_called_with('s3://my/bucket', 'script_name', MODEL_DIR_CMD_LIST,
-                           {'TF_CONFIG': tf_config})
+                           {'TF_CONFIG': tf_config},
+                           capture_error=True)
 
 
 @pytest.mark.skipif(sys.version_info.major != 3,
@@ -158,7 +161,8 @@ def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_trai
                 '"task": {"index": 0, "type": "worker"}}'
 
     run.assert_called_with('s3://my/bucket', 'script_name', MODEL_DIR_CMD_LIST,
-                           {'TF_CONFIG': tf_config})
+                           {'TF_CONFIG': tf_config},
+                           capture_error=True)
 
 
 @patch('sagemaker_containers.beta.framework.entry_point.run')
@@ -169,7 +173,9 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
     run.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
-                           distributed_training_env.to_env_vars(), runner=runner.ProcessRunnerType)
+                           distributed_training_env.to_env_vars(),
+                           capture_error=True,
+                           runner=runner.ProcessRunnerType)
 
 
 def test_build_tf_config():
