@@ -169,7 +169,7 @@ def _log_model_missing_warning(model_dir):
                 pb_file_exists = True
                 path, direct_parent_dir = os.path.split(dirpath)
                 if not str.isdigit(direct_parent_dir):
-                    logger.warn('Your model will NOT be servable with SageMaker TensorFlow Serving containers.'
+                    logger.warn('Your model will NOT be servable with SageMaker TensorFlow Serving containers. '
                                 'The SavedModel bundle is under directory \"{}\", not a numeric name.'
                                 .format(direct_parent_dir))
 
@@ -177,10 +177,10 @@ def _log_model_missing_warning(model_dir):
         logger.warn('No model artifact is saved under path {}.'
                     ' Your training job will not save any model files to S3.\n'
                     'For details of how to construct your training script see:\n'
-                    'https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/tensorflow#adapting-your-local-tensorflow-script' # noqa
+                    'https://sagemaker.readthedocs.io/en/stable/using_tf.html#adapting-your-local-tensorflow-script'
                     .format(model_dir))
     elif not pb_file_exists:
-        logger.warn('Your model will NOT be servable with SageMaker TensorFlow Serving container.'
+        logger.warn('Your model will NOT be servable with SageMaker TensorFlow Serving container. '
                     'The model artifact was not saved in the TensorFlow SavedModel directory structure:\n'
                     'https://www.tensorflow.org/guide/saved_model#structure_of_a_savedmodel_directory')
 
