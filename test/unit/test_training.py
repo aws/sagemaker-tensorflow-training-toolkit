@@ -209,14 +209,14 @@ def test_log_model_missing_warning_no_model(logger):
     logger.warn.assert_called_with('No model artifact is saved under path {}.'
                                    ' Your training job will not save any model files to S3.\n'
                                    'For details of how to construct your training script see:\n'
-                                   'https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/tensorflow#adapting-your-local-tensorflow-script' # noqa
+                                   'https://sagemaker.readthedocs.io/en/stable/using_tf.html#adapting-your-local-tensorflow-script'  # noqa
                                    .format(path))
 
 
 @patch('sagemaker_tensorflow_container.training.logger')
 def test_log_model_missing_warning_wrong_format(logger):
     training._log_model_missing_warning(os.path.join(RESOURCE_PATH, 'test_dir_wrong_model'))
-    logger.warn.assert_called_with('Your model will NOT be servable with SageMaker TensorFlow Serving container.'
+    logger.warn.assert_called_with('Your model will NOT be servable with SageMaker TensorFlow Serving container. '
                                    'The model artifact was not saved in the TensorFlow '
                                    'SavedModel directory structure:\n'
                                    'https://www.tensorflow.org/guide/saved_model#structure_of_a_savedmodel_directory')
@@ -225,7 +225,7 @@ def test_log_model_missing_warning_wrong_format(logger):
 @patch('sagemaker_tensorflow_container.training.logger')
 def test_log_model_missing_warning_wrong_parent_dir(logger):
     training._log_model_missing_warning(os.path.join(RESOURCE_PATH, 'test_dir_wrong_parent_dir'))
-    logger.warn.assert_called_with('Your model will NOT be servable with SageMaker TensorFlow Serving containers.'
+    logger.warn.assert_called_with('Your model will NOT be servable with SageMaker TensorFlow Serving containers. '
                                    'The SavedModel bundle is under directory \"{}\", not a numeric name.'
                                    .format('not-digit'))
 
