@@ -16,7 +16,7 @@ phases:
   pre_build:
     commands:
       - start-dockerd
-      - ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
+      - ACCOUNT=$(aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text)
       - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
       - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
       - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
