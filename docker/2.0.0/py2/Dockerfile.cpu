@@ -6,7 +6,8 @@ LABEL maintainer="Amazon AI"
 ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN true
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     software-properties-common \
     build-essential \
     openssh-client \
@@ -16,8 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     vim \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+    zlib1g-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
@@ -41,8 +42,9 @@ RUN echo "hwloc_base_binding_policy = none" >> /usr/local/etc/openmpi-mca-params
     echo "rmaps_base_mapping_policy = slot" >> /usr/local/etc/openmpi-mca-params.conf
 
 ENV LD_LIBRARY_PATH=/usr/local/openmpi/lib:$LD_LIBRARY_PATH
-
 ENV PATH /usr/local/openmpi/bin/:$PATH
+
+ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
@@ -57,7 +59,9 @@ RUN mkdir -p /root/.ssh/ && \
 # Set environment variables for MKL
 # For more about MKL with TensorFlow see:
 # https://www.tensorflow.org/performance/performance_guide#tensorflow_with_intel%C2%AE_mkl_dnn
-ENV KMP_AFFINITY=granularity=fine,compact,1,0 KMP_BLOCKTIME=1 KMP_SETTINGS=0
+ENV KMP_AFFINITY=granularity=fine,compact,1,0 
+ENV KMP_BLOCKTIME=1 
+ENV KMP_SETTINGS=0
 
 WORKDIR /
 
@@ -65,45 +69,53 @@ ARG PYTHON=python
 ARG PYTHON_PIP=python-pip
 ARG PIP=pip
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     ${PYTHON} \
     ${PYTHON_PIP}
 
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1 
+ENV PYTHONUNBUFFERED=1 
+ENV PYTHONIOENCODING=UTF-8 
+ENV LANG=C.UTF-8 
+ENV LC_ALL=C.UTF-8
 
-ARG framework_support_installable=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
-ARG sagemaker_tensorflow_extensions=tensorflow-2.0.0-cp27-cp27mu-manylinux2010_x86_64.whl
-COPY $framework_support_installable .
-COPY $sagemaker_tensorflow_extensions .
+ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
+ARG THENSORFLOW_WHL=tensorflow-2.0.0-cp27-cp27mu-manylinux2010_x86_64.whl
+COPY $FRAMEWORK_SUPPORT_INSTALLABLE .
+COPY $THENSORFLOW_WHL .
 
-RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
+RUN ${PIP} --no-cache-dir install --upgrade \
+    pip \
+    setuptools
 
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
 
 RUN ${PIP} install --no-cache-dir -U \
-            numpy==1.16.4 \
-            scipy==1.2.2 \
-            scikit-learn==0.20.3 \
-            pandas==0.24.2 \
-            Pillow==6.1.0 \
-            h5py==2.9.0 \
-            keras_applications==1.0.8 \
-            keras_preprocessing==1.1.0 \
-            requests==2.22.0 \
-            keras==2.2.4 \
-            awscli==1.16.196 \
-            mpi4py==3.0.2 \
-            $sagemaker_tensorflow_extensions \
-            # Let's install TensorFlow separately in the end to avoid
-            # the library version to be overwritten
-    # && ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
-    && ${PIP} install --no-cache-dir -U $framework_support_installable && \
-        rm -f $framework_support_installable \
-    && ${PIP} install --no-cache-dir -U horovod==0.18.2 \
-    && ${PIP} uninstall -y --no-cache-dir \
-        markdown
-
-ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
+    numpy==1.16.5 \
+    scipy==1.2.2 \
+    scikit-learn==0.20.3 \
+    pandas==0.24.2 \
+    Pillow==6.1.0 \
+    h5py==2.9.0 \
+    keras_applications==1.0.8 \
+    keras_preprocessing==1.1.0 \
+    requests==2.22.0 \
+    keras==2.2.4 \
+    awscli \
+    mpi4py==3.0.2 && \
+    # Let's install TensorFlow separately in the end to avoid
+    # the library version to be overwritten
+    # ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
+    ${PIP} install --force-reinstall --no-cache-dir -U \
+    $THENSORFLOW_WHL && \
+    ${PIP} install --no-cache-dir -U \
+    $FRAMEWORK_SUPPORT_INSTALLABLE && \
+    rm -f $FRAMEWORK_SUPPORT_INSTALLABLE && \
+    ${PIP} install --no-cache-dir -U \
+    horovod==0.18.2 && \
+    ${PIP} uninstall -y --no-cache-dir \
+    markdown
 
 CMD ["bin/bash"]
