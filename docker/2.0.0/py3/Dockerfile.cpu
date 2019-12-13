@@ -14,9 +14,21 @@ ENV KMP_AFFINITY=granularity=fine,compact,1,0
 ENV KMP_BLOCKTIME=1 
 ENV KMP_SETTINGS=0
 
+ENV PYTHONDONTWRITEBYTECODE=1 
+ENV PYTHONUNBUFFERED=1 
+ENV PYTHONIOENCODING=UTF-8 
+ENV LANG=C.UTF-8 
+ENV LC_ALL=C.UTF-8
+
 ARG PYTHON=python3
 ARG PYTHON_PIP=python3-pip
 ARG PIP=pip3
+
+# Use TENSORFLOW_WHL instead of TF_URL before releasing
+# ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.14/AmazonLinux/cpu/final/tensorflow-1.14.0-cp36-cp36m-linux_x86_64.whl"
+
+ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
+ARG TENSORFLOW_WHL=tensorflow-2.0.0-cp36-cp36m-manylinux2010_x86_64.whl
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
@@ -70,21 +82,8 @@ RUN mkdir -p /root/.ssh/ \
 
 WORKDIR /
 
-###########################################################################
-# Python won’t try to write .pyc or .pyo files on the import of source modules
-ENV PYTHONDONTWRITEBYTECODE=1 
-ENV PYTHONUNBUFFERED=1 
-ENV PYTHONIOENCODING=UTF-8 
-ENV LANG=C.UTF-8 
-ENV LC_ALL=C.UTF-8
-
-# Use THENSORFLOW_WHL instead of TF_URL before releasing
-# ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.14/AmazonLinux/cpu/final/tensorflow-1.14.0-cp36-cp36m-linux_x86_64.whl"
-
-ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
-ARG THENSORFLOW_WHL=tensorflow-2.0.0-cp36-cp36m-manylinux2010_x86_64.whl
 COPY $FRAMEWORK_SUPPORT_INSTALLABLE .
-COPY $THENSORFLOW_WHL .
+COPY $TENSORFLOW_WHL .
 
 RUN ${PIP} --no-cache-dir install --upgrade \
     pip \
@@ -107,11 +106,11 @@ RUN ${PIP} install --no-cache-dir -U \
     requests==2.22.0 \
     awscli==1.16.196 \
     mpi4py==3.0.2 \
-    # "sagemaker-tensorflow>=1.14,<1.15" && \
+    "sagemaker-tensorflow>=2.0,<2.1" && \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
  && ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
-    $THENSORFLOW_WHL \
+    $TENSORFLOW_WHL \
     horovod==0.18.2 \
  && ${PIP} install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \

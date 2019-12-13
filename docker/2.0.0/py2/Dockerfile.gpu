@@ -7,6 +7,19 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN true
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 
+ENV PYTHONDONTWRITEBYTECODE=1 
+ENV PYTHONUNBUFFERED=1 
+ENV PYTHONIOENCODING=UTF-8 
+ENV LANG=C.UTF-8 
+ENV LC_ALL=C.UTF-8
+
+ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
+ARG TENSORFLOW_WHL=tensorflow_gpu-2.0.0-cp27-cp27mu-manylinux2010_x86_64.whl
+
+ARG PYTHON=python
+ARG PYTHON_PIP=python-pip
+ARG PIP=pip
+
 RUN apt-get update && apt-get install -y --no-install-recommends --allow-unauthenticated \
     ca-certificates \
     cuda-command-line-tools-10-0 \
@@ -61,10 +74,6 @@ RUN mkdir /tmp/openmpi \
  && ldconfig \
  && rm -rf /tmp/openmpi
 
-ARG PYTHON=python
-ARG PYTHON_PIP=python-pip
-ARG PIP=pip
-
 RUN apt-get update && apt-get install -y \
     ${PYTHON} \
     ${PYTHON_PIP}
@@ -97,14 +106,6 @@ RUN mkdir -p /root/.ssh/ \
  && cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys \
  && printf "Host *\n  StrictHostKeyChecking no\n" >> /root/.ssh/config
 
-###########################################################################
-# Python won’t try to write .pyc or .pyo files on the import of source modules
-ENV PYTHONDONTWRITEBYTECODE=1 
-ENV PYTHONUNBUFFERED=1 
-ENV PYTHONIOENCODING=UTF-8 
-ENV LANG=C.UTF-8 
-ENV LC_ALL=C.UTF-8
-
 WORKDIR /
 
 RUN ${PIP} --no-cache-dir install --upgrade \
@@ -114,10 +115,8 @@ RUN ${PIP} --no-cache-dir install --upgrade \
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
 
-ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
-ARG THENSORFLOW_WHL=tensorflow_gpu-2.0.0-cp27-cp27mu-manylinux2010_x86_64.whl
 COPY $FRAMEWORK_SUPPORT_INSTALLABLE .
-COPY $THENSORFLOW_WHL .
+COPY $TENSORFLOW_WHL .
 
 RUN ${PIP} install --no-cache-dir -U \
     numpy==1.16.5 \
@@ -136,7 +135,7 @@ RUN ${PIP} install --no-cache-dir -U \
     # the library version to be overwritten
     # ${PIP} install --force-reinstall --no-cache-dir -U ${TF_URL} \
  && ${PIP} install --force-reinstall --no-cache-dir -U \
-    $THENSORFLOW_WHL \
+    $TENSORFLOW_WHL \
  && ${PIP} install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \
  && rm -f $FRAMEWORK_SUPPORT_INSTALLABLE \
