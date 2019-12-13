@@ -32,7 +32,7 @@ hvd.init()
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 config.gpu_options.visible_device_list = str(hvd.local_rank())
-K.set_session(tf.Session(config=config))
+K.set_session(tf.compat.v1.Session(config=config))
 
 batch_size = 128
 num_classes = 10
@@ -119,10 +119,10 @@ if hvd.rank() == 0:
     # Exports the keras model as TensorFlow Serving Saved Model
     with K.get_session() as session:
 
-        init = tf.global_variables_initializer()
+        init = tf.compat.v1.global_variables_initializer()
         session.run(init)
 
-        tf.saved_model.simple_save(
+        tf.compat.v1.saved_model.simple_save(
             session,
             os.path.join('/opt/ml/model/mnist/1'),
             inputs={'input_image': model.input},
