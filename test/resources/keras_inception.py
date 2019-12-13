@@ -26,12 +26,12 @@ args = parser.parse_args()
 model = keras.applications.inception_v3.InceptionV3(weights='imagenet')
 
 # Exports the keras model as TensorFlow Serving Saved Model
-with tf.Session() as session:
+with tf.compat.v1.Session() as session:
 
-    init = tf.global_variables_initializer()
+    init = tf.compat.v1.global_variables_initializer()
     session.run(init)
 
-    tf.saved_model.simple_save(
+    tf.compat.v1.saved_model.simple_save(
         session,
         os.path.join(args.model_dir, 'inception-model/1'),
         inputs={'input_image': model.input},
