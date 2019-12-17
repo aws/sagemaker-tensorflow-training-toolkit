@@ -116,4 +116,11 @@ RUN ${PIP} install --no-cache-dir -U \
  && ${PIP} uninstall -y --no-cache-dir \
     markdown
 
+COPY dockerd-entrypoint.py /usr/local/bin/dockerd-entrypoint.py
+COPY deep_learning_container.py /usr/local/bin/deep_learning_container.py
+
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.py \
+ && chmod +x /usr/local/bin/deep_learning_container.py
+
+ENTRYPOINT ["python", "/usr/local/bin/dockerd-entrypoint.py"]
 CMD ["bin/bash"]
