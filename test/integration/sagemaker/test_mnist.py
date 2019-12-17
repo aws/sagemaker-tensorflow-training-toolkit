@@ -89,8 +89,8 @@ def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framewor
                            hyperparameters={
                                # Saving a checkpoint after every 5 steps to hammer the S3 plugin
                                'save-checkpoint-steps': 10,
-                               # Disable throttling for checkpoint and model saving
-                               'throttle-secs': 0,
+                               # Reducing throttling for checkpoint and model saving
+                               'throttle-secs': 1,
                                # Without the patch training jobs would fail around 100th to
                                # 150th step
                                'max-steps': 200,
