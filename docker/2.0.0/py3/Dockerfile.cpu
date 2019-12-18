@@ -29,6 +29,7 @@ ARG PIP=pip3
 
 ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
 ARG TENSORFLOW_WHL=tensorflow-2.0.0-cp36-cp36m-manylinux2010_x86_64.whl
+ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.0/AmazonLinux/cpu/final/$TENSORFLOW_WHL
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
@@ -83,7 +84,6 @@ RUN mkdir -p /root/.ssh/ \
 WORKDIR /
 
 COPY $FRAMEWORK_SUPPORT_INSTALLABLE .
-COPY $TENSORFLOW_WHL .
 
 RUN ${PIP} --no-cache-dir install --upgrade \
     pip \
@@ -92,6 +92,9 @@ RUN ${PIP} --no-cache-dir install --upgrade \
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python \
  && ln -s $(which ${PIP}) /usr/bin/pip
+
+# Setup TF Wheel
+RUN wget $TF_URL -O /tmp/tensorflow-2.0.0-cp27-cp27mu-manylinux2010_x86_64.whl
 
 # install PyYAML==5.1.2 to avoid conflict with latest awscli
 # # python-dateutil==2.8.0 to satisfy botocore associated with latest awscli
@@ -115,7 +118,7 @@ RUN ${PIP} install --no-cache-dir -U \
     # the library version to be overwritten
     # ${PIP} install --no-cache-dir -U ${TF_URL} \
  && ${PIP} install --no-cache-dir -U \
-    $TENSORFLOW_WHL \
+    /tmp/$TENSORFLOW_WHL \
     horovod==0.18.2 \
  && ${PIP} install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \
