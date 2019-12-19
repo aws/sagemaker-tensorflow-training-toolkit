@@ -120,6 +120,7 @@ RUN ${PIP} install --no-cache-dir -U \
  && ${PIP} install --no-cache-dir -U \
     /tmp/$TENSORFLOW_WHL \
     horovod==0.18.2 \
+ && rm -f /tmp/$TENSORFLOW_WHL \
  && ${PIP} install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \
  && rm -f $FRAMEWORK_SUPPORT_INSTALLABLE 
