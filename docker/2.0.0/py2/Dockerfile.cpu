@@ -22,6 +22,7 @@ ENV LC_ALL=C.UTF-8
 
 ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
 ARG TENSORFLOW_WHL=tensorflow-2.0.0-cp27-cp27mu-manylinux2010_x86_64.whl
+ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.0/AmazonLinux/cpu/final/$TENSORFLOW_WHL
 
 ARG PYTHON=python
 ARG PYTHON_PIP=python-pip
@@ -81,7 +82,6 @@ RUN apt-get update && apt-get install -y \
     ${PYTHON_PIP}
 
 COPY $FRAMEWORK_SUPPORT_INSTALLABLE .
-COPY $TENSORFLOW_WHL .
 
 RUN ${PIP} --no-cache-dir install --upgrade \
     pip \
@@ -89,6 +89,9 @@ RUN ${PIP} --no-cache-dir install --upgrade \
 
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
+
+# Setup TF Wheel
+RUN wget $TF_URL -O /tmp/$TENSORFLOW_WHL
 
 # install PyYAML==5.1.2 to avoid conflict with latest awscli
 # # python-dateutil==2.8.0 to satisfy botocore associated with latest awscli
@@ -113,7 +116,8 @@ RUN ${PIP} install --no-cache-dir -U \
     # the library version to be overwritten
     # ${PIP} install --no-cache-dir -U ${TF_URL} \
  && ${PIP} install --no-cache-dir -U \
-    $TENSORFLOW_WHL \
+    /tmp/$TENSORFLOW_WHL \
+ && rm -f /tmp/$TENSORFLOW_WHL \
  && ${PIP} install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \
  && rm -f $FRAMEWORK_SUPPORT_INSTALLABLE \
@@ -125,6 +129,8 @@ COPY deep_learning_container.py /usr/local/bin/deep_learning_container.py
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.py \
  && chmod +x /usr/local/bin/deep_learning_container.py
+
+RUN curl https://aws-dlc-licenses.s3.amazonaws.com/tensorflow-2.0/license.txt -o /license.txt
 
 ENTRYPOINT ["python", "/usr/local/bin/dockerd-entrypoint.py"]
 CMD ["bin/bash"]
