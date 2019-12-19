@@ -100,11 +100,11 @@ RUN wget $TF_URL -O /tmp/$TENSORFLOW_WHL
 # # python-dateutil==2.8.0 to satisfy botocore associated with latest awscli
 RUN ${PIP} install --no-cache-dir -U \
     numpy==1.17.4 \
-    scipy==1.2.2 \
-    scikit-learn==0.20.3 \
-    pandas==0.24.2 \
-    Pillow==6.1.0 \
-    h5py==2.9.0 \
+    scipy==1.4.0 \
+    scikit-learn==0.22 \
+    pandas==0.25.3 \
+    Pillow==6.2.1 \
+    h5py==2.10.0 \
     keras_applications==1.0.8 \
     keras_preprocessing==1.1.0 \
     keras==2.3.1 \
@@ -112,7 +112,7 @@ RUN ${PIP} install --no-cache-dir -U \
     PyYAML==5.1.2 \
     requests==2.22.0 \
     awscli==1.16.303 \
-    mpi4py==3.0.2 \
+    mpi4py==3.0.3 \
     "sagemaker-tensorflow>=2.0,<2.1" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
