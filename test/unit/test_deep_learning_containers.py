@@ -17,7 +17,7 @@ import unittest
 import pytest
 import requests
 
-from .docker.build_artifacts import deep_learning_container as deep_learning_container_to_test
+from docker.build_artifacts import deep_learning_container as deep_learning_container_to_test
 
 
 @pytest.fixture(name='fixture_valid_instance_id')
