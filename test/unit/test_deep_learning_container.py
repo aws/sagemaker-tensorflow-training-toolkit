@@ -14,10 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
+from docker.build_artifacts import deep_learning_container as deep_learning_container_to_test
 import pytest
 import requests
-
-from docker.build_artifacts import deep_learning_container as deep_learning_container_to_test
 
 
 @pytest.fixture(name='fixture_valid_instance_id')
