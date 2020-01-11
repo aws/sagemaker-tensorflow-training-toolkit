@@ -88,8 +88,6 @@ RUN pip3 --no-cache-dir install --upgrade \
 RUN ln -s $(which python3) /usr/local/bin/python \
  && ln -s $(which pip3) /usr/bin/pip
 
-# install PyYAML==5.1.2 to avoid conflict with latest awscli
-# python-dateutil==2.8.0 to satisfy botocore associated with latest awscli
 RUN pip install --no-cache-dir -U \
     numpy==1.17.4 \
     scipy==1.2.2 \
@@ -100,12 +98,9 @@ RUN pip install --no-cache-dir -U \
     keras_applications==1.0.8 \
     keras_preprocessing==1.1.0 \
     keras==2.3.1 \
-    # botocore requires python-dateutil<2.8.1
-    "python-dateutil<2.8.1" \
     requests==2.22.0 \
     smdebug==0.5.0.post0 \
     sagemaker-experiments==0.1.3 \
-    # awscli==1.16.296 \
     mpi4py==3.0.2 \
     "cryptography>=2.3" \
     "sagemaker-tensorflow>=1.15,<1.16" \
@@ -114,12 +109,9 @@ RUN pip install --no-cache-dir -U \
  && pip install --force-reinstall --no-cache-dir -U \
     ${TF_URL} \
  && pip install --force-reinstall --no-cache-dir -U \
-    # awscli requires PyYAML<5.2
-    "PyYAML<5.2" \
     horovod==0.18.2 \
  && pip install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \
- && pip install --no-cache-dir -U \
     awscli==1.16.314 \
  && rm -f $FRAMEWORK_SUPPORT_INSTALLABLE
 

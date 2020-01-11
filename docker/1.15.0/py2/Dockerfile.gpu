@@ -133,9 +133,6 @@ RUN pip install --no-cache-dir -U \
     keras_preprocessing==1.1.0 \
     requests==2.22.0 \
     keras==2.3.1 \
-    # botocore requires python-dateutil<2.8.1
-    "python-dateutil<2.8.1" \
-    awscli==1.16.296 \
     mpi4py==3.0.2 \
     "cryptography>=2.3" \
     "sagemaker-tensorflow>=1.15,<1.16" \
@@ -144,13 +141,12 @@ RUN pip install --no-cache-dir -U \
     ${TF_URL} \
  && pip install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \
+    awscli==1.16.314 \
  && rm -f $FRAMEWORK_SUPPORT_INSTALLABLE
 
 # Install Horovod, temporarily using CUDA stubs
 RUN ldconfig /usr/local/cuda/targets/x86_64-linux/lib/stubs \
  && HOROVOD_GPU_ALLREDUCE=NCCL HOROVOD_WITH_TENSORFLOW=1 pip install --no-cache-dir \
-    # awscli requires PyYAML<5.2
-    "PyYAML<5.2" \
     horovod==0.18.2 \
  && ldconfig
 
