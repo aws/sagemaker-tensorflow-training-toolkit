@@ -53,13 +53,13 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['sagemaker-containers>=2.4.6', 'numpy', 'scipy', 'sklearn',
+    install_requires=['sagemaker-containers>=2.6.2', 'numpy', 'scipy', 'sklearn',
                       'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker==1.19.1', 'tensorflow<2.0', 'docker-compose', 'boto3==1.10.32',
-                 'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore==1.13.32',
-                 'requests-mock', 'awscli==1.16.296'],
+                 'sagemaker==1.50.1', 'tensorflow<2.0', 'docker-compose', 'boto3==1.10.50',
+                 'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore==1.13.50',
+                 'requests-mock', 'awscli==1.16.314'],
         'benchmark': ['click']
     },
 )
