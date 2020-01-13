@@ -56,6 +56,10 @@ The Docker images are built from the Dockerfiles specified in
 The Docker files are grouped based on TensorFlow version and separated
 based on Python version and processor type.
 
+The Docker files for TensorFlow 2.0 are available in the
+`tf-2 <https://github.com/aws/sagemaker-tensorflow-container/tree/tf-2>`__ branch, in
+`docker/2.0.0/ <https://github.com/aws/sagemaker-tensorflow-container/tree/tf-2/docker>`__.
+
 The Docker images, used to run training & inference jobs, are built from
 both corresponding "base" and "final" Dockerfiles.
 
