@@ -86,9 +86,11 @@ phases:
       - create-key-pair
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
+      - HAS_MATCHING_CHANGES_OUTPUT=$(has-matching-changes "test/" "tests/" "src/*.py" "setup.py" "docker/*" "buildspec.yml")
+
       # run cpu integration tests
       - |
-        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
+        if [ "$HAS_MATCHING_CHANGES" = "Changes Found" ] ; then
           pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu
           pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu
         else
@@ -97,7 +99,7 @@ phases:
 
       # run gpu integration tests
       - |
-        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
+        if [ "$HAS_MATCHING_CHANGES" = "Changes Found" ] ; then
           printf "$SETUP_CMDS" > $SETUP_FILE
           cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
           remote-test --github-repo $GITHUB_REPO --test-cmd "$cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
@@ -109,7 +111,7 @@ phases:
 
       # run sagemaker tests
       - |
-        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
+        if [ "$HAS_MATCHING_CHANGES" = "Changes Found" ] ; then
           pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY2 --py-version 2 --processor cpu
           pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY2 --py-version 2 --processor gpu
           pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY3 --py-version 3 --processor cpu
