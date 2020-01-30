@@ -12,12 +12,9 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import os.path
 import shlex
 import subprocess
 import sys
 
-if not os.path.exists("/opt/ml/input/config"):
-    subprocess.call(['python', '/usr/local/bin/deep_learning_container.py', '&>/dev/null', '&'])
 
 subprocess.check_call(shlex.split(' '.join(sys.argv[1:])))
