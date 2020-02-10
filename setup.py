@@ -29,7 +29,7 @@ def read_version():
 
 
 setup(
-    name='sagemaker_tensorflow_container',
+    name='sagemaker_tensorflow_training',
     version=read_version(),
     description='Open source library for creating '
                 'TensorFlow containers to run on Amazon SageMaker.',
