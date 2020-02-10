@@ -29,6 +29,6 @@ phases:
 
 artifacts:
   files:
-    - dist/sagemaker_pytorch_training-*.tar.gz
+    - dist/sagemaker_tensorflow_training-*.tar.gz
   name: ARTIFACT_1
   discard-paths: yes
