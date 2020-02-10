@@ -12,15 +12,12 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import argparse
-import os
+import os.path
+import shlex
+import subprocess
+import sys
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--model_dir', type=str)
-parser.add_argument('--arbitrary_value', type=int, default=0)
-args = parser.parse_args()
+if not os.path.exists("/opt/ml/input/config"):
+    subprocess.call(['python', '/usr/local/bin/deep_learning_container.py', '&>/dev/null', '&'])
 
-assert os.environ['TRAINING_JOB_NAME'] in args.model_dir, 'model_dir not unique to training job: %s' % args.model_dir
-
-# For the "hyperparameter tuning" to work
-print('accuracy=1')
+subprocess.check_call(shlex.split(' '.join(sys.argv[1:])))
