@@ -96,9 +96,9 @@ def _run_ps(env, cluster):
     # Force parameter server to run on cpu. Running multiple TensorFlow processes on the same
     # GPU is not safe:
     # https://stackoverflow.com/questions/46145100/is-it-unsafe-to-run-multiple-tensorflow-processes-on-the-same-gpu
-    no_gpu_config = tf.ConfigProto(device_count={'GPU': 0})
+    no_gpu_config = tf.compat.v1.ConfigProto(device_count={'GPU': 0})
 
-    server = tf.train.Server(
+    server = tf.distribute.Server(
         cluster_spec, job_name='ps', task_index=task_index, config=no_gpu_config
     )
 
