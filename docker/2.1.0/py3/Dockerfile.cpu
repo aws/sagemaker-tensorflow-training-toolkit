@@ -121,6 +121,6 @@ RUN ${PIP} install --no-cache-dir -U \
     $FRAMEWORK_SUPPORT_INSTALLABLE \
  && rm -f $FRAMEWORK_SUPPORT_INSTALLABLE 
 
-RUN curl https://aws-dlc-licenses.s3.amazonaws.com/tensorflow-2.0/license.txt -o /license.txt
+RUN curl https://aws-dlc-licenses.s3.amazonaws.com/tensorflow-2.1/license.txt -o /license.txt
 
 CMD ["bin/bash"]
