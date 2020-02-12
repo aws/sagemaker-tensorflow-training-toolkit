@@ -27,7 +27,7 @@ ARG PIP=pip3
 # Use TENSORFLOW_WHL instead of TF_URL before releasing
 # ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.14/AmazonLinux/cpu/final/tensorflow-1.14.0-cp36-cp36m-linux_x86_64.whl"
 
-ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_container-2.0.8.dev0.tar.gz
+ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_training.tar.gz
 ARG TENSORFLOW_WHL=tensorflow-2.0.0-cp36-cp36m-manylinux2010_x86_64.whl
 ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.0/AmazonLinux/cpu/final/$TENSORFLOW_WHL
 
