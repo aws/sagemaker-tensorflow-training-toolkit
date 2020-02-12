@@ -108,7 +108,7 @@ RUN ${PIP} install --no-cache-dir -U \
     python-dateutil==2.8.1 \
     pyYAML==5.2 \
     requests==2.22.0 \
-    awscli==1.17.11 \
+    awscli \
     mpi4py==3.0.3 \
     opencv-python==4.2.0.32 \
     "sagemaker-tensorflow>=2.0,<2.1" \
