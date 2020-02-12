@@ -1,5 +1,132 @@
 # Changelog
 
+## v0.1.0 (2020-02-12)
+
+### Features
+
+ * Add release to PyPI. Change package name to sagemaker-tensorflow-training.
+
+### Bug Fixes and Other Changes
+
+ * pin awscli to latest version
+ * Pin awscli to latest
+ * bump smdebug version to 0.5.0.post0
+ * update: Update awscli version and remove related pins
+ * update: Update buildspec for TF 1.15.0
+ * update copyright year in license header
+ * update: Release TF 1.15.0 dockerfiles
+ * use regional endpoint for STS in builds
+ * update documentation link in warning message
+ * update instance type region availability.
+ * license file was missing from root of repo.
+ * install tensorflow<2.0
+ * merge dockerfiles
+ * move script mode branch to master
+ * use last legacy mode version for --framework-version test arg default
+ * Pin pytest and pluggy to work around configparser error
+ * Use multiprocessing.Process to launch parameter server
+ * increase grpc message size limit to 2gb
+ * Fix typo in serving method name
+ * restore python-dev package in image
+ * Add default tag to functional tests
+ * update link to correct docs
+ * Add EI Dockerfile for 1.11
+ * Add EI documentation within README
+ * add Dockerfile for EI
+ * Use get_closest_marker instead of get_marker
+ * Add docker files of TF 1.12
+ * Default GRPC timeout for EI & Allow timeout to be configurable
+ * remove requests from test dependencies
+ * catch RpcError due to change in GRPC
+ * Icywang86rui gpu fix
+ * Read port range from container support for TFS port
+ * Unfreeze requests version
+ * export_saved_model: copy asset files
+ * add port to dockerfile
+ * Updated TF Pipe Mode Version
+ * Fix MKL setting
+ * Set MKL vars plus tests
+ * increase test timeout
+ * Add back https to S3
+ * Add 1.11.0 CPU and GPU Dockerfile
+ * pin requests version
+ * fix memory leak in serving
+ * Update region in s3 boto client in serve
+ * Update readme with instructions for 1.9.0 and above
+ * Fix deserialization of dicts for json predict requests
+ * Add dockerfile and update test for tensorflow 1.10.0
+ * Support tensorflow 1.9.0
+ * Add integ tests to verify that tensorflow in gpu-image can access gpu-devices.
+ * train on 3 epochs for pipe mode test
+ * Change error classes used by _default_input_fn() and _default_output_fn()
+ * Changing assertion to check only existence
+ * Install sagemaker-tensorflow from pypi. Add MKL environment variables for TF 1.8
+ * get most recent saved model to export
+ * pip install tensorflow 1.8 in 1.8 cpu image
+ * install tensorflow extensions
+ * upgrade cpu binaries in docker build
+ * Force upgrade of the framework binaries to make sure the right binaries are installed.
+ * Add Pillow to pip install list
+ * Increase train steps for cifar distributed test to mitigate race condition
+ * Add TensorFlow 1.8 dockerfiles
+ * Add TensorFlow 1.7 dockerfiles
+ * Explain how to download tf binaries from PyPI
+ * Allow training without S3
+ * Fix hyperparameter name for detecting a tuning job
+ * Checkout v1.4.1 tag instead of r1.4 branch
+ * Move processing of requirements file in.
+ * Generate checkpoint path using TRAINING_JOB_NAME environment variable if needed
+ * Wrap user-provided model_fn to pass arguments positionally (maintains compatibility with existing behavior)
+ * Add more unit tests for trainer, fix __all__ and rename train.py to avoid import conflict
+ * Use regional endpoint for S3 client
+ * Update README.rst
+ * Pass input_channels to eval_input_fn if defined
+ * Fix setup.py to refer to renamed README
+ * Add test and build instructions
+ * Fix year in license headers
+ * Add TensorFlow 1.6
+ * Add test instructions in README
+ * Add container support to install_requires
+ * Add Apache license headers
+ * Use wget to install tensorflow-model-server
+ * Fix file path for integ test
+ * Fix s3_prefix path in integ test
+ * Fix typo in path for integ test
+ * Add input_channels to train_input_fn interface.
+ * Update logging and make serving_input_fn optional.
+ * remove pip install in tensorflow training
+ * Modify integration tests to run nvidia-docker for gpu
+ * add h5py for keras models
+ * Add local integ tests & resources
+ * Restructure repo to use a directory per TF version for dockerfiles
+ * Rename "feature_map" variables to "feature_dict" to avoid overloading it with the ML term "feature map"
+ * Copying in changes from internal repo:
+ * Add functional test
+ * Fix FROM image names for final build dockerfiles
+ * Add dockerfiles for building our production images (TF 1.4)
+ * GPU Dockerfile and setup.py fixes
+ * Add base image Dockerfiles for 1.4
+ * Merge pull request #1 from aws/mvs-first-commit
+ * first commit
+ * Updating initial README.md from template
+ * Creating initial file from template
+ * Creating initial file from template
+ * Creating initial file from template
+ * Creating initial file from template
+ * Creating initial file from template
+ * Initial commit
+
+### Documentation Changes
+
+ * update README.rst
+ * Add link to TF 2.0 branch
+
+### Testing and Release Infrastructure
+
+ * Add twine check during PR.
+ * properly fail build if has-matching-changes fails
+ * properly fail build if has-matching-changes fails
+
 ## v0.1.0 (2019-05-22)
 
 ### Bug fixes and other changes
