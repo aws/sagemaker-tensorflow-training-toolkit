@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -29,7 +29,7 @@ def read_version():
 
 
 setup(
-    name='sagemaker_tensorflow_container',
+    name='sagemaker_tensorflow_training',
     version=read_version(),
     description='Open source library for creating '
                 'TensorFlow containers to run on Amazon SageMaker.',
@@ -53,13 +53,13 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['sagemaker-containers>=2.6.1', 'numpy', 'scipy', 'sklearn',
+    install_requires=['sagemaker-containers>=2.6.2', 'numpy', 'scipy', 'sklearn',
                       'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker==1.48.0', 'tensorflow', 'docker-compose', 'boto3>=1.10.41',
-                 'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore>=1.13.41',
-                 'awscli>=1.16.305'],
+                 'sagemaker==1.50.1', 'tensorflow<2.0', 'docker-compose', 'boto3==1.10.50',
+                 'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore==1.13.50',
+                 'requests-mock', 'awscli==1.16.314'],
         'benchmark': ['click']
     },
 )
