@@ -20,7 +20,7 @@ ENV PYTHONIOENCODING=UTF-8
 ENV LANG=C.UTF-8 
 ENV LC_ALL=C.UTF-8
 
-ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_training.tar.gz
+ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_training*.tar.gz
 ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.1/AmazonLinux/cpu/final/tensorflow-2.1.0-cp27-cp27mu-manylinux2010_x86_64.whl
 
 ARG PYTHON=python
