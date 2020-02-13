@@ -24,7 +24,7 @@ phases:
       - pip3 install -U -e .[test]
 
       # run flake8
-      - tox -e flake8
+      - tox -e flake8,twine
 
       # run unit tests
       - tox -e py36,py27 test/unit
