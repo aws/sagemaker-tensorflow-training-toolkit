@@ -1,5 +1,31 @@
 # Changelog
 
+## v2.2.0 (2020-02-13)
+
+### Features
+
+ * Add release to PyPI. Change package name to sagemaker-tensorflow-training.
+
+### Bug Fixes and Other Changes
+
+ * pin awscli to latest version
+ * Pin awscli to latest
+ * bump smdebug version to 0.5.0.post0
+ * update: Update awscli version and remove related pins
+ * update: Update buildspec for TF 1.15.0
+ * update copyright year in license header
+
+### Documentation Changes
+
+ * update README.rst
+ * Add link to TF 2.0 branch
+
+### Testing and Release Infrastructure
+
+ * Add twine check during PR.
+ * properly fail build if has-matching-changes fails
+ * properly fail build if has-matching-changes fails
+
 ## v0.1.0 (2020-02-12)
 
 ### Features
