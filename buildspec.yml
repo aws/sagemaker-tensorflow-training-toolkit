@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.15.0'
+    FRAMEWORK_VERSION: '1.15.2'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-tensorflow-container'
     SETUP_FILE: 'setup_cmds.sh'
