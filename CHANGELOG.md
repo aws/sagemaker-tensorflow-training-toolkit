@@ -1,5 +1,29 @@
 # Changelog
 
+## v3.1.0 (2020-02-14)
+
+### Features
+
+ * Add release to PyPI. Change package name to sagemaker-tensorflow-training.
+
+### Bug Fixes and Other Changes
+
+ * remove sagemaker_experiments from mnist script
+ * Update package name in the dockerfile for tf-2.0.
+ * Merge branch 'master' of https://github.com/aws/sagemaker-tensorflow-containers into tf-2
+ * Merge branch 'master' of https://github.com/aws/sagemaker-tensorflow-containers into merge-master-into-tf-2
+ * Revert "Merge 'master' branch into 'tf-2' branch. (#279)"
+ * Merge 'master' branch into 'tf-2' branch.
+
+### Documentation Changes
+
+ * update README.rst
+
+### Testing and Release Infrastructure
+
+ * Add twine check during PR.
+ * properly fail build if has-matching-changes fails
+
 ## v0.1.0 (2019-05-22)
 
 ### Bug fixes and other changes
