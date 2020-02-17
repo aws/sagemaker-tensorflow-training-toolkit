@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.1.1 (2020-02-17)
+
+### Bug Fixes and Other Changes
+
+ * update: add r2.1 dockerfiles
+ * add 2.0.1 dockerfiles
+
 ## v3.1.0 (2020-02-14)
 
 ### Features
