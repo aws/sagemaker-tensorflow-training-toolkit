@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.2.2 (2020-02-20)
+
+### Bug Fixes and Other Changes
+
+ * copy all tests to test-toolkit folder.
+
+## v2.2.1 (2020-02-17)
+
+### Bug Fixes and Other Changes
+
+ * update: update r1.15.2 dockerfiles
+
 ## v2.2.0 (2020-02-13)
 
 ### Features
