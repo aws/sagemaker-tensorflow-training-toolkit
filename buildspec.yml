@@ -43,9 +43,9 @@ phases:
       # prepare build context
       - build_dir="$root_dir/docker/$FRAMEWORK_VERSION/py2"
       - cp $root_dir/dist/$tar_name $build_dir
-      - ls $build_artifacts/*
+      - ls -A $build_artifacts/*
       - echo $build_dir/
-      - cp -v $build_artifacts/* $build_dir/
+      - cp -v $build_artifacts/*.py $build_dir/
       - cd $build_dir
 
       # build cpu image
