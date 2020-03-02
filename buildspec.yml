@@ -36,7 +36,7 @@ phases:
       - tar_name=$(ls dist)
 
       # Find build artifacts
-      - build_artifacts=$root_dir/docker/artifacts
+      - build_artifacts=$root_dir/docker/build_artifacts
 
       # build py2 images
 
