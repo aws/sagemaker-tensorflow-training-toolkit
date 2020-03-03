@@ -43,14 +43,9 @@ def pytest_addoption(parser):
     parser.addoption('--instance-type', default=None)
 
 
-def pytest_generate_tests(metafunc):
-    if 'py_version' in metafunc.fixturenames:
-        py_version_params = ['py' + v for v in metafunc.config.getoption('--py-version').split(',')]
-        metafunc.parametrize('py_version', py_version_params, scope='session')
-
-    if 'processor' in metafunc.fixturenames:
-        processor_params = metafunc.config.getoption('--processor').split(',')
-        metafunc.parametrize('processor', processor_params, scope='session')
+def pytest_configure(config):
+    os.environ['TEST_PY_VERSIONS'] = config.getoption('--py-version')
+    os.environ['TEST_PROCESSORS'] = config.getoption('--processor')
 
 
 @pytest.fixture(scope='session')
