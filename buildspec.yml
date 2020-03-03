@@ -81,7 +81,7 @@ phases:
       # build gpu image
       - prod_tag="$FRAMEWORK_VERSION-gpu-py3"
       - GPU_TAG_PY3="$prod_tag-$build_id"
-        - docker pull $PROD_IMAGE:$prod_tag
+      - docker pull $PROD_IMAGE:$prod_tag
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY3 .
 
       # push images to ecr
