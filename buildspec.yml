@@ -41,6 +41,9 @@ phases:
       # Find build artifacts
       - build_artifacts=$root_dir/docker/build_artifacts
 
+      # login so we can pull prod images for cache
+      - $(aws ecr get-login --registry-ids 763104351884 --no-include-email --region $AWS_DEFAULT_REGION)
+
       # build py2 images
 
       # prepare build context
@@ -52,11 +55,13 @@ phases:
       # build cpu image
       - prod_tag="$FRAMEWORK_VERSION-cpu-py2"
       - CPU_TAG_PY2="$prod_tag-$build_id"
+      - docker pull $PROD_IMAGE:$prod_tag
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY2 .
 
       # build gpu image
       - prod_tag="$FRAMEWORK_VERSION-gpu-py2"
       - GPU_TAG_PY2="$prod_tag-$build_id"
+      - docker pull $PROD_IMAGE:$prod_tag
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY2 .
 
       # build py3 images
@@ -70,11 +75,13 @@ phases:
       # build cpu image
       - prod_tag="$FRAMEWORK_VERSION-cpu-py3"
       - CPU_TAG_PY3="$prod_tag-$build_id"
+      - docker pull $PROD_IMAGE:$prod_tag
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY3 .
 
       # build gpu image
       - prod_tag="$FRAMEWORK_VERSION-gpu-py3"
       - GPU_TAG_PY3="$prod_tag-$build_id"
+        - docker pull $PROD_IMAGE:$prod_tag
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY3 .
 
       # push images to ecr
