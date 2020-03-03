@@ -7,6 +7,8 @@ env:
     GITHUB_REPO: 'sagemaker-tensorflow-container'
     SETUP_FILE: 'setup_cmds.sh'
     SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
+    CPU_DOCKERFILE: 'Dockerfile.cpu'
+    GPU_DOCKERFILE: 'Dockerfile.gpu'
 
 phases:
   pre_build:
@@ -14,6 +16,7 @@ phases:
       - start-dockerd
       - ACCOUNT=$(aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text)
       - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
+      - PROD_IMAGE="763104351884.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/tensorflow-training"
       - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
       - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
 
@@ -47,14 +50,14 @@ phases:
       - cd $build_dir
 
       # build cpu image
-      - cpu_dockerfile="Dockerfile.cpu"
-      - CPU_TAG_PY2="$FRAMEWORK_VERSION-cpu-py2-$build_id"
-      - docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY2 .
+      - prod_tag="$FRAMEWORK_VERESION-cpu-py2"
+      - CPU_TAG_PY2="$prod_tag-$build_id"
+      - docker build --cache-from $PROD_IMAGE:$prod_tag -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY2 .
 
       # build gpu image
-      - gpu_dockerfile="Dockerfile.gpu"
-      - GPU_TAG_PY2="$FRAMEWORK_VERSION-gpu-py2-$build_id"
-      - docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY2 .
+      - prod_tag="$FRAMEWORK_VERESION-gpu-py2"
+      - GPU_TAG_PY2="$prod_tag-$build_id"
+      - docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY2 .
 
       # build py3 images
 
@@ -65,14 +68,14 @@ phases:
       - cd $build_dir
 
       # build cpu image
-      - cpu_dockerfile="Dockerfile.cpu"
-      - CPU_TAG_PY3="$FRAMEWORK_VERSION-cpu-py3-$build_id"
-      - docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY3 .
+      - prod_tag="$FRAMEWORK_VERESION-cpu-py3"
+      - CPU_TAG_PY3="$prod_tag-$build_id"
+      - docker build --cache-from $PROD_IMAGE:$prod_tag -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY3 .
 
       # build gpu image
-      - gpu_dockerfile="Dockerfile.gpu"
-      - GPU_TAG_PY3="$FRAMEWORK_VERSION-gpu-py3-$build_id"
-      - docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY3 .
+      - prod_tag="$FRAMEWORK_VERESION-gpu-py3"
+      - GPU_TAG_PY3="$prod_tag-$build_id"
+      - docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY3 .
 
       # push images to ecr
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
