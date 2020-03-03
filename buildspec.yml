@@ -87,8 +87,8 @@ phases:
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
       # run cpu integration tests
-      - py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu"
-      - py2_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu"
+      - py3_cmd="tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu"
+      - py2_cmd="tox -e py27 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu"
       - execute-command-if-has-matching-changes "$py3_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
       - execute-command-if-has-matching-changes "$py2_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
 
