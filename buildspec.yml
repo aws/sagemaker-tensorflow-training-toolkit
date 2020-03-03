@@ -99,7 +99,7 @@ phases:
       - execute-command-if-has-matching-changes "$py3_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
 
       - cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
-      - py2_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
+      - py2_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\" --skip-setup"
       - execute-command-if-has-matching-changes "$py2_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
 
       # run sagemaker tests
