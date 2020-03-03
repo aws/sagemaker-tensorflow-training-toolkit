@@ -12,11 +12,8 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import os
 import random
 import time
-
-import pytest
 
 
 def unique_name_from_base(base, max_length=63):
@@ -25,13 +22,3 @@ def unique_name_from_base(base, max_length=63):
     available_length = max_length - 2 - len(ts) - len(unique)
     trimmed = base[:available_length]
     return '{}-{}-{}'.format(trimmed, ts, unique)
-
-
-@pytest.fixture(params=os.environ['TEST_PY_VERSIONS'].split(','))
-def py_version(request):
-    return request.param
-
-
-@pytest.fixture(params=os.environ['TEST_PROCESSORS'].split(','))
-def processor(request):
-    return request.param
