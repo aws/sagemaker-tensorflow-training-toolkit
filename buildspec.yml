@@ -50,12 +50,12 @@ phases:
       - cd $build_dir
 
       # build cpu image
-      - prod_tag="$FRAMEWORK_VERESION-cpu-py2"
+      - prod_tag="$FRAMEWORK_VERSION-cpu-py2"
       - CPU_TAG_PY2="$prod_tag-$build_id"
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY2 .
 
       # build gpu image
-      - prod_tag="$FRAMEWORK_VERESION-gpu-py2"
+      - prod_tag="$FRAMEWORK_VERSION-gpu-py2"
       - GPU_TAG_PY2="$prod_tag-$build_id"
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY2 .
 
@@ -68,12 +68,12 @@ phases:
       - cd $build_dir
 
       # build cpu image
-      - prod_tag="$FRAMEWORK_VERESION-cpu-py3"
+      - prod_tag="$FRAMEWORK_VERSION-cpu-py3"
       - CPU_TAG_PY3="$prod_tag-$build_id"
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY3 .
 
       # build gpu image
-      - prod_tag="$FRAMEWORK_VERESION-gpu-py3"
+      - prod_tag="$FRAMEWORK_VERSION-gpu-py3"
       - GPU_TAG_PY3="$prod_tag-$build_id"
       - docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY3 .
 
