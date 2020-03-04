@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.1.2 (2020-03-04)
+
+### Bug Fixes and Other Changes
+
+ * update sagemaker-tensorflow version to 2.1
+
+### Testing and Release Infrastructure
+
+ * add pipemode integ tests.
+
 ## v3.1.1 (2020-02-17)
 
 ### Bug Fixes and Other Changes
