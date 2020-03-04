@@ -10,13 +10,15 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
 
 import argparse
-import numpy as np
+from random import randint
 import struct
 import sys
+
+import numpy as np
 import tensorflow as tf
-from random import randint
 
 # Utility functions for generating a recordio encoded file of labeled numpy data
 # for testing. Each file contains one or more records. Each record is a TensorFlow

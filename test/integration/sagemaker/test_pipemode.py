@@ -13,17 +13,16 @@
 from __future__ import absolute_import
 
 import os
-import pytest
-from sagemaker import s3_input
-from sagemaker.tensorflow import TensorFlow
 import shutil
 import uuid
 
-from contextlib import contextmanager
+import pytest
+from recordio_utils import build_record_file, build_single_record_file
+from sagemaker import s3_input
+from sagemaker.tensorflow import TensorFlow
 
-import recordio_utils
+from test.integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
 from timeout import timeout
-from test.integration.utils import processor, py_version, unique_name_from_base
 
 DIMENSION = 5
 
@@ -33,11 +32,11 @@ def make_test_data(directory, name, num_files, num_records, dimension, sagemaker
         os.makedirs('test-data')
     for i in range(num_files):
         if num_records > 1:
-            recordio_utils.build_record_file(os.path.join(directory, name + str(i)),
-                                             num_records=num_records, dimension=dimension)
+            build_record_file(os.path.join(directory, name + str(i)),
+                              num_records=num_records, dimension=dimension)
         else:
-            recordio_utils.build_single_record_file(os.path.join(directory, name + str(i)),
-                                                    dimension=dimension)
+            build_single_record_file(os.path.join(directory, name + str(i)),
+                                     dimension=dimension)
 
     return sagemaker_session.upload_data(path=os.path.join(directory),
                                          key_prefix='pipemode-{}-files'.format(name))
@@ -89,8 +88,8 @@ def run_test(sagemaker_session, ecr_image, instance_type, framework_version, tes
                            hyperparameters={'dimension': DIMENSION})
     input = s3_input(s3_data=test_data,
                      distribution='FullyReplicated',
-                     record_wrapping = record_wrapper_type,
-                     input_mode ='Pipe')
+                     record_wrapping=record_wrapper_type,
+                     input_mode='Pipe')
     with timeout(minutes=20):
         estimator.fit({'elizabeth': input},
                       job_name=unique_name_from_base('test-sagemaker-pipemode'))
