@@ -26,7 +26,6 @@ ARG PIP=pip3
 
 # Use TENSORFLOW_WHL instead of TF_URL before releasing
 # ARG TF_URL="https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.14/AmazonLinux/gpu/final/tensorflow-1.14.0-cp36-cp36m-linux_x86_64.whl"
-ARG SMDEBUG_URL=https://s3.amazonaws.com/kannanva-smdebug-0.7/smdebug-0.7.0b20200304-py2.py3-none-any.whl
 
 ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_training.tar.gz
 ARG TENSORFLOW_WHL=tensorflow_gpu-2.0.0-cp36-cp36m-manylinux2010_x86_64.whl
@@ -149,7 +148,6 @@ RUN ${PIP} install --no-cache-dir -U \
     keras_preprocessing==1.1.0 \
     requests==2.22.0 \
     keras==2.3.1 \
-    ${SMDEBUG_URL} \
     python-dateutil==2.8.0 \
     PyYAML==5.1.2 \
     awscli==1.16.303 \
