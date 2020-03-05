@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.2.2.post0 (2020-03-05)
+
+### Testing and Release Infrastructure
+
+ * fix PR build
+
 ## v2.2.2 (2020-02-20)
 
 ### Bug Fixes and Other Changes
