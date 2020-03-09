@@ -60,6 +60,7 @@ setup(
                  'sagemaker==1.50.1', 'tensorflow<2.0', 'docker-compose', 'boto3==1.10.50',
                  'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore==1.13.50',
                  'requests-mock', 'awscli==1.16.314'],
-        'benchmark': ['click']
+        'benchmark': ['click'],
+        ':python_version=="3.6"': ['sagemaker-experiments==0.1.7']
     },
 )
