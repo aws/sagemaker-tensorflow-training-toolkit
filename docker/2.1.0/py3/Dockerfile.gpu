@@ -25,8 +25,8 @@ ARG PYTHON_PIP=python3-pip
 ARG PIP=pip3
 
 ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_training*.tar.gz
-ARG TF_URL=https://tensorflow-aws-beta.s3-us-west-2.amazonaws.com/2.1/AmazonLinux/gpu/latest-patch-zcc_2.1_2.patch/tensorflow_gpu-2.1.0-cp36-cp36m-manylinux2010_x86_64.whl
-ARG SMDEBUG_URL=https://s3.amazonaws.com/kannanva-smdebug-0.7/smdebug-0.7.0b20200304-py2.py3-none-any.whl
+ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.1/AmazonLinux/gpu/final/tensorflow_gpu-2.1.0-cp36-cp36m-manylinux2010_x86_64.whl
+ARG SMDEBUG_URL=https://s3.amazonaws.com/kannanva-smdebug-0.7/smdebug-0.7.0b20200309-py2.py3-none-any.whl
 
 RUN apt-get update && apt-get install -y --no-install-recommends --allow-unauthenticated \
     python3-dev \
