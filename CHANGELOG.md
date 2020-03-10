@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.1.3 (2020-03-10)
+
+### Bug Fixes and Other Changes
+
+ * install SageMaker Python SDK into Python 3 images
+ * Add sagemaker-experiments
+
 ## v3.1.2 (2020-03-04)
 
 ### Bug Fixes and Other Changes
