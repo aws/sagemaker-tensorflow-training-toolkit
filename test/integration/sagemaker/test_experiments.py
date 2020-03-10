@@ -35,7 +35,7 @@ def test_training(sagemaker_session, ecr_image, instance_type, framework_version
 
     sm_client = sagemaker_session.sagemaker_client
 
-    experiment_name = f"tf-container-integ-test-{int(time.time())}"
+    experiment_name = "tf-container-integ-test-{}".format(int(time.time()))
 
     experiment = Experiment.create(
         experiment_name=experiment_name,
@@ -43,7 +43,8 @@ def test_training(sagemaker_session, ecr_image, instance_type, framework_version
         sagemaker_boto_client=sm_client,
     )
 
-    trial_name = f"tf-container-integ-test-{int(time.time())}"
+    trial_name = "tf-container-integ-test-{}".format(int(time.time()))
+
     trial = Trial.create(
         experiment_name=experiment_name, trial_name=trial_name, sagemaker_boto_client=sm_client
     )
@@ -80,15 +81,11 @@ def test_training(sagemaker_session, ecr_image, instance_type, framework_version
     trial_component_summary = trial_components[0]
     trial_component = TrialComponent.load(
         trial_component_name=trial_component_summary.trial_component_name,
-        sagemaker_boto_name=sm_client,
+        sagemaker_boto_client=sm_client,
     )
 
     # associate the trial component with the trial
     trial.add_trial_component(trial_component)
-
-    # verify association
-    associated_trial_components = list(trial.list_trial_components())
-    assert len(associated_trial_components) == 1
 
     # cleanup
     trial.remove_trial_component(trial_component_summary.trial_component_name)
