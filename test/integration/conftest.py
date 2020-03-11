@@ -123,10 +123,3 @@ def skip_py2_containers(request, tag):
 def ecr_image(account_id, docker_base_name, tag, region):
     return '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(
         account_id, region, docker_base_name, tag)
-
-
-@pytest.fixture(autouse=True)
-def skip_py2_containers(request, tag):
-    if request.node.get_closest_marker('skip_py2_containers'):
-        if 'py2' in tag:
-            pytest.skip('Skipping python2 container with tag {}'.format(tag))
