@@ -146,6 +146,7 @@ def test_tuning(sagemaker_session, ecr_image, instance_type, framework_version):
         tuner.wait()
 
 
+@pytest.mark.skip_py2_containers
 def test_tf1x_smdebug(sagemaker_session, ecr_image, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'tf1x_mnist_smdebug.py')
