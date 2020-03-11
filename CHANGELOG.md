@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.1.4 (2020-03-11)
+
+### Bug Fixes and Other Changes
+
+ * Add smdebug to TF 2.x
+ * remove python 3.6 specific f strings
+ * Updating LD_LIBRARY_PATH for tf-2.0 Dockerfile.gpu
+
 ## v3.1.3 (2020-03-10)
 
 ### Bug Fixes and Other Changes
