@@ -22,6 +22,7 @@ ENV SAGEMAKER_TRAINING_MODULE=sagemaker_tensorflow_container.training:main
 ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_training*.tar.gz
 ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.15.2/AmazonLinux/gpu/final/tensorflow_gpu-1.15.2-cp36-cp36m-manylinux2010_x86_64.whl
 
+
 RUN apt-get update \
  && apt-get install -y --no-install-recommends --allow-unauthenticated \
     python3-dev \

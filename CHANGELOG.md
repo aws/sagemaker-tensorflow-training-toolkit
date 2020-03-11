@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.2.3 (2020-03-10)
+
+### Bug Fixes and Other Changes
+
+ * update smdebug wheel
+ * Update smdebug to 0.7.0 - TF 1.15.2
+ * install SageMaker Python SDK into Python 3 images
+
 ## v2.2.2.post0 (2020-03-05)
 
 ### Testing and Release Infrastructure
