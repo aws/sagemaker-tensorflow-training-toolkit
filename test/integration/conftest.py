@@ -92,6 +92,20 @@ def instance_type(request, processor):
     return provided_instance_type if provided_instance_type is not None else default_instance_type
 
 
+@pytest.fixture()
+def py_version():
+    if 'TEST_PY_VERSIONS' in os.environ:
+        return os.environ['TEST_PY_VERSIONS'].split(',')
+    return None
+
+
+@pytest.fixture()
+def processor():
+    if 'TEST_PROCESSORS' in os.environ:
+        return os.environ['TEST_PROCESSORS'].split(',')
+    return None
+
+
 @pytest.fixture(autouse=True)
 def skip_by_device_type(request, processor):
     is_gpu = (processor == 'gpu')
