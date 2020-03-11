@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.2.4 (2020-03-11)
+
+### Bug Fixes and Other Changes
+
+ * update smdebug wheel
+ * Revert "Update smdebug to 0.7.0 - TF 1.15.2 (#298)"
+
 ## v2.2.3 (2020-03-10)
 
 ### Bug Fixes and Other Changes
