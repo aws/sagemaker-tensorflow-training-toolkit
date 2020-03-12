@@ -16,6 +16,7 @@ from glob import glob
 import os
 from os.path import basename
 from os.path import splitext
+import sys
 
 from setuptools import find_packages, setup
 
@@ -27,6 +28,14 @@ def read(fname):
 def read_version():
     return read('VERSION').strip()
 
+
+test_dependencies = ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
+                     'sagemaker==1.50.1', 'tensorflow<2.0', 'docker-compose', 'boto3==1.10.50',
+                     'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore==1.13.50',
+                     'requests-mock', 'awscli==1.16.314']
+
+if sys.version_info.major > 2:
+    test_dependencies.append('sagemaker-experiments==0.1.7')
 
 setup(
     name='sagemaker_tensorflow_training',
@@ -56,11 +65,7 @@ setup(
     install_requires=['sagemaker-containers>=2.6.2', 'numpy', 'scipy', 'sklearn',
                       'pandas', 'Pillow', 'h5py'],
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'sagemaker==1.50.1', 'tensorflow<2.0', 'docker-compose', 'boto3==1.10.50',
-                 'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore==1.13.50',
-                 'requests-mock', 'awscli==1.16.314'],
+        'test': test_dependencies,
         'benchmark': ['click'],
-        ':python_version=="3.6"': ['sagemaker-experiments==0.1.7']
     },
 )
