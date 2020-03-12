@@ -33,9 +33,13 @@ def test_training(sagemaker_session, ecr_image, instance_type, framework_version
         pytest.skip('Skipping python2 {}'.format(py_version))
         return
 
-    from smexperiments.experiment import Experiment
-    from smexperiments.trial import Trial
-    from smexperiments.trial_component import TrialComponent
+    try:
+        from smexperiments.experiment import Experiment
+        from smexperiments.trial import Trial
+        from smexperiments.trial_component import TrialComponent
+    except ImportError:
+        pytest.skip('smexperiments module not found')
+        return
 
     sm_client = sagemaker_session.sagemaker_client
 
