@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.1.5 (2020-03-12)
+
+### Bug Fixes and Other Changes
+
+ * Add default timeout
+ * install experiments with python 3
+ * add py2 fixture for tf2.x test
+
 ## v3.1.4 (2020-03-11)
 
 ### Bug Fixes and Other Changes
