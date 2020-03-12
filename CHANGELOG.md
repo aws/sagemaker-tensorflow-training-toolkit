@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.2.5 (2020-03-12)
+
+### Bug Fixes and Other Changes
+
+ * install smexperiments when python >= 3.6
+ * SM integration test for TF 1.x
+ * upgrade to latest sagemaker-experiments
+ * Added pytest fixture
+
 ## v2.2.4 (2020-03-11)
 
 ### Bug Fixes and Other Changes
