@@ -99,6 +99,7 @@ def test_train_horovod(run_module, single_machine_training_env):
                                   runner=runner.MPIRunnerType)
 
 
+@pytest.mark.skip_on_pipeline
 @pytest.mark.skipif(sys.version_info.major != 3,
                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
@@ -129,6 +130,7 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                            {'TF_CONFIG': tf_config})
 
 
+@pytest.mark.skip_on_pipeline
 @pytest.mark.skipif(sys.version_info.major != 3,
                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
