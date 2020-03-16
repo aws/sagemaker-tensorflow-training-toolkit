@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.1.6 (2020-03-16)
+
+### Bug Fixes and Other Changes
+
+ * Added skip marker
+ * smdebug 0.7.1
+ * Revert "Revert "add py2 fixture for tf2.x test (#310)" (#319)"
+ * Revert "add py2 fixture for tf2.x test (#310)"
+ * Update sagemaker-python-sdk in test env
+ * add missing fixtures
+
 ## v3.1.5 (2020-03-12)
 
 ### Bug Fixes and Other Changes
