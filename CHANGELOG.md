@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.2.6 (2020-03-16)
+
+### Bug Fixes and Other Changes
+
+ * smdebug 0.7.1
+ * Added marker to skip on pipeline
+
 ## v2.2.5 (2020-03-12)
 
 ### Bug Fixes and Other Changes
