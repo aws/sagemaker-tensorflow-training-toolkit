@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.1.7 (2020-03-26)
+
+### Bug Fixes and Other Changes
+
+ * Adding of deep_learning_container.py in Tf2
+
 ## v3.1.6 (2020-03-16)
 
 ### Bug Fixes and Other Changes
