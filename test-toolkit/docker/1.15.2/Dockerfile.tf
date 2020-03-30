@@ -4,6 +4,14 @@ FROM tensorflow/tensorflow:1.15.2-gpu-py3
 # Horovod & its dependencies
 ###########################################################################
 
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends --allow-unauthenticated \
+    build-essential \
+    ca-certificates \
+    openssh-client \
+    openssh-server \
+ && rm -rf /var/lib/apt/lists/*
+
 # Install Open MPI
 RUN mkdir /tmp/openmpi \
  && cd /tmp/openmpi \
@@ -61,4 +69,4 @@ ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 
 COPY dist/sagemaker_tensorflow_training-*.tar.gz /sagemaker_tensorflow_training.tar.gz
 RUN pip install --upgrade --no-cache-dir /sagemaker_tensorflow_training.tar.gz && \
- rm /sagemaker_tensorflow_training.tar.gz
+    rm /sagemaker_tensorflow_training.tar.gz
