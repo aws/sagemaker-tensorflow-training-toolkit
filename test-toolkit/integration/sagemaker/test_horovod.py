@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import os
 
+import pytest
 import sagemaker
 from sagemaker.tensorflow import TensorFlow
 
@@ -22,6 +23,7 @@ from integration.utils import processor, py_version, unique_name_from_base  # no
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
 
+@pytest.mark.skip_generic
 def test_distributed_training_horovod(sagemaker_session,
                                       instance_type,
                                       image_uri,
