@@ -35,8 +35,8 @@ ENV PATH=/usr/local/openmpi/bin/:$PATH
 ENV PATH=/usr/local/nvidia/bin:$PATH
 
 # SSH login fix. Otherwise user is kicked off after login
-RUN mkdir -p /var/run/sshd \
- && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+#RUN mkdir -p /var/run/sshd \
+# && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
 # Create SSH key.
 RUN mkdir -p /root/.ssh/ \
@@ -44,10 +44,21 @@ RUN mkdir -p /root/.ssh/ \
  && cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys \
  && printf "Host *\n  StrictHostKeyChecking no\n" >> /root/.ssh/config
 
+# Install Horovod, temporarily using CUDA stubs
+RUN ldconfig /usr/local/cuda-10.0/targets/x86_64-linux/lib/stubs \
+ && HOROVOD_GPU_ALLREDUCE=NCCL HOROVOD_WITH_TENSORFLOW=1 pip install --no-cache-dir \
+    horovod==0.18.2 \
+ && ldconfig
+
+# Allow OpenSSH to talk to containers without asking for confirmation
+RUN cat /etc/ssh/ssh_config | grep -v StrictHostKeyChecking > /etc/ssh/ssh_config.new \
+ && echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config.new \
+ && mv /etc/ssh/ssh_config.new /etc/ssh/ssh_config
+
 WORKDIR /
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 
 COPY dist/sagemaker_tensorflow_training-*.tar.gz /sagemaker_tensorflow_training.tar.gz
 RUN pip install --upgrade --no-cache-dir /sagemaker_tensorflow_training.tar.gz && \
-    rm /sagemaker_tensorflow_training.tar.gz
+ rm /sagemaker_tensorflow_training.tar.gz
