@@ -19,12 +19,13 @@ import tarfile
 import pytest
 from sagemaker.tensorflow import TensorFlow
 
-from test.integration.utils import processor, py_version  # noqa: F401
+from integration.utils import processor, py_version  # noqa: F401
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
 
 @pytest.mark.skip_gpu
+@pytest.mark.skip_generic
 @pytest.mark.parametrize('instances, processes', [
     [1, 2],
     (2, 1),

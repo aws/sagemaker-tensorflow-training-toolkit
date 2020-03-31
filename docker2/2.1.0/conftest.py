@@ -130,20 +130,6 @@ def instance_type(request, processor):
     return provided_instance_type if provided_instance_type is not None else default_instance_type
 
 
-@pytest.fixture(scope='session')
-def py_version():
-    if 'TEST_PY_VERSIONS' in os.environ:
-        return os.environ['TEST_PY_VERSIONS'].split(',')
-    return None
-
-
-@pytest.fixture(scope='session')
-def processor():
-    if 'TEST_PROCESSORS' in os.environ:
-        return os.environ['TEST_PROCESSORS'].split(',')
-    return None
-
-
 @pytest.fixture(autouse=True)
 def skip_by_device_type(request, processor):
     is_gpu = (processor == 'gpu')
@@ -157,13 +143,6 @@ def skip_gpu_instance_restricted_regions(region, instance_type):
     if (region in NO_P2_REGIONS and instance_type.startswith('ml.p2')) or \
             (region in NO_P3_REGIONS and instance_type.startswith('ml.p3')):
         pytest.skip('Skipping GPU test in region {}'.format(region))
-
-
-@pytest.fixture(autouse=True)
-def skip_py2_containers(request, tag):
-    if request.node.get_closest_marker('skip_py2_containers'):
-        if 'py2' in tag:
-            pytest.skip('Skipping python2 container with tag {}'.format(tag))
 
 
 @pytest.fixture(autouse=True)
