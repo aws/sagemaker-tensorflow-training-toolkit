@@ -20,20 +20,10 @@ phases:
   build:
     commands:
       # install
-      - pip3 install -U -e .
       - pip3 install -U -e .[test]
 
       # run flake8
       - tox -e flake8,twine
-
-      # run unit tests
-      - tox -e py36,py27 test/unit
-
-      # Create pip archive
-      - root_dir=$(pwd)
-      - build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
-      - python3 setup.py sdist
-      - tar_name=$(ls dist)
 
       # Find build artifacts
       - build_artifacts=$root_dir/docker/artifacts
@@ -42,7 +32,6 @@ phases:
 
       # prepare build context
       - build_dir="$root_dir/docker/$FRAMEWORK_VERSION/py2"
-      - cp $root_dir/dist/$tar_name $build_dir
       - cp $build_artifacts/* $build_dir/
       - cd $build_dir
 
@@ -60,7 +49,6 @@ phases:
 
       # prepare build context
       - build_dir="$root_dir/docker/$FRAMEWORK_VERSION/py3"
-      - cp $root_dir/dist/$tar_name $build_dir
       - cp $build_artifacts/* $build_dir/
       - cd $build_dir
 
@@ -89,28 +77,28 @@ phases:
       # run cpu integration tests
       - py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu"
       - py2_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu"
-      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
-      - execute-command-if-has-matching-changes "$py2_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
 
       # run gpu integration tests
       - printf "$SETUP_CMDS" > $SETUP_FILE
       - cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
       - py3_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
-      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
 
       - cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
       - py2_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
-      - execute-command-if-has-matching-changes "$py2_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
 
       # run sagemaker tests
       - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY2 --py-version 2 --processor cpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
       - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY2 --py-version 2 --processor gpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
       - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY3 --py-version 3 --processor cpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
       - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY3 --py-version 3 --processor gpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "docker/*" "buildspec.yml"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
 
     finally:
       # shut down remote gpu instance
