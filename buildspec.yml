@@ -25,6 +25,9 @@ phases:
       # run flake8
       - tox -e flake8,twine
 
+      - root_dir=$(pwd)
+      - build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
+
       # Find build artifacts
       - build_artifacts=$root_dir/docker/artifacts
 
