@@ -26,7 +26,7 @@ RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 @pytest.mark.skip_generic
 def test_distributed_training_horovod(sagemaker_session,
                                       instance_type,
-                                      ecr_image,
+                                      image_uri,
                                       tmpdir,
                                       framework_version):
 
@@ -36,7 +36,7 @@ def test_distributed_training_horovod(sagemaker_session,
         role='SageMakerRole',
         train_instance_type=instance_type,
         train_instance_count=2,
-        image_name=ecr_image,
+        image_name=image_uri,
         framework_version=framework_version,
         py_version='py3',
         script_mode=True,

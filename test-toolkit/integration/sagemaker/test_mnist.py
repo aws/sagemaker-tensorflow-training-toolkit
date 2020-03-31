@@ -25,7 +25,7 @@ from timeout import timeout
 
 
 @pytest.mark.deploy_test
-def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_mnist(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -33,7 +33,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
                            train_instance_type=instance_type,
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
@@ -43,7 +43,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_distributed_mnist_no_ps(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -51,7 +51,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, fr
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
@@ -61,7 +61,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, fr
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_distributed_mnist_ps(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
@@ -70,7 +70,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
@@ -81,7 +81,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_tuning(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_tuning(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
 
@@ -90,7 +90,7 @@ def test_tuning(sagemaker_session, ecr_image, instance_type, framework_version):
                            train_instance_type=instance_type,
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
 

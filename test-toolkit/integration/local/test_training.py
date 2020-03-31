@@ -33,13 +33,13 @@ def py_full_version(py_version):  # noqa: F811
 
 
 @pytest.mark.skip_gpu
-def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir, framework_version):
+def test_mnist_cpu(sagemaker_local_session, image_uri, tmpdir, framework_version):
     output_path = 'file://{}'.format(tmpdir)
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist.py'),
                     instance_type='local',
                     instance_count=1,
                     sagemaker_local_session=sagemaker_local_session,
-                    docker_image=docker_image,
+                    image_uri=image_uri,
                     framework_version=framework_version,
                     output_path=output_path,
                     training_data_path='file://{}'.format(
@@ -49,7 +49,7 @@ def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir, framework_vers
 
 @pytest.mark.skip_gpu
 def test_distributed_training_cpu_no_ps(sagemaker_local_session,
-                                        docker_image,
+                                        image_uri,
                                         tmpdir,
                                         framework_version):
     output_path = 'file://{}'.format(tmpdir)
@@ -57,7 +57,7 @@ def test_distributed_training_cpu_no_ps(sagemaker_local_session,
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
-                    docker_image=docker_image,
+                    image_uri=image_uri,
                     framework_version=framework_version,
                     output_path=output_path,
                     training_data_path='file://{}'.format(
@@ -67,7 +67,7 @@ def test_distributed_training_cpu_no_ps(sagemaker_local_session,
 
 @pytest.mark.skip_gpu
 def test_distributed_training_cpu_ps(sagemaker_local_session,
-                                     docker_image,
+                                     image_uri,
                                      tmpdir,
                                      framework_version):
     output_path = 'file://{}'.format(tmpdir)
@@ -75,7 +75,7 @@ def test_distributed_training_cpu_ps(sagemaker_local_session,
                     instance_type='local',
                     instance_count=2,
                     sagemaker_local_session=sagemaker_local_session,
-                    docker_image=docker_image,
+                    image_uri=image_uri,
                     framework_version=framework_version,
                     output_path=output_path,
                     hyperparameters={'sagemaker_parameter_server_enabled': True},
@@ -88,7 +88,7 @@ def run_tf_training(script,
                     instance_type,
                     instance_count,
                     sagemaker_local_session,
-                    docker_image,
+                    image_uri,
                     framework_version,
                     training_data_path,
                     output_path=None,
@@ -101,7 +101,7 @@ def run_tf_training(script,
                            train_instance_count=instance_count,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_local_session,
-                           image_name=docker_image,
+                           image_name=image_uri,
                            model_dir='/opt/ml/model',
                            output_path=output_path,
                            hyperparameters=hyperparameters,
