@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.1.7.post1 (2020-03-31)
+
+### Testing and Release Infrastructure
+
+ * refactor toolkit tests.
+
 ## v3.1.7.post0 (2020-03-31)
 
 ### Testing and Release Infrastructure
