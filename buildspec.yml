@@ -29,7 +29,7 @@ phases:
       - build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
 
       # Find build artifacts
-      - build_artifacts=$root_dir/docker/artifacts
+      - build_artifacts=$root_dir/docker/build_artifacts
 
       # build py2 images
 
