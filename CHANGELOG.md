@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.1.7.post0 (2020-03-31)
+
+### Testing and Release Infrastructure
+
+ * copy tests to test-toolkit folder.
+
 ## v3.1.7 (2020-03-26)
 
 ### Bug Fixes and Other Changes
