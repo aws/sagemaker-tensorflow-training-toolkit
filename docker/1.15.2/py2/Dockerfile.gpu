@@ -136,7 +136,9 @@ RUN pip install --no-cache-dir -U \
     "sagemaker-tensorflow-training>=2,<3" \
     # Let's install TensorFlow separately in the end to avoid the library version to be overwritten
  && pip install --force-reinstall --no-cache-dir -U \
-    ${TF_URL}
+    ${TF_URL} \
+ && pip install --no-cache-dir -U \
+    awscli
 
 # Install Horovod, temporarily using CUDA stubs
 RUN ldconfig /usr/local/cuda/targets/x86_64-linux/lib/stubs \
