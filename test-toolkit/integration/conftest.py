@@ -42,7 +42,7 @@ def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default='sagemaker-tensorflow-training')
     parser.addoption('--tag', default=None)
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--framework-version', default='1.15.2')
+    parser.addoption('--framework-version', default='2.1.0')
     parser.addoption('--processor', default='cpu', choices=['cpu', 'gpu', 'cpu,gpu'])
     parser.addoption('--py-version', default='3', choices=['2', '3', '2,3'])
     parser.addoption('--account-id', default='142577830533')
@@ -128,20 +128,6 @@ def instance_type(request, processor):
     provided_instance_type = request.config.getoption('--instance-type')
     default_instance_type = 'ml.c4.xlarge' if processor == 'cpu' else 'ml.p2.xlarge'
     return provided_instance_type if provided_instance_type is not None else default_instance_type
-
-
-@pytest.fixture(scope='session')
-def py_version():
-    if 'TEST_PY_VERSIONS' in os.environ:
-        return os.environ['TEST_PY_VERSIONS'].split(',')
-    return None
-
-
-@pytest.fixture(scope='session')
-def processor():
-    if 'TEST_PROCESSORS' in os.environ:
-        return os.environ['TEST_PROCESSORS'].split(',')
-    return None
 
 
 @pytest.fixture(autouse=True)
