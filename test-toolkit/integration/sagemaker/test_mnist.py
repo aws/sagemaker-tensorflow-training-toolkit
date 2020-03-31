@@ -20,12 +20,12 @@ from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
 from six.moves.urllib.parse import urlparse
 
-from test.integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
+from integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
 from timeout import timeout
 
 
 @pytest.mark.deploy_test
-def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_mnist(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -33,7 +33,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
                            train_instance_type=instance_type,
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
@@ -43,7 +43,7 @@ def test_mnist(sagemaker_session, ecr_image, instance_type, framework_version):
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_distributed_mnist_no_ps(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
     estimator = TensorFlow(entry_point=script,
@@ -51,7 +51,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, fr
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
@@ -61,7 +61,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, ecr_image, instance_type, fr
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_distributed_mnist_ps(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
     estimator = TensorFlow(entry_point=script,
@@ -70,7 +70,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
                            train_instance_count=2,
                            train_instance_type=instance_type,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
     inputs = estimator.sagemaker_session.upload_data(
@@ -81,38 +81,7 @@ def test_distributed_mnist_ps(sagemaker_session, ecr_image, instance_type, frame
     _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
 
 
-def test_s3_plugin(sagemaker_session, ecr_image, instance_type, region, framework_version):
-    resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
-    script = os.path.join(resource_path, 'mnist', 'mnist_estimator.py')
-    estimator = TensorFlow(entry_point=script,
-                           role='SageMakerRole',
-                           hyperparameters={
-                               # Saving a checkpoint after every 5 steps to hammer the S3 plugin
-                               'save-checkpoint-steps': 10,
-                               # Reducing throttling for checkpoint and model saving
-                               'throttle-secs': 1,
-                               # Without the patch training jobs would fail around 100th to
-                               # 150th step
-                               'max-steps': 200,
-                               # Large batch size would result in a larger checkpoint file
-                               'batch-size': 1024,
-                               # This makes the training job exporting model during training.
-                               # Stale model garbage collection will also be performed.
-                               'export-model-during-training': True
-                           },
-                           train_instance_count=1,
-                           train_instance_type=instance_type,
-                           sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
-                           framework_version=framework_version,
-                           script_mode=True)
-    estimator.fit('s3://sagemaker-sample-data-{}/tensorflow/mnist'.format(region),
-                  job_name=unique_name_from_base('test-tf-sm-s3-mnist'))
-    _assert_s3_file_exists(region, estimator.model_data)
-    _assert_checkpoint_exists(region, estimator.model_dir, 200)
-
-
-def test_tuning(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_tuning(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
     script = os.path.join(resource_path, 'mnist', 'mnist.py')
 
@@ -121,7 +90,7 @@ def test_tuning(sagemaker_session, ecr_image, instance_type, framework_version):
                            train_instance_type=instance_type,
                            train_instance_count=1,
                            sagemaker_session=sagemaker_session,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            script_mode=True)
 
