@@ -99,10 +99,11 @@ def test_train_horovod(run_module, single_machine_training_env):
                                   runner=runner.MPIRunnerType)
 
 
+@pytest.mark.skip_on_pipeline
 @pytest.mark.skipif(sys.version_info.major != 3,
                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
-@patch('tensorflow.distribute.Server')
+@patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('multiprocessing.Process', lambda target: target())
 @patch('time.sleep', MagicMock())
@@ -114,7 +115,7 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                                      'ps': ['host1:2223', 'host2:2223']})
 
     tf_server.assert_called_with(
-        cluster_spec(), job_name='ps', task_index=0, config=tf.compat.v1.ConfigProto(device_count={'GPU': 0})
+        cluster_spec(), job_name='ps', task_index=0, config=tf.ConfigProto(device_count={'GPU': 0})
     )
     tf_server().join.assert_called_with()
 
@@ -129,10 +130,11 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                            {'TF_CONFIG': tf_config})
 
 
+@pytest.mark.skip_on_pipeline
 @pytest.mark.skipif(sys.version_info.major != 3,
                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
-@patch('tensorflow.distribute.Server')
+@patch('tensorflow.train.Server')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('multiprocessing.Process', lambda target: target())
 @patch('time.sleep', MagicMock())
@@ -146,7 +148,7 @@ def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_trai
                                      'ps': ['host1:2223', 'host2:2223']})
 
     tf_server.assert_called_with(
-        cluster_spec(), job_name='ps', task_index=1, config=tf.compat.v1.ConfigProto(device_count={'GPU': 0})
+        cluster_spec(), job_name='ps', task_index=1, config=tf.ConfigProto(device_count={'GPU': 0})
     )
     tf_server().join.assert_called_with()
 
