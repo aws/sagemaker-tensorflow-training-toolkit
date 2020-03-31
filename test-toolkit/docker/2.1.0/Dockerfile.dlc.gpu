@@ -1,0 +1,6 @@
+ARG region
+FROM 763104351884.dkr.ecr.$region.amazonaws.com/tensorflow-training:2.1.0-gpu-py3
+
+COPY dist/sagemaker_tensorflow_training-*.tar.gz /sagemaker_tensorflow_training.tar.gz
+RUN pip install --upgrade --no-cache-dir /sagemaker_tensorflow_training.tar.gz && \
+    rm /sagemaker_tensorflow_training.tar.gz
