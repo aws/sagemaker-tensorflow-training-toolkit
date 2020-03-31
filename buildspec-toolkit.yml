@@ -1,0 +1,93 @@
+version: 0.2
+
+env:
+  variables:
+    FRAMEWORK_VERSION: '2.1.0'
+    CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
+    GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
+    ECR_REPO: 'sagemaker-test'
+    GITHUB_REPO: 'sagemaker-tensorflow-container'
+    DLC_ACCOUNT: '763104351884'
+    SETUP_FILE: 'setup_cmds.sh'
+    SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
+
+phases:
+  pre_build:
+    commands:
+      - start-dockerd
+      - ACCOUNT=$(aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text)
+      - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
+      - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - BUILD_ID="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
+      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
+
+  build:
+    commands:
+      - TOX_PARALLEL_NO_SPINNER=1
+      - PY_COLORS=0
+
+      # install
+      - pip3 install -U -e .[test]
+
+      # run linters
+      - tox -e flake8,twine
+
+      # run unit tests
+      - tox -e py36,py27 test-toolkit/unit
+
+      # define tags
+      - GENERIC_TAG="$FRAMEWORK_VERSION-tensorflow-$BUILD_ID"
+      - DLC_CPU_TAG="$FRAMEWORK_VERSION-dlc-cpu-$BUILD_ID"
+      - DLC_GPU_TAG="$FRAMEWORK_VERSION-dlc-gpu-$BUILD_ID"
+
+      # run local CPU integration tests (build and push the image to ECR repo)
+      - test_cmd="pytest test-toolkit/integration/local --build-image --push-image --dockerfile-type tf --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --tag $GENERIC_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+      - test_cmd="pytest test-toolkit/integration/local --build-image --push-image --dockerfile-type dlc.cpu --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --tag $DLC_CPU_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+
+      # launch remote GPU instance
+      - prefix='ml.'
+      - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
+      - create-key-pair
+      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu-latest
+
+      # build DLC GPU image because the base DLC image is too big and takes too long to build as part of the test
+      - python3 setup.py sdist
+      - build_dir="test-toolkit/docker/$FRAMEWORK_VERSION"
+      - $(aws ecr get-login --registry-ids $DLC_ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
+      # push DLC GPU image to ECR
+      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker push $PREPROD_IMAGE:$DLC_GPU_TAG
+
+      # run GPU local integration tests
+      - printf "$SETUP_CMDS" > $SETUP_FILE
+      # no reason to rebuild the image again since it was already built and pushed to ECR during CPU tests
+      - generic_cmd="pytest test-toolkit/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $GENERIC_TAG"
+      - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$generic_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+      - dlc_cmd="pytest test-toolkit/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
+      - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\" --skip-setup"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+
+      # run CPU sagemaker integration tests
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $GENERIC_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $DLC_CPU_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+
+      # run GPU sagemaker integration tests
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE --tag $GENERIC_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE --tag $DLC_GPU_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml"
+    finally:
+      # shut down remote GPU instance
+      - cleanup-gpu-instances
+      - cleanup-key-pairs
+
+      # remove ECR image
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GENERIC_TAG
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$DLC_CPU_TAG
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$DLC_GPU_TAG
