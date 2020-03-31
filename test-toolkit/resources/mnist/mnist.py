@@ -34,19 +34,6 @@ def _load_testing_data(base_dir):
     y_test = np.load(os.path.join(base_dir, 'test', 'y_test.npy'))
     return x_test, y_test
 
-
-def assert_can_track_sagemaker_experiments():
-    in_sagemaker_training = 'TRAINING_JOB_ARN' in os.environ
-    in_python_three = sys.version_info[0] == 3
-
-    if in_sagemaker_training and in_python_three:
-        import smexperiments.tracker
-
-        with smexperiments.tracker.Tracker.load() as tracker:
-            tracker.log_parameter('param', 1)
-            tracker.log_metric('metric', 1.0)
-
-
 args, unknown = _parse_args()
 
 model = tf.keras.models.Sequential([
@@ -66,4 +53,3 @@ model.evaluate(x_test, y_test)
 
 if args.current_host == args.hosts[0]:
     model.save(os.path.join('/opt/ml/model', 'my_model.h5'))
-    assert_can_track_sagemaker_experiments()
