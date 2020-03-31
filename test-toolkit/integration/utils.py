@@ -27,11 +27,11 @@ def unique_name_from_base(base, max_length=63):
     return '{}-{}-{}'.format(trimmed, ts, unique)
 
 
-@pytest.fixture(params=os.environ['TEST_PY_VERSIONS'].split(','))
+@pytest.fixture(scope='session', params=os.environ['TEST_PY_VERSIONS'].split(','))
 def py_version(request):
     return request.param
 
 
-@pytest.fixture(params=os.environ['TEST_PROCESSORS'].split(','))
+@pytest.fixture(scope='session', params=os.environ['TEST_PROCESSORS'].split(','))
 def processor(request):
     return request.param
