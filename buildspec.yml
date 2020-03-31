@@ -38,12 +38,14 @@ phases:
       # build cpu image
       - cpu_dockerfile="Dockerfile.cpu"
       - CPU_TAG_PY2="$FRAMEWORK_VERSION-cpu-py2-$build_id"
-      - docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY2 .
+      - build_cmd="docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY2 . "
+      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
 
       # build gpu image
       - gpu_dockerfile="Dockerfile.gpu"
       - GPU_TAG_PY2="$FRAMEWORK_VERSION-gpu-py2-$build_id"
-      - docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY2 .
+      - build_cmd="docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY2 . "
+      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
 
       # build py3 images
 
@@ -55,19 +57,25 @@ phases:
       # build cpu image
       - cpu_dockerfile="Dockerfile.cpu"
       - CPU_TAG_PY3="$FRAMEWORK_VERSION-cpu-py3-$build_id"
-      - docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY3 .
+      - build_cmd="docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY3 . "
+      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
 
       # build gpu image
       - gpu_dockerfile="Dockerfile.gpu"
       - GPU_TAG_PY3="$FRAMEWORK_VERSION-gpu-py3-$build_id"
-      - docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY3 .
+      - build_cmd="docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY3 . "
+      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
 
       # push images to ecr
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-      - docker push $PREPROD_IMAGE:$CPU_TAG_PY2
-      - docker push $PREPROD_IMAGE:$GPU_TAG_PY2
-      - docker push $PREPROD_IMAGE:$CPU_TAG_PY3
-      - docker push $PREPROD_IMAGE:$GPU_TAG_PY3
+      - push_cmd="docker push $PREPROD_IMAGE:$CPU_TAG_PY2"
+      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
+      - push_cmd="docker push $PREPROD_IMAGE:$GPU_TAG_PY2"
+      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
+      - push_cmd="docker push $PREPROD_IMAGE:$CPU_TAG_PY3"
+      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
+      - push_cmd="docker push $PREPROD_IMAGE:$GPU_TAG_PY3"
+      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
 
       # launch remote gpu instance
       - instance_type='p2.xlarge'
@@ -106,7 +114,11 @@ phases:
       - cleanup-key-pairs
 
       # remove ecr image
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG_PY2
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG_PY2
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG_PY3
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG_PY3
+      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG_PY2"
+      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
+      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG_PY2"
+      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
+      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG_PY3"
+      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
+      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG_PY3"
+      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
