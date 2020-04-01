@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.1.8 (2020-04-01)
+
+### Bug Fixes and Other Changes
+
+ * Allowing arguments for deep_learning_container.py for tf2
+
 ## v3.1.7.post1 (2020-03-31)
 
 ### Testing and Release Infrastructure
