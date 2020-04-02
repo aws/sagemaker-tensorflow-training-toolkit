@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.0 (2020-04-02)
+
+### Features
+
+ * install sagemaker-tensorflow-toolkit from PyPI.
+
 ## v2.2.8 (2020-04-01)
 
 ### Bug Fixes and Other Changes
