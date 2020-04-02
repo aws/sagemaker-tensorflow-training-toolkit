@@ -24,7 +24,6 @@ ARG PYTHON=python3
 ARG PYTHON_PIP=python3-pip
 ARG PIP=pip3
 
-ARG FRAMEWORK_SUPPORT_INSTALLABLE=sagemaker_tensorflow_training*.tar.gz
 ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.1/AmazonLinux/cpu/final/tensorflow-2.1.0-cp36-cp36m-manylinux2010_x86_64.whl
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -81,8 +80,6 @@ RUN mkdir -p /root/.ssh/ \
 
 WORKDIR /
 
-COPY $FRAMEWORK_SUPPORT_INSTALLABLE .
-
 RUN ${PIP} --no-cache-dir install --upgrade \
     pip \
     setuptools
@@ -105,7 +102,7 @@ RUN ${PIP} install --no-cache-dir -U \
     keras==2.3.1 \
     smdebug==0.7.2 \
     python-dateutil==2.8.1 \
-    pyYAML==5.2 \
+    pyYAML==5.3.1 \
     requests==2.22.0 \
     awscli \
     mpi4py==3.0.3 \
@@ -113,14 +110,12 @@ RUN ${PIP} install --no-cache-dir -U \
     sagemaker==1.50.17 \
     sagemaker-experiments==0.1.7 \
     "sagemaker-tensorflow>=2.1,<2.2" \
+    "sagemaker-tensorflow-training>2,<4" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
  && ${PIP} install --no-cache-dir -U \
     ${TF_URL} \
-    horovod==0.18.2 \
- && ${PIP} install --no-cache-dir -U \
-    $FRAMEWORK_SUPPORT_INSTALLABLE \
- && rm -f $FRAMEWORK_SUPPORT_INSTALLABLE
+    horovod==0.18.2
 
 ADD https://raw.githubusercontent.com/aws/aws-deep-learning-containers-utils/master/deep_learning_container.py /usr/local/bin/deep_learning_container.py
 

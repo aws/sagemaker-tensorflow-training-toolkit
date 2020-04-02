@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.2.0 (2020-04-02)
+
+### Features
+
+ * install sagemaker-tensorflow-toolkit from PyPI.
+
+### Bug Fixes and Other Changes
+
+ * Upgrading the pyyaml version
+
 ## v3.1.8 (2020-04-01)
 
 ### Bug Fixes and Other Changes
