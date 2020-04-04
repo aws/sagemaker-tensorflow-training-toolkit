@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.3.0 (2020-04-02)
+
+### Features
+
+ * install sagemaker-tensorflow-toolkit from PyPI.
+
+## v2.2.8 (2020-04-01)
+
+### Bug Fixes and Other Changes
+
+ * Allowing arguments for deep_learning_container.py for tf1.15
+
 ## v2.2.7.post0 (2020-03-31)
 
 ### Testing and Release Infrastructure
