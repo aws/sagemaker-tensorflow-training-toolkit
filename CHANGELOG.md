@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.1 (2020-04-06)
+
+### Bug Fixes and Other Changes
+
+ * updating pillow version of tf1.15
+
 ## v2.3.0 (2020-04-02)
 
 ### Features
