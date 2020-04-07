@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.2 (2020-04-07)
+
+### Bug Fixes and Other Changes
+
+ * Bump smdebug version
+
 ## v2.3.1 (2020-04-06)
 
 ### Bug Fixes and Other Changes
