@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.2.1 (2020-04-07)
+
+### Bug Fixes and Other Changes
+
+ * version bump
+
 ## v3.2.0 (2020-04-02)
 
 ### Features
