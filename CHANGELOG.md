@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.2.2 (2020-04-08)
+
+### Bug Fixes and Other Changes
+
+ * Revert the version of SMdebug in TF2
+
 ## v3.2.1 (2020-04-07)
 
 ### Bug Fixes and Other Changes
