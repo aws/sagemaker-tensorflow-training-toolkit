@@ -81,13 +81,13 @@ phases:
 
       # push images to ecr
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-      - docker push $PREPROD_IMAGE:$CPU_TAG_PY2
+      - push_cmd="docker push $PREPROD_IMAGE:$CPU_TAG_PY2"
       - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
-      - docker push $PREPROD_IMAGE:$GPU_TAG_PY2
+      - push_cmd="docker push $PREPROD_IMAGE:$GPU_TAG_PY2"
       - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
-      - docker push $PREPROD_IMAGE:$CPU_TAG_PY3
+      - push_cmd="docker push $PREPROD_IMAGE:$CPU_TAG_PY3"
       - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
-      - docker push $PREPROD_IMAGE:$GPU_TAG_PY3
+      - push_cmd="docker push $PREPROD_IMAGE:$GPU_TAG_PY3"
       - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
 
       # launch remote gpu instance
