@@ -1,9 +1,9 @@
 # TensorFlow benchmarking scripts
 
-This folder contains the TF training scripts https://github.com/tensorflow/benchmarks/tree/master/scripts/tf_cnn_benchmarks.
+This folder contains a copy of [TensorFlow's `tf_cnn_benchmarks.py` script](https://github.com/tensorflow/benchmarks/blob/e3bd1370ba21b02c4d34340934ffb4941977d96f/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py).
 
 ## Basic usage
-**execute_tensorflow_training.py train** uses SageMaker python sdk to start a training job. 
+**execute_tensorflow_training.py train** uses SageMaker python sdk to start a training job.
 
 ```bash
 ./execute_tensorflow_training.py train --help
@@ -26,7 +26,7 @@ Options:
   --help                          Show this message and exit.
 
 ```
-**execute_tensorflow_training.py generate_reports** generate benchmark reports. 
+**execute_tensorflow_training.py generate_reports** generate benchmark reports.
 
 ## Examples:
 
