@@ -17,7 +17,7 @@ import sys
 
 from mock import MagicMock, patch
 import pytest
-from sagemaker_containers.beta.framework import runner
+from sagemaker_training import runner
 import tensorflow as tf
 
 from sagemaker_tensorflow_container import training
@@ -81,22 +81,22 @@ def test_is_host_master():
     assert training._is_host_master(HOST_LIST, 'somehost') is False
 
 
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 def test_single_machine(run_module, single_machine_training_env):
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
     run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
                                   single_machine_training_env.to_env_vars(),
-                                  runner=runner.ProcessRunnerType)
+                                  runner_type=runner.ProcessRunnerType)
 
 
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 def test_train_horovod(run_module, single_machine_training_env):
     single_machine_training_env.additional_framework_parameters['sagemaker_mpi_enabled'] = True
 
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
     run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
                                   single_machine_training_env.to_env_vars(),
-                                  runner=runner.MPIRunnerType)
+                                  runner_type=runner.MPIRunnerType)
 
 
 @pytest.mark.skip_on_pipeline
@@ -104,7 +104,7 @@ def test_train_horovod(run_module, single_machine_training_env):
                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 @patch('multiprocessing.Process', lambda target: target())
 @patch('time.sleep', MagicMock())
 def test_train_distributed_master(run, tf_server, cluster_spec, distributed_training_env):
@@ -135,7 +135,7 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                     reason="Skip this for python 2 because of dict key order mismatch")
 @patch('tensorflow.train.ClusterSpec')
 @patch('tensorflow.train.Server')
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 @patch('multiprocessing.Process', lambda target: target())
 @patch('time.sleep', MagicMock())
 def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_training_env):
@@ -163,7 +163,7 @@ def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_trai
                            {'TF_CONFIG': tf_config})
 
 
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 def test_train_distributed_no_ps(run, distributed_training_env):
     distributed_training_env.additional_framework_parameters[
         training.SAGEMAKER_PARAMETER_SERVER_ENABLED] = False
@@ -171,7 +171,7 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
     run.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
-                           distributed_training_env.to_env_vars(), runner=runner.ProcessRunnerType)
+                           distributed_training_env.to_env_vars(), runner_type=runner.ProcessRunnerType)
 
 
 def test_build_tf_config():
@@ -241,8 +241,8 @@ def test_log_model_missing_warning_correct(logger):
 @patch('sagemaker_tensorflow_container.training.logger')
 @patch('sagemaker_tensorflow_container.training.train')
 @patch('logging.Logger.setLevel')
-@patch('sagemaker_containers.beta.framework.training_env')
-@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={})
+@patch('sagemaker_training.environment.Environment')
+@patch('sagemaker_training.environment.read_hyperparameters', return_value={})
 @patch('sagemaker_tensorflow_container.s3_utils.configure')
 def test_main(configure_s3_env, read_hyperparameters, training_env,
               set_level, train, logger, single_machine_training_env):
@@ -258,8 +258,8 @@ def test_main(configure_s3_env, read_hyperparameters, training_env,
 @patch('sagemaker_tensorflow_container.training.logger')
 @patch('sagemaker_tensorflow_container.training.train')
 @patch('logging.Logger.setLevel')
-@patch('sagemaker_containers.beta.framework.training_env')
-@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': MODEL_DIR})
+@patch('sagemaker_training.environment.Environment')
+@patch('sagemaker_training.environment.read_hyperparameters', return_value={'model_dir': MODEL_DIR})
 @patch('sagemaker_tensorflow_container.s3_utils.configure')
 def test_main_simple_training_model_dir(configure_s3_env, read_hyperparameters, training_env,
                                         set_level, train, logger, single_machine_training_env):
@@ -272,9 +272,9 @@ def test_main_simple_training_model_dir(configure_s3_env, read_hyperparameters, 
 @patch('sagemaker_tensorflow_container.training.logger')
 @patch('sagemaker_tensorflow_container.training.train')
 @patch('logging.Logger.setLevel')
-@patch('sagemaker_containers.beta.framework.training_env')
-@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': MODEL_DIR,
-                                                                                     '_tuning_objective_metric': 'auc'})
+@patch('sagemaker_training.environment.Environment')
+@patch('sagemaker_training.environment.read_hyperparameters', return_value={'model_dir': MODEL_DIR,
+                                                                            '_tuning_objective_metric': 'auc'})
 @patch('sagemaker_tensorflow_container.s3_utils.configure')
 def test_main_tuning_model_dir(configure_s3_env, read_hyperparameters, training_env,
                                set_level, train, logger, single_machine_training_env):
@@ -288,9 +288,9 @@ def test_main_tuning_model_dir(configure_s3_env, read_hyperparameters, training_
 @patch('sagemaker_tensorflow_container.training.logger')
 @patch('sagemaker_tensorflow_container.training.train')
 @patch('logging.Logger.setLevel')
-@patch('sagemaker_containers.beta.framework.training_env')
-@patch('sagemaker_containers.beta.framework.env.read_hyperparameters', return_value={'model_dir': '/opt/ml/model',
-                                                                                     '_tuning_objective_metric': 'auc'})
+@patch('sagemaker_training.environment.Environment')
+@patch('sagemaker_training.environment.read_hyperparameters', return_value={'model_dir': '/opt/ml/model',
+                                                                            '_tuning_objective_metric': 'auc'})
 @patch('sagemaker_tensorflow_container.s3_utils.configure')
 def test_main_tuning_mpi_model_dir(configure_s3_env, read_hyperparameters, training_env,
                                    set_level, train, logger, single_machine_training_env):
