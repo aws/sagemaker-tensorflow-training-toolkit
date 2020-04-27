@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.2.3.post0 (2020-04-27)
+
+### Documentation Changes
+
+ * remove extra newlines for consistency
+
 ## v3.2.3 (2020-04-16)
 
 ### Bug Fixes and Other Changes
