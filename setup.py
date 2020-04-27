@@ -62,7 +62,7 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['sagemaker-training>=3.4.2', 'numpy', 'scipy', 'sklearn',
+    install_requires=['sagemaker-training>=3.5.0', 'numpy', 'scipy', 'sklearn',
                       'pandas', 'Pillow', 'h5py'],
     extras_require={
         'test': test_dependencies,
