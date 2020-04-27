@@ -1,5 +1,18 @@
 # Changelog
 
+## v10.0.0 (2020-04-27)
+
+### Breaking Changes
+
+ * Replace sagemaker-containers with sagemaker-training
+
+### Testing and Release Infrastructure
+
+ * remove CHANGELOG entries from failed builds
+ * bump version to prepare for new version scheme
+ * add training script to benchmark directory
+ * skip image push in PR build if no changes
+
 ## v2.3.2 (2020-04-07)
 
 ### Bug Fixes and Other Changes
