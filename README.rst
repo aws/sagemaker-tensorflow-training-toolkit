@@ -186,7 +186,6 @@ If you want to run unit tests, then use:
 ::
 
     # All test instructions should be run from the top level directory
-
     pytest test/unit
 
 Integration Tests
@@ -210,7 +209,6 @@ If you want to run local integration tests, then use:
 ::
 
     # Required arguments for integration tests are found in test/integ/conftest.py
-
     pytest test/integration --docker-base-name <your_docker_image> \
                             --tag <your_docker_image_tag> \
                             --framework-version <tensorflow_version> \
