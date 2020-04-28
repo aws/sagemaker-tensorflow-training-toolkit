@@ -17,9 +17,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONIOENCODING=UTF-8
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
-# Specify the location of module that contains the training logic for SageMaker
-# https://docs.aws.amazon.com/sagemaker/latest/dg/docker-container-environmental-variables-entrypoint.html
-ENV SAGEMAKER_TRAINING_MODULE=sagemaker_tensorflow_container.training:main
+
 
 # Define framework-related package sources
 # To be changed for py3.7
@@ -113,8 +111,6 @@ RUN ${PIP} install --no-cache-dir -U \
     keras_preprocessing==1.1.0 \
     requests==2.22.0 \
     smdebug==0.7.2 \
-    sagemaker==1.50.17 \
-    sagemaker-experiments==0.1.7 \
     mpi4py==3.0.2 \
     "cryptography>=2.3" \
     # Let's install TensorFlow separately in the end to avoid
