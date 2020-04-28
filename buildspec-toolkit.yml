@@ -33,7 +33,7 @@ phases:
       - tox -e flake8,twine
 
       # run unit tests
-      - tox -e py37,py27 test-toolkit/unit
+      - tox -e py27,py36,py37 --parallel all test-toolkit/unit
 
       # define tags
       - GENERIC_TAG="$FRAMEWORK_VERSION-tensorflow-$BUILD_ID"

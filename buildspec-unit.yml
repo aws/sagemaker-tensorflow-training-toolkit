@@ -5,4 +5,4 @@ phases:
     commands:
     - pip install --upgrade pip --quiet
     - pip install tox --quiet
-    - tox -e ${TOX_ENVLIST} -- test/unit
+    - tox -e ${TOX_ENVLIST} --parallel all -- test/unit
