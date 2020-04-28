@@ -154,7 +154,10 @@ def train(env, cmd_args):
         else:
             runner_type = runner.ProcessRunnerType
 
-        entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env.to_env_vars(),
+        entry_point.run(env.module_dir,
+                        env.user_entry_point,
+                        cmd_args,
+                        env.to_env_vars(),
                         runner_type=runner_type)
 
 
