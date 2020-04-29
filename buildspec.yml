@@ -96,14 +96,14 @@ phases:
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
       # run cpu integration tests
-      - py3_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu --durations 10"
+      - py3_cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu --durations 10"
       - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
       - py2_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu --durations 10"
       - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
 
       # run gpu integration tests
       - printf "$SETUP_CMDS" > $SETUP_FILE
-      - cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local -n 4 --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu --durations 10"
+      - cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/local -n 4 --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu --durations 10"
       - py3_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
       - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
 
@@ -112,9 +112,9 @@ phases:
       - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
 
       # run sagemaker tests
-      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY3 --py-version 3 --processor cpu --durations 10"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY3 --py-version 3 --processor cpu --durations 10"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY3 --py-version 3 --processor gpu --durations 10"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY3 --py-version 3 --processor gpu --durations 10"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
       - test_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY2 --py-version 2 --processor cpu --durations 10"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
