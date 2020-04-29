@@ -21,7 +21,7 @@ ENV LC_ALL=C.UTF-8
 
 # Define framework-related package sources
 # To be changed for py3.7
-ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.15.2/AmazonLinux/gpu/final/tensorflow_gpu-1.15.2-cp36-cp36m-manylinux2010_x86_64.whl
+ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.15.2/AmazonLinux/cpu/final/tensorflow_cpu-1.15.2-cp37-cp37m-manylinux2010_x86_64.whl
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -116,7 +116,7 @@ RUN ${PIP} install --no-cache-dir -U \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
  && ${PIP} install --force-reinstall --no-cache-dir -U \
-    tensorflow==1.15.2 \
+    ${TF_URL} \
  && ${PIP} install --force-reinstall --no-cache-dir -U \
     horovod==0.18.2 \
  && ${PIP} install --no-cache-dir -U \
