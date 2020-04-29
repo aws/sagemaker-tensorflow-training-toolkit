@@ -89,15 +89,13 @@ phases:
       # build cpu image
       - prod_tag="$FRAMEWORK_VERSION-cpu-py37"
       - CPU_TAG_PY37="$prod_tag-$build_id"
-      - docker pull $PROD_IMAGE:$prod_tag
-      - build_cmd="docker build --cache-from $PROD_IMAGE:$prod_tag -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY37 . "
+      - build_cmd="docker build --no-cache -f $CPU_DOCKERFILE -t $PREPROD_IMAGE:$CPU_TAG_PY37 . "
       - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
 
       # build gpu image
       - prod_tag="$FRAMEWORK_VERSION-gpu-py37"
       - GPU_TAG_PY37="$prod_tag-$build_id"
-      - docker pull $PROD_IMAGE:$prod_tag
-      - build_cmd="docker build --cache-from $PROD_IMAGE:$prod_tag -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY37 . "
+      - build_cmd="docker build --no-cache -f $GPU_DOCKERFILE -t $PREPROD_IMAGE:$GPU_TAG_PY37 . "
       - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
 
       # push images to ecr
