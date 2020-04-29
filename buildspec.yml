@@ -6,7 +6,7 @@ env:
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-tensorflow-container'
     SETUP_FILE: 'setup_cmds.sh'
-    SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
+    SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip\npython3.6 -m pip install -U -e .\npython3.6 -m pip install -U -e .[test]'
 
 phases:
   pre_build:
@@ -19,8 +19,6 @@ phases:
 
   build:
     commands:
-      # install
-      - pip3 install -U -e .[test]
 
       # run flake8
       - tox -e flake8,twine
@@ -86,29 +84,29 @@ phases:
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
       # run cpu integration tests
-      - py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu"
-      - py2_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu"
+      - py2_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu"
+      - py3_cmd="IGNORE_COVERAGE=- tox -e py26 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu"
       - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
       - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
 
       # run gpu integration tests
       - printf "$SETUP_CMDS" > $SETUP_FILE
-      - cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
-      - py3_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
-      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
-
-      - cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
+      - cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
       - py2_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
       - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
 
+      - cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
+      - py3_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
+      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
+
       # run sagemaker tests
-      - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY2 --py-version 2 --processor cpu"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY2 --py-version 2 --processor cpu"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-      - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY2 --py-version 2 --processor gpu"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY2 --py-version 2 --processor gpu"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-      - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY3 --py-version 3 --processor cpu"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY3 --py-version 3 --processor cpu"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-      - test_cmd="pytest test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY3 --py-version 3 --processor gpu"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY3 --py-version 3 --processor gpu"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
 
     finally:
