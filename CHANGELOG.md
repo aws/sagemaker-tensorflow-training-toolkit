@@ -1,5 +1,15 @@
 # Changelog
 
+## v10.1.0 (2020-04-29)
+
+### Features
+
+ * Python 3.7 support
+
+### Testing and Release Infrastructure
+
+ * Fix buildspecs
+
 ## v10.0.0 (2020-04-27)
 
 ### Breaking Changes
