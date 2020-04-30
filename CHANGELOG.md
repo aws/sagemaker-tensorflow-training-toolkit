@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.2.3.post1 (2020-04-30)
+
+### Testing and Release Infrastructure
+
+ * use tox in buildspecs
+
 ## v3.2.3.post0 (2020-04-27)
 
 ### Documentation Changes
