@@ -150,11 +150,8 @@ RUN ${PIP} install --no-cache-dir -U \
     pandas==0.24.2 \
     Pillow==7.0.0 \
     h5py==2.10.0 \
-    keras_applications==1.0.8 \
-    keras_preprocessing==1.1.0 \
     requests==2.22.0 \
     smdebug==0.7.2 \
-    sagemaker==1.56.1 \
     sagemaker-experiments==0.1.7 \
     mpi4py==3.0.2 \
     "cryptography>=2.3" \
