@@ -17,7 +17,7 @@ import os
 import sagemaker
 from sagemaker.tensorflow import TensorFlow
 
-from test.integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
+from test.integration.utils import unique_name_from_base  # noqa: F401
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
@@ -26,7 +26,10 @@ def test_distributed_training_horovod(sagemaker_session,
                                       instance_type,
                                       ecr_image,
                                       tmpdir,
-                                      framework_version):
+                                      framework_version,
+                                      py_version):
+
+    python_version = 'py37' if py_version == '37' else 'py3'
 
     mpi_options = '-verbose -x orte_base_help_aggregate=0'
     estimator = TensorFlow(
@@ -36,7 +39,7 @@ def test_distributed_training_horovod(sagemaker_session,
         train_instance_count=2,
         image_name=ecr_image,
         framework_version=framework_version,
-        py_version='py3',
+        py_version=python_version,
         script_mode=True,
         hyperparameters={'sagemaker_mpi_enabled': True,
                          'sagemaker_mpi_custom_mpi_options': mpi_options,

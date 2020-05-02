@@ -28,12 +28,14 @@ TF_CHECKPOINT_FILES = ['graph.pbtxt', 'model.ckpt-0.index', 'model.ckpt-0.meta']
 def py_full_version(py_version):  # noqa: F811
     if py_version == '2':
         return '2.7'
+    elif py_version == '37':
+        return '3.7'
     else:
         return '3.6'
 
 
 @pytest.mark.skip_gpu
-def test_py_versions(sagemaker_local_session, docker_image, py_full_version, framework_version, tmpdir):
+def test_py_versions(sagemaker_local_session, docker_image, py_full_version, framework_version, tmpdir, py_full_version):
     output_path = 'file://{}'.format(tmpdir)
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'test_py_version', 'entry.py'),
                     instance_type='local',
@@ -42,7 +44,8 @@ def test_py_versions(sagemaker_local_session, docker_image, py_full_version, fra
                     docker_image=docker_image,
                     framework_version=framework_version,
                     output_path=output_path,
-                    training_data_path=None)
+                    training_data_path=None,
+                    py_full_version=py_full_version)
 
     with tarfile.open(os.path.join(str(tmpdir), 'output.tar.gz')) as tar:
         output_file = tar.getmember('py_version')
@@ -53,7 +56,7 @@ def test_py_versions(sagemaker_local_session, docker_image, py_full_version, fra
 
 
 @pytest.mark.skip_gpu
-def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir, framework_version):
+def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir, framework_version, py_full_version):
     output_path = 'file://{}'.format(tmpdir)
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist.py'),
                     instance_type='local',
@@ -63,12 +66,13 @@ def test_mnist_cpu(sagemaker_local_session, docker_image, tmpdir, framework_vers
                     framework_version=framework_version,
                     output_path=output_path,
                     training_data_path='file://{}'.format(
-                        os.path.join(RESOURCE_PATH, 'mnist', 'data')))
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data')),
+                    py_full_version=py_full_version)
     _assert_files_exist_in_tar(output_path, ['my_model.h5'])
 
 
 @pytest.mark.skip_cpu
-def test_gpu(sagemaker_local_session, docker_image, framework_version):
+def test_gpu(sagemaker_local_session, docker_image, framework_version, py_full_version):
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'gpu_device_placement.py'),
                     instance_type='local_gpu',
                     instance_count=1,
@@ -76,14 +80,16 @@ def test_gpu(sagemaker_local_session, docker_image, framework_version):
                     docker_image=docker_image,
                     framework_version=framework_version,
                     training_data_path='file://{}'.format(
-                        os.path.join(RESOURCE_PATH, 'mnist', 'data')))
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data')),
+                    py_full_version=py_full_version)
 
 
 @pytest.mark.skip_gpu
 def test_distributed_training_cpu_no_ps(sagemaker_local_session,
                                         docker_image,
                                         tmpdir,
-                                        framework_version):
+                                        framework_version,
+                                        py_full_version):
     output_path = 'file://{}'.format(tmpdir)
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist_estimator.py'),
                     instance_type='local',
@@ -93,7 +99,8 @@ def test_distributed_training_cpu_no_ps(sagemaker_local_session,
                     framework_version=framework_version,
                     output_path=output_path,
                     training_data_path='file://{}'.format(
-                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')),
+                    py_full_version=py_full_version)
     _assert_files_exist_in_tar(output_path, TF_CHECKPOINT_FILES)
 
 
@@ -101,7 +108,8 @@ def test_distributed_training_cpu_no_ps(sagemaker_local_session,
 def test_distributed_training_cpu_ps(sagemaker_local_session,
                                      docker_image,
                                      tmpdir,
-                                     framework_version):
+                                     framework_version,
+                                     py_full_version):
     output_path = 'file://{}'.format(tmpdir)
     run_tf_training(script=os.path.join(RESOURCE_PATH, 'mnist', 'mnist_estimator.py'),
                     instance_type='local',
@@ -112,7 +120,8 @@ def test_distributed_training_cpu_ps(sagemaker_local_session,
                     output_path=output_path,
                     hyperparameters={'sagemaker_parameter_server_enabled': True},
                     training_data_path='file://{}'.format(
-                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')))
+                        os.path.join(RESOURCE_PATH, 'mnist', 'data-distributed')),
+                    py_full_version=py_full_version)
     _assert_files_exist_in_tar(output_path, TF_CHECKPOINT_FILES)
 
 
@@ -124,9 +133,12 @@ def run_tf_training(script,
                     framework_version,
                     training_data_path,
                     output_path=None,
-                    hyperparameters=None):
+                    hyperparameters=None,
+                    py_full_version):
 
     hyperparameters = hyperparameters or {}
+
+    py_version = 'py37' if py_full_version == '3.7' else 'py3'
 
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
@@ -139,7 +151,7 @@ def run_tf_training(script,
                            hyperparameters=hyperparameters,
                            base_job_name='test-tf',
                            framework_version=framework_version,
-                           py_version='py3')
+                           py_version=py_version)
 
     estimator.fit(training_data_path)
 
