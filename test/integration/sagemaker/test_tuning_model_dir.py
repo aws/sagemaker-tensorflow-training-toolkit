@@ -24,15 +24,13 @@ def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'tuning_model_dir', 'entry.py')
 
-    python_version = 'py37' if py_version == '37' else 'py3'
-
     estimator = TensorFlow(entry_point=script,
                            role='SageMakerRole',
                            train_instance_type=instance_type,
                            train_instance_count=1,
                            image_name=ecr_image,
                            framework_version=framework_version,
-                           py_version=python_version,
+                           py_version='py3',
                            sagemaker_session=sagemaker_session)
 
     tuner = HyperparameterTuner(estimator=estimator,
