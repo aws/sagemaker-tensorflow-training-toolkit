@@ -1,5 +1,13 @@
 # Changelog
 
+## v10.1.1 (2020-05-04)
+
+### Bug Fixes and Other Changes
+
+ * remove sagemaker pysdk, keras_applications and keras_preprocessing in docker files
+ * Fix sm integration issues
+ * add dockerfiles for tf 1.15.2 py37 containers
+
 ## v10.1.0 (2020-04-29)
 
 ### Features
