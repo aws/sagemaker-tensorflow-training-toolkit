@@ -128,7 +128,7 @@ def train(env, cmd_args):
     """Get training job environment from env and run the training job.
 
     Args:
-        env (sagemaker_training.env.TrainingEnv): Instance of TrainingEnv class
+        env (sagemaker_training.environment.Environment): Instance of Environment class
     """
     parameter_server_enabled = env.additional_framework_parameters.get(
         SAGEMAKER_PARAMETER_SERVER_ENABLED, False)
