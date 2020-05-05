@@ -1,5 +1,11 @@
 # Changelog
 
+## v10.1.2 (2020-05-05)
+
+### Bug Fixes and Other Changes
+
+ * Add py37 to sm tests
+
 ## v10.1.1 (2020-05-04)
 
 ### Bug Fixes and Other Changes
