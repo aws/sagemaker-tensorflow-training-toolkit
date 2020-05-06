@@ -19,7 +19,7 @@ import os
 import subprocess
 import time
 
-import sagemaker_containers.beta.framework as framework
+from sagemaker_training import entry_point, environment, mapping, runner
 import tensorflow as tf
 
 from sagemaker_tensorflow_container import s3_utils
@@ -109,7 +109,7 @@ def _run_worker(env, cmd_args, tf_config):
     env_vars = env.to_env_vars()
     env_vars['TF_CONFIG'] = json.dumps(tf_config)
 
-    framework.entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env_vars)
+    entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env_vars)
 
 
 def _wait_until_master_is_down(master):
@@ -128,7 +128,7 @@ def train(env, cmd_args):
     """Get training job environment from env and run the training job.
 
     Args:
-        env (sagemaker_containers.beta.framework.env.TrainingEnv): Instance of TrainingEnv class
+        env (sagemaker_training.environment.Environment): Instance of Environment class
     """
     parameter_server_enabled = env.additional_framework_parameters.get(
         SAGEMAKER_PARAMETER_SERVER_ENABLED, False)
@@ -150,12 +150,15 @@ def train(env, cmd_args):
         mpi_enabled = env.additional_framework_parameters.get('sagemaker_mpi_enabled')
 
         if mpi_enabled:
-            runner_type = framework.runner.MPIRunnerType
+            runner_type = runner.MPIRunnerType
         else:
-            runner_type = framework.runner.ProcessRunnerType
+            runner_type = runner.ProcessRunnerType
 
-        framework.entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env.to_env_vars(),
-                                  runner=runner_type)
+        entry_point.run(env.module_dir,
+                        env.user_entry_point,
+                        cmd_args,
+                        env.to_env_vars(),
+                        runner_type=runner_type)
 
 
 def _log_model_missing_warning(model_dir):
@@ -195,8 +198,8 @@ def _model_dir_with_training_job(model_dir, job_name):
 def main():
     """Training entry point
     """
-    hyperparameters = framework.env.read_hyperparameters()
-    env = framework.training_env(hyperparameters=hyperparameters)
+    hyperparameters = environment.read_hyperparameters()
+    env = environment.Environment(hyperparameters=hyperparameters)
 
     user_hyperparameters = env.hyperparameters
 
@@ -208,5 +211,5 @@ def main():
         user_hyperparameters['model_dir'] = model_dir
 
     s3_utils.configure(user_hyperparameters.get('model_dir'), os.environ.get('SAGEMAKER_REGION'))
-    train(env, framework.mapping.to_cmd_args(user_hyperparameters))
+    train(env, mapping.to_cmd_args(user_hyperparameters))
     _log_model_missing_warning(MODEL_DIR)
