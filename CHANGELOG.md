@@ -1,5 +1,19 @@
 # Changelog
 
+## v4.0.0 (2020-05-09)
+
+### Breaking Changes
+
+ * Replace sagemaker-containers with sagemaker-training
+
+### Features
+
+ * Python 3.7 support
+
+### Testing and Release Infrastructure
+
+ * fix typo in release buildspec.
+
 ## v3.2.3.post1 (2020-04-30)
 
 ### Testing and Release Infrastructure
