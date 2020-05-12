@@ -1,5 +1,15 @@
 # Changelog
 
+## v10.1.3 (2020-05-12)
+
+### Bug Fixes and Other Changes
+
+ * Bump version of sagemaker-training for typing fix
+
+### Testing and Release Infrastructure
+
+ * remove unused build scripts.
+
 ## v10.1.2 (2020-05-05)
 
 ### Bug Fixes and Other Changes
