@@ -54,7 +54,7 @@ build_dir = os.path.join('docker', args.version)
 # Run docker-login so we can pull the cached image
 login_cmd = subprocess.check_output(
     'aws ecr get-login --no-include-email --registry-id {}'.format(args.account).split())
-print('Executing docker login command: '.format(login_cmd))
+print('Executing docker login command: {}'.format(login_cmd))
 subprocess.check_call(login_cmd.split())
 
 for arch in ['cpu', 'gpu']:
