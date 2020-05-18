@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.0.0.post0 (2020-05-18)
+
+### Documentation Changes
+
+ * update image-building instructions
+
 ## v4.0.1 (2020-05-13)
 
 ### Bug Fixes and Other Changes
