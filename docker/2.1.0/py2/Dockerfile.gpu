@@ -7,10 +7,10 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN true
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 
-ENV PYTHONDONTWRITEBYTECODE=1 
-ENV PYTHONUNBUFFERED=1 
-ENV PYTHONIOENCODING=UTF-8 
-ENV LANG=C.UTF-8 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
+ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
 ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.1/AmazonLinux/gpu/final/tensorflow_gpu-2.1.0-cp27-cp27mu-manylinux2010_x86_64.whl
@@ -141,7 +141,7 @@ RUN ${PIP} install --no-cache-dir -U \
     opencv-python==4.2.0.32 \
     "cryptography>=2.3" \
     "sagemaker-tensorflow>=2.1,<2.2" \
-    "sagemaker-tensorflow-training>2,<4" \
+    "sagemaker-tensorflow-training>=20" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
  && ${PIP} install --no-cache-dir -U \

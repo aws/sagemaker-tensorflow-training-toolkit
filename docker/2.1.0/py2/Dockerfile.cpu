@@ -10,14 +10,14 @@ ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 # Set environment variables for MKL
 # For more about MKL with TensorFlow see:
 # https://www.tensorflow.org/performance/performance_guide#tensorflow_with_intel%C2%AE_mkl_dnn
-ENV KMP_AFFINITY=granularity=fine,compact,1,0 
-ENV KMP_BLOCKTIME=1 
+ENV KMP_AFFINITY=granularity=fine,compact,1,0
+ENV KMP_BLOCKTIME=1
 ENV KMP_SETTINGS=0
 
-ENV PYTHONDONTWRITEBYTECODE=1 
-ENV PYTHONUNBUFFERED=1 
-ENV PYTHONIOENCODING=UTF-8 
-ENV LANG=C.UTF-8 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
+ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
 ARG TF_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.1/AmazonLinux/cpu/final/tensorflow-2.1.0-cp27-cp27mu-manylinux2010_x86_64.whl
@@ -108,13 +108,13 @@ RUN ${PIP} install --no-cache-dir -U \
     opencv-python==4.2.0.32 \
     "cryptography>=2.3" \
     "sagemaker-tensorflow>=2.1,<2.2" \
-    "sagemaker-tensorflow-training>2,<4" \
+    "sagemaker-tensorflow-training>=20" \
     # Let's install TensorFlow separately in the end to avoid
     # the library version to be overwritten
  && ${PIP} install --no-cache-dir -U \
     ${TF_URL} \
  && ${PIP} install --no-cache-dir -U \
-    horovod==0.18.2 
+    horovod==0.18.2
 
 ADD https://raw.githubusercontent.com/aws/aws-deep-learning-containers-utils/master/deep_learning_container.py /usr/local/bin/deep_learning_container.py
 
