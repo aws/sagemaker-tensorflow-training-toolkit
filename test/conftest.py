@@ -19,8 +19,34 @@ import boto3
 import pytest
 from sagemaker import LocalSession, Session
 
-from integration import image_utils
-from integration import NO_P2_REGIONS, NO_P3_REGIONS
+from utils import image_utils
+
+# these regions have some p2 and p3 instances, but not enough for automated testing
+NO_P2_REGIONS = [
+    'ca-central-1',
+    'eu-central-1',
+    'eu-west-2',
+    'us-west-1',
+    'eu-west-3',
+    'eu-north-1',
+    'sa-east-1',
+    'ap-east-1',
+    'me-south-1'
+]
+NO_P3_REGIONS = [
+    'ap-southeast-1',
+    'ap-southeast-2',
+    'ap-south-1',
+    'ca-central-1',
+    'eu-central-1',
+    'eu-west-2',
+    'us-west-1'
+    'eu-west-3',
+    'eu-north-1',
+    'sa-east-1',
+    'ap-east-1',
+    'me-south-1'
+]
 
 
 logger = logging.getLogger(__name__)
@@ -49,9 +75,14 @@ def pytest_addoption(parser):
     parser.addoption('--instance-type', default=None)
 
 
-def pytest_configure(config):
-    os.environ['TEST_PY_VERSIONS'] = config.getoption('--py-version')
-    os.environ['TEST_PROCESSORS'] = config.getoption('--processor')
+def pytest_generate_tests(metafunc):
+    if 'py_version' in metafunc.fixturenames:
+        py_version_params = ['py' + v for v in metafunc.config.getoption('--py-version').split(',')]
+        metafunc.parametrize('py_version', py_version_params, scope='session')
+
+    if 'processor' in metafunc.fixturenames:
+        processor_params = metafunc.config.getoption('--processor').split(',')
+        metafunc.parametrize('processor', processor_params, scope='session')
 
 
 @pytest.fixture(scope='session', name='dockerfile_type')
@@ -73,7 +104,7 @@ def fixture_build_image(request, framework_version, dockerfile, image_uri, regio
                                        dockerfile=dockerfile,
                                        image_uri=image_uri,
                                        region=region,
-                                       cwd=os.path.join(DIR_PATH, '..', '..'))
+                                       cwd=os.path.join(DIR_PATH, '..'))
 
     return image_uri
 

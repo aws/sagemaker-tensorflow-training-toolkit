@@ -17,7 +17,7 @@ import os
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
 
-from integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
+from utils.test_utils import unique_name_from_base
 
 
 def test_model_dir_with_training_job_name(sagemaker_session, image_uri, instance_type, framework_version):
