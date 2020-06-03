@@ -39,6 +39,7 @@ RUN apt-get update \
     wget \
     vim \
     zlib1g-dev \
+    nginx \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Open MPI
