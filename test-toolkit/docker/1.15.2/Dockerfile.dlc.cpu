@@ -6,4 +6,4 @@ FROM 763104351884.dkr.ecr.$region.amazonaws.com/tensorflow-training:1.15.2-cpu-p
 #    rm /sagemaker_tensorflow_training.tar.gz
 
 RUN pip show sagemaker-tensorflow-training
-RUN pip install --upgrade --no-cache-dir sagemaker-tensorflow-training=20.0.0.post0 
+RUN pip install --upgrade --no-cache-dir sagemaker-tensorflow-training==20.0.0.post0 
