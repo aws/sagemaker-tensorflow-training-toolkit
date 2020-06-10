@@ -240,7 +240,7 @@ The instance-type is your specified `Amazon SageMaker Instance Type
 Before running functional tests:
 
 #. Build your Docker image.
-#. Push the image to your ECR repository.
+#. `Push the image to your ECR repository <https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html>`__.
 #. Pass in the correct pytest arguments to run tests on SageMaker against the image within your ECR repository.
 
 If you want to run a functional end to end test on `Amazon
