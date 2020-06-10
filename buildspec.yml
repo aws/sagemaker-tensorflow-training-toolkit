@@ -3,8 +3,11 @@ version: 0.2
 env:
   variables:
     FRAMEWORK_VERSION: '2.1.0'
+    CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
+    GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-tensorflow-container'
+    DLC_ACCOUNT: '763104351884'
     SETUP_FILE: 'setup_cmds.sh'
     SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip\npython3.6 -m pip install -U -e .\npython3.6 -m pip install -U -e .[test]'
 
@@ -15,111 +18,73 @@ phases:
       - ACCOUNT=$(aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text)
       - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
       - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - BUILD_ID="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
       - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
 
   build:
     commands:
+      - TOX_PARALLEL_NO_SPINNER=1
+      - PY_COLORS=0
 
-      # run flake8
+      # run linters
       - tox -e flake8,twine
 
-      - root_dir=$(pwd)
-      - build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
+      # run unit tests
+      - tox -e py27,py36,py37 --parallel all test/unit
 
-      # Find build artifacts
-      - build_artifacts=$root_dir/docker/build_artifacts
+      # define tags
+      - GENERIC_TAG="$FRAMEWORK_VERSION-tensorflow-$BUILD_ID"
+      - DLC_CPU_TAG="$FRAMEWORK_VERSION-dlc-cpu-$BUILD_ID"
+      - DLC_GPU_TAG="$FRAMEWORK_VERSION-dlc-gpu-$BUILD_ID"
 
-      # build py2 images
+      # run local CPU integration tests (build and push the image to ECR repo)
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --build-image --push-image --dockerfile-type tf --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --tag $GENERIC_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --build-image --push-image --dockerfile-type dlc.cpu --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --tag $DLC_CPU_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
 
-      # prepare build context
-      - build_dir="$root_dir/docker/$FRAMEWORK_VERSION/py2"
-      - cp $build_artifacts/* $build_dir/
-      - cd $build_dir
-
-      # build cpu image
-      - cpu_dockerfile="Dockerfile.cpu"
-      - CPU_TAG_PY2="$FRAMEWORK_VERSION-cpu-py2-$build_id"
-      - build_cmd="docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY2 . "
-      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
-
-      # build gpu image
-      - gpu_dockerfile="Dockerfile.gpu"
-      - GPU_TAG_PY2="$FRAMEWORK_VERSION-gpu-py2-$build_id"
-      - build_cmd="docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY2 . "
-      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
-
-      # build py3 images
-
-      # prepare build context
-      - build_dir="$root_dir/docker/$FRAMEWORK_VERSION/py3"
-      - cp $build_artifacts/* $build_dir/
-      - cd $build_dir
-
-      # build cpu image
-      - cpu_dockerfile="Dockerfile.cpu"
-      - CPU_TAG_PY3="$FRAMEWORK_VERSION-cpu-py3-$build_id"
-      - build_cmd="docker build -f $cpu_dockerfile -t $PREPROD_IMAGE:$CPU_TAG_PY3 . "
-      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
-
-      # build gpu image
-      - gpu_dockerfile="Dockerfile.gpu"
-      - GPU_TAG_PY3="$FRAMEWORK_VERSION-gpu-py3-$build_id"
-      - build_cmd="docker build -f $gpu_dockerfile -t $PREPROD_IMAGE:$GPU_TAG_PY3 . "
-      - execute-command-if-has-matching-changes "$build_cmd" "test/" "docker/*" "buildspec.yml"
-
-      # push images to ecr
-      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-      - push_cmd="docker push $PREPROD_IMAGE:$CPU_TAG_PY2"
-      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
-      - push_cmd="docker push $PREPROD_IMAGE:$GPU_TAG_PY2"
-      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
-      - push_cmd="docker push $PREPROD_IMAGE:$CPU_TAG_PY3"
-      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
-      - push_cmd="docker push $PREPROD_IMAGE:$GPU_TAG_PY3"
-      - execute-command-if-has-matching-changes "$push_cmd" "test/" "docker/*" "buildspec.yml"
-
-      # launch remote gpu instance
-      - instance_type='p2.xlarge'
+      # launch remote GPU instance
+      - prefix='ml.'
+      - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
       - create-key-pair
-      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
+      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu-latest
 
-      # run cpu integration tests
-      - py2_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu"
-      - py3_cmd="IGNORE_COVERAGE=- tox -e py26 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu"
-      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
-      - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
+      # build DLC GPU image because the base DLC image is too big and takes too long to build as part of the test
+      - python3.6 setup.py sdist
+      - build_dir="test/docker/$FRAMEWORK_VERSION"
+      - $(aws ecr get-login --registry-ids $DLC_ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
+      # push DLC GPU image to ECR
+      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker push $PREPROD_IMAGE:$DLC_GPU_TAG
 
-      # run gpu integration tests
+      # run GPU local integration tests
       - printf "$SETUP_CMDS" > $SETUP_FILE
-      - cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY2 --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
-      - py2_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
-      - execute-command-if-has-matching-changes "$py2_cmd" "test/" "docker/*" "buildspec.yml"
+      # no reason to rebuild the image again since it was already built and pushed to ECR during CPU tests
+      - generic_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $GENERIC_TAG"
+      - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$generic_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
+      - dlc_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
+      - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\" --skip-setup"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
 
-      - cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_TAG_PY3 --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
-      - py3_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
-      - execute-command-if-has-matching-changes "$py3_cmd" "test/" "docker/*" "buildspec.yml"
+      # run CPU sagemaker integration tests
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $GENERIC_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $DLC_CPU_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
 
-      # run sagemaker tests
-      - test_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY2 --py-version 2 --processor cpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-      - test_cmd="IGNORE_COVERAGE=- tox -e py27 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY2 --py-version 2 --processor gpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $CPU_TAG_PY3 --py-version 3 --processor cpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n 8 --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --tag $GPU_TAG_PY3 --py-version 3 --processor gpu"
-      - execute-command-if-has-matching-changes "$test_cmd" "test/" "docker/*" "buildspec.yml"
-
+      # run GPU sagemaker integration tests
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE --tag $GENERIC_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE --tag $DLC_GPU_TAG"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml"
     finally:
-      # shut down remote gpu instance
+      # shut down remote GPU instance
       - cleanup-gpu-instances
       - cleanup-key-pairs
 
-      # remove ecr image
-      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG_PY2"
-      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
-      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG_PY2"
-      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
-      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG_PY3"
-      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
-      - delete_cmd="aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG_PY3"
-      - execute-command-if-has-matching-changes "$delete_cmd" "test/" "docker/*" "buildspec.yml"
+      # remove ECR image
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GENERIC_TAG
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$DLC_CPU_TAG
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$DLC_GPU_TAG

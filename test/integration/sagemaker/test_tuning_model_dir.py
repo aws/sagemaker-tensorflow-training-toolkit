@@ -16,11 +16,10 @@ import os
 
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
+from sagemaker.utils import unique_name_from_base
 
-from test.integration.utils import processor, py_version, unique_name_from_base  # noqa: F401
 
-
-def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance_type, framework_version):
+def test_model_dir_with_training_job_name(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
     script = os.path.join(resource_path, 'tuning_model_dir', 'entry.py')
 
@@ -28,7 +27,7 @@ def test_model_dir_with_training_job_name(sagemaker_session, ecr_image, instance
                            role='SageMakerRole',
                            train_instance_type=instance_type,
                            train_instance_count=1,
-                           image_name=ecr_image,
+                           image_name=image_uri,
                            framework_version=framework_version,
                            py_version='py3',
                            sagemaker_session=sagemaker_session)
