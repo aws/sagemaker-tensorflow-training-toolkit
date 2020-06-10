@@ -1,5 +1,11 @@
 # Changelog
 
+## v10.1.4 (2020-06-10)
+
+### Bug Fixes and Other Changes
+
+ * bump version of sagemaker-training for script entry point fix.
+
 ## v10.1.3 (2020-05-12)
 
 ### Bug Fixes and Other Changes
