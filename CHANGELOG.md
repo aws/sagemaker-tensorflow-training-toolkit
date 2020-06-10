@@ -1,5 +1,16 @@
 # Changelog
 
+## v10.1.4.post0 (2020-06-10)
+
+### Documentation Changes
+
+ * remove functional test info from branch
+ * Update README.rst
+
+### Testing and Release Infrastructure
+
+ * Make docker folder read only, remove unused tests.
+
 ## v10.1.4 (2020-06-10)
 
 ### Bug Fixes and Other Changes
