@@ -17,8 +17,7 @@ import os
 import pytest
 import sagemaker
 from sagemaker.tensorflow import TensorFlow
-
-from utils.test_utils import unique_name_from_base
+from sagemaker.utils import unique_name_from_base
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 

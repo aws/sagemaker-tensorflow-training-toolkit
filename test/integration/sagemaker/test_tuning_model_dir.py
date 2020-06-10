@@ -16,8 +16,7 @@ import os
 
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
-
-from utils.test_utils import unique_name_from_base
+from sagemaker.utils import unique_name_from_base
 
 
 def test_model_dir_with_training_job_name(sagemaker_session, image_uri, instance_type, framework_version):

@@ -18,10 +18,10 @@ import boto3
 import pytest
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter
+from sagemaker.utils import unique_name_from_base
 from six.moves.urllib.parse import urlparse
 
 from timeout import timeout
-from utils.test_utils import unique_name_from_base
 
 
 @pytest.mark.deploy_test
