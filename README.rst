@@ -76,6 +76,17 @@ Tagging scheme is based on <tensorflow_version>-<processor>-<python_version>. (e
 All "final" Dockerfiles build images using base images that use the tagging scheme
 above.
 
+Before building these images, you need to have a pip-installable binary of this repository saved locally. To create the SageMaker Tensorflow Container Python package:
+
+::
+    # Create the binary
+    git clone https://github.com/aws/sagemaker-tensorflow-container.git
+    cd sagemaker-tensorflow-container
+    python setup.py sdist
+    cp dist/sagemaker_tensorflow_training*.tar.gz docker/<tensorflow_version>/sagemaker_tensorflow_training.tar.gz
+
+Once you have copied the tensorflow_training.tar.gz to the desired location [same directory as the Dockerfile], you can then build the image.
+
 If you want to build your "base" Docker image, then use:
 
 ::
