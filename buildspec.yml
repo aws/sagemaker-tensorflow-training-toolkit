@@ -51,7 +51,7 @@ phases:
 
       # build DLC GPU image because the base DLC image is too big and takes too long to build as part of the test
       - python3.6 setup.py sdist
-      - build_dir="test/docker/$FRAMEWORK_VERSION"
+      - build_dir="test/container/$FRAMEWORK_VERSION"
       - $(aws ecr get-login --registry-ids $DLC_ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
       # push DLC GPU image to ECR
