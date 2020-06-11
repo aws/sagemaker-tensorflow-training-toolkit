@@ -19,12 +19,12 @@ import tarfile
 import pytest
 from sagemaker.tensorflow import TensorFlow
 
-from test.integration.utils import processor, py_version  # noqa: F401
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 
 
 @pytest.mark.skip_gpu
+@pytest.mark.skip_generic
 @pytest.mark.parametrize('instances, processes', [
     [1, 2],
     (2, 1),
@@ -33,7 +33,7 @@ RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
 def test_distributed_training_horovod_basic(instances,
                                             processes,
                                             sagemaker_local_session,
-                                            docker_image,
+                                            image_uri,
                                             tmpdir,
                                             framework_version):
     output_path = 'file://%s' % tmpdir
@@ -43,7 +43,7 @@ def test_distributed_training_horovod_basic(instances,
         train_instance_type='local',
         sagemaker_session=sagemaker_local_session,
         train_instance_count=instances,
-        image_name=docker_image,
+        image_name=image_uri,
         output_path=output_path,
         framework_version=framework_version,
         hyperparameters={'sagemaker_mpi_enabled': True,
