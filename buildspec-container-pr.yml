@@ -1,0 +1,13 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
+
+  build:
+    commands:
+
+      - error_cmd="echo 'In order to make changes to the docker files, please, use https://github.com/aws/deep-learning-containers repository.' && exit 1"
+      - execute-command-if-has-matching-changes "$error_cmd" "docker/"
