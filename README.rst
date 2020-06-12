@@ -1,7 +1,6 @@
-
-==================================
-SageMaker PyTorch Training Toolkit
-==================================
+=====================================
+SageMaker TensorFlow Training Toolkit
+=====================================
 
 SageMaker TensorFlow Training Toolkit is an open-source library for using TensorFlow to train models on Amazon SageMaker.
 
@@ -10,22 +9,6 @@ For inference, see `SageMaker TensorFlow Inference Toolkit <https://github.com/a
 For the Dockerfiles used for building SageMaker PyTorch Containers, see `AWS Deep Learning Containers <https://github.com/aws/deep-learning-containers>`__.
 
 For information on running TensorFlow jobs on Amazon SageMaker, please refer to the `SageMaker Python SDK documentation <https://github.com/aws/sagemaker-python-sdk>`__.
-
-For notebook examples: `SageMaker Notebook
-Examples <https://github.com/awslabs/amazon-sagemaker-examples>`__.
-
-===============================
-SageMaker TensorFlow Containers
-===============================
-
-SageMaker TensorFlow Containers is an open source library for making the
-TensorFlow framework run on `Amazon SageMaker <https://aws.amazon.com/documentation/sagemaker/>`__.
-
-This repository also contains Dockerfiles which install this library, TensorFlow, and dependencies
-for building SageMaker TensorFlow images.
-
-For information on running TensorFlow jobs on SageMaker: `Python
-SDK <https://github.com/aws/sagemaker-python-sdk>`__.
 
 For notebook examples: `SageMaker Notebook
 Examples <https://github.com/awslabs/amazon-sagemaker-examples>`__.
