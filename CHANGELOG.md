@@ -1,5 +1,15 @@
 # Changelog
 
+## v20.0.1.post0 (2020-06-15)
+
+### Documentation Changes
+
+ * Update README.rst
+
+### Testing and Release Infrastructure
+
+ * Make docker folder read only, remove unused tests.
+
 ## v20.0.1 (2020-06-10)
 
 ### Bug Fixes and Other Changes
