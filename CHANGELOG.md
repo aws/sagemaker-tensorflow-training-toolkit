@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.0.1.post1 (2020-06-18)
+
+### Testing and Release Infrastructure
+
+ * add single-instance, multi-process Horovod test for local GPU
+
 ## v20.0.1.post0 (2020-06-15)
 
 ### Documentation Changes
