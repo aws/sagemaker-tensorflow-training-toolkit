@@ -1,5 +1,15 @@
 # Changelog
 
+## v10.1.4.post2 (2020-06-18)
+
+### Documentation Changes
+
+ * remove confusing information from the Readme.
+
+### Testing and Release Infrastructure
+
+ * add single-instance, multi-process Horovod test for local GPU
+
 ## v10.1.4.post1 (2020-06-11)
 
 ### Testing and Release Infrastructure
