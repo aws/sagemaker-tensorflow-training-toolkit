@@ -1,5 +1,11 @@
 # Changelog
 
+## v10.1.4.post4 (2020-07-01)
+
+### Testing and Release Infrastructure
+
+ * add integration test for MPI env vars propagation
+
 ## v10.1.4.post3 (2020-06-29)
 
 ### Testing and Release Infrastructure
