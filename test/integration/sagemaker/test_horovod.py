@@ -19,35 +19,63 @@ import sagemaker
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.utils import unique_name_from_base
 
-RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'resources')
+RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
 
 @pytest.mark.skip_generic
-def test_distributed_training_horovod(sagemaker_session,
-                                      instance_type,
-                                      image_uri,
-                                      tmpdir,
-                                      framework_version):
+def test_distributed_training_horovod(
+    sagemaker_session, instance_type, image_uri, tmpdir, framework_version
+):
 
-    mpi_options = '-verbose -x orte_base_help_aggregate=0'
+    mpi_options = "-verbose -x orte_base_help_aggregate=0"
     estimator = TensorFlow(
-        entry_point=os.path.join(RESOURCE_PATH, 'mnist', 'horovod_mnist.py'),
-        role='SageMakerRole',
+        entry_point=os.path.join(RESOURCE_PATH, "mnist", "horovod_mnist.py"),
+        role="SageMakerRole",
         train_instance_type=instance_type,
         train_instance_count=2,
         image_name=image_uri,
         framework_version=framework_version,
-        py_version='py3',
+        py_version="py3",
         script_mode=True,
-        hyperparameters={'sagemaker_mpi_enabled': True,
-                         'sagemaker_mpi_custom_mpi_options': mpi_options,
-                         'sagemaker_mpi_num_of_processes_per_host': 1},
-        sagemaker_session=sagemaker_session)
+        hyperparameters={
+            "sagemaker_mpi_enabled": True,
+            "sagemaker_mpi_custom_mpi_options": mpi_options,
+            "sagemaker_mpi_num_of_processes_per_host": 1,
+        },
+        sagemaker_session=sagemaker_session,
+    )
 
-    estimator.fit(job_name=unique_name_from_base('test-tf-horovod'))
+    estimator.fit(job_name=unique_name_from_base("test-tf-horovod"))
 
     model_data_source = sagemaker.local.data.get_data_source_instance(
-        estimator.model_data, sagemaker_session)
+        estimator.model_data, sagemaker_session
+    )
 
     for filename in model_data_source.get_file_list():
-        assert os.path.basename(filename) == 'model.tar.gz'
+        assert os.path.basename(filename) == "model.tar.gz"
+
+
+@pytest.mark.skip_generic
+def test_distributed_training_horovod_with_env_vars(
+    sagemaker_session, instance_type, image_uri, tmpdir, framework_version
+):
+
+    mpi_options = "-verbose -x orte_base_help_aggregate=0"
+    estimator = TensorFlow(
+        entry_point=os.path.join(RESOURCE_PATH, "hvdbasic", "train_hvd_env_vars.py"),
+        role="SageMakerRole",
+        train_instance_type=instance_type,
+        train_instance_count=2,
+        image_name=image_uri,
+        framework_version=framework_version,
+        py_version="py3",
+        script_mode=True,
+        hyperparameters={
+            "sagemaker_mpi_enabled": True,
+            "sagemaker_mpi_custom_mpi_options": mpi_options,
+            "sagemaker_mpi_num_of_processes_per_host": 2,
+        },
+        sagemaker_session=sagemaker_session,
+    )
+
+    estimator.fit(job_name=unique_name_from_base("test-tf-horovod-env-vars"))
