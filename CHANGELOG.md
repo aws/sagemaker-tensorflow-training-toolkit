@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.1.0 (2020-08-06)
+
+### Features
+
+ * tensorflow 2.3 support
+
 ## v20.0.1.post2 (2020-07-02)
 
 ### Testing and Release Infrastructure
