@@ -33,11 +33,13 @@ for name in flags.param_specs.keys():
     absl_flags.declare_key_flag(name)
 
 absl_flags.DEFINE_boolean(
-    'ml_perf_compliance_logging', False,
-    'Print logs required to be compliant with MLPerf. If set, must clone the '
-    'MLPerf training repo https://github.com/mlperf/training and add '
-    'https://github.com/mlperf/training/tree/master/compliance to the '
-    'PYTHONPATH')
+    "ml_perf_compliance_logging",
+    False,
+    "Print logs required to be compliant with MLPerf. If set, must clone the "
+    "MLPerf training repo https://github.com/mlperf/training and add "
+    "https://github.com/mlperf/training/tree/master/compliance to the "
+    "PYTHONPATH",
+)
 
 
 def main(positional_arguments):
@@ -47,22 +49,20 @@ def main(positional_arguments):
     # arguments.
     assert len(positional_arguments) >= 1
     if len(positional_arguments) > 1:
-        raise ValueError('Received unknown positional arguments: %s'
-                         % positional_arguments[1:])
+        raise ValueError("Received unknown positional arguments: %s" % positional_arguments[1:])
 
     params = benchmark_cnn.make_params_from_flags()
-    with mlperf.mlperf_logger(absl_flags.FLAGS.ml_perf_compliance_logging,
-                              params.model):
+    with mlperf.mlperf_logger(absl_flags.FLAGS.ml_perf_compliance_logging, params.model):
         params = benchmark_cnn.setup(params)
         bench = benchmark_cnn.BenchmarkCNN(params)
 
     tfversion = cnn_util.tensorflow_version_tuple()
-    log_fn('TensorFlow:  %i.%i' % (tfversion[0], tfversion[1]))
+    log_fn("TensorFlow:  %i.%i" % (tfversion[0], tfversion[1]))
 
     bench.print_info()
     bench.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.disable_v2_behavior()
     app.run(main)  # Raises error on invalid flags, unlike tf.app.run()
