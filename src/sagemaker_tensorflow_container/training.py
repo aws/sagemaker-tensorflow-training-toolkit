@@ -109,7 +109,11 @@ def _run_worker(env, cmd_args, tf_config):
     env_vars = env.to_env_vars()
     env_vars['TF_CONFIG'] = json.dumps(tf_config)
 
-    entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env_vars)
+    entry_point.run(uri=env.module_dir,
+                    user_entry_point=env.user_entry_point,
+                    args=cmd_args,
+                    env_vars=env_vars,
+                    capture_error=True)
 
 
 def _wait_until_master_is_down(master):
@@ -154,7 +158,11 @@ def train(env, cmd_args):
         else:
             runner_type = runner.ProcessRunnerType
 
-        entry_point.run(env.module_dir, env.user_entry_point, cmd_args, env.to_env_vars(),
+        entry_point.run(uri=env.module_dir,
+                        user_entry_point=env.user_entry_point,
+                        args=cmd_args,
+                        env_vars=env.to_env_vars(),
+                        capture_error=True,
                         runner_type=runner_type)
 
 

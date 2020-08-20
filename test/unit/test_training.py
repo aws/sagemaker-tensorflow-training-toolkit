@@ -84,8 +84,11 @@ def test_is_host_master():
 @patch('sagemaker_training.entry_point.run')
 def test_single_machine(run_module, single_machine_training_env):
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
-    run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
-                                  single_machine_training_env.to_env_vars(),
+    run_module.assert_called_with(uri=MODULE_DIR,
+                                  user_entry_point=MODULE_NAME,
+                                  args=MODEL_DIR_CMD_LIST,
+                                  env_vars=single_machine_training_env.to_env_vars(),
+                                  capture_error=True,
                                   runner_type=runner.ProcessRunnerType)
 
 
@@ -94,8 +97,11 @@ def test_train_horovod(run_module, single_machine_training_env):
     single_machine_training_env.additional_framework_parameters['sagemaker_mpi_enabled'] = True
 
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
-    run_module.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
-                                  single_machine_training_env.to_env_vars(),
+    run_module.assert_called_with(uri=MODULE_DIR,
+                                  user_entry_point=MODULE_NAME,
+                                  args=MODEL_DIR_CMD_LIST,
+                                  env_vars=single_machine_training_env.to_env_vars(),
+                                  capture_error=True,
                                   runner_type=runner.MPIRunnerType)
 
 
@@ -126,8 +132,11 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
                 '"environment": "cloud", ' \
                 '"task": {"index": 0, "type": "master"}}'
 
-    run.assert_called_with('s3://my/bucket', 'script_name', MODEL_DIR_CMD_LIST,
-                           {'TF_CONFIG': tf_config})
+    run.assert_called_with(uri='s3://my/bucket',
+                           user_entry_point='script_name',
+                           args=MODEL_DIR_CMD_LIST,
+                           env_vars={'TF_CONFIG': tf_config},
+                           capture_error=True)
 
 
 @pytest.mark.skip_on_pipeline
@@ -159,8 +168,11 @@ def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_trai
                 '"environment": "cloud", ' \
                 '"task": {"index": 0, "type": "worker"}}'
 
-    run.assert_called_with('s3://my/bucket', 'script_name', MODEL_DIR_CMD_LIST,
-                           {'TF_CONFIG': tf_config})
+    run.assert_called_with(uri='s3://my/bucket',
+                           user_entry_point='script_name',
+                           args=MODEL_DIR_CMD_LIST,
+                           env_vars={'TF_CONFIG': tf_config},
+                           capture_error=True)
 
 
 @patch('sagemaker_training.entry_point.run')
@@ -170,8 +182,12 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     distributed_training_env.current_host = HOST2
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
-    run.assert_called_with(MODULE_DIR, MODULE_NAME, MODEL_DIR_CMD_LIST,
-                           distributed_training_env.to_env_vars(), runner_type=runner.ProcessRunnerType)
+    run.assert_called_with(uri=MODULE_DIR,
+                           user_entry_point=MODULE_NAME,
+                           args=MODEL_DIR_CMD_LIST,
+                           env_vars=distributed_training_env.to_env_vars(),
+                           capture_error=True,
+                           runner_type=runner.ProcessRunnerType)
 
 
 def test_build_tf_config():
