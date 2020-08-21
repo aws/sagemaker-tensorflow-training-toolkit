@@ -19,26 +19,32 @@ from sagemaker.tuner import HyperparameterTuner, IntegerParameter
 from sagemaker.utils import unique_name_from_base
 
 
-def test_model_dir_with_training_job_name(sagemaker_session, image_uri, instance_type, framework_version):
-    resource_path = os.path.join(os.path.dirname(__file__), '../..', 'resources')
-    script = os.path.join(resource_path, 'tuning_model_dir', 'entry.py')
+def test_model_dir_with_training_job_name(
+    sagemaker_session, image_uri, instance_type, framework_version
+):
+    resource_path = os.path.join(os.path.dirname(__file__), "../..", "resources")
+    script = os.path.join(resource_path, "tuning_model_dir", "entry.py")
 
-    estimator = TensorFlow(entry_point=script,
-                           role='SageMakerRole',
-                           train_instance_type=instance_type,
-                           train_instance_count=1,
-                           image_name=image_uri,
-                           framework_version=framework_version,
-                           py_version='py3',
-                           sagemaker_session=sagemaker_session)
+    estimator = TensorFlow(
+        entry_point=script,
+        role="SageMakerRole",
+        train_instance_type=instance_type,
+        train_instance_count=1,
+        image_name=image_uri,
+        framework_version=framework_version,
+        py_version="py3",
+        sagemaker_session=sagemaker_session,
+    )
 
-    tuner = HyperparameterTuner(estimator=estimator,
-                                objective_metric_name='accuracy',
-                                hyperparameter_ranges={'arbitrary_value': IntegerParameter(0, 1)},
-                                metric_definitions=[{'Name': 'accuracy', 'Regex': 'accuracy=([01])'}],
-                                max_jobs=1,
-                                max_parallel_jobs=1)
+    tuner = HyperparameterTuner(
+        estimator=estimator,
+        objective_metric_name="accuracy",
+        hyperparameter_ranges={"arbitrary_value": IntegerParameter(0, 1)},
+        metric_definitions=[{"Name": "accuracy", "Regex": "accuracy=([01])"}],
+        max_jobs=1,
+        max_parallel_jobs=1,
+    )
 
     # User script has logic to check for the correct model_dir
-    tuner.fit(job_name=unique_name_from_base('test-tf-model-dir', max_length=32))
+    tuner.fit(job_name=unique_name_from_base("test-tf-model-dir", max_length=32))
     tuner.wait()
