@@ -17,15 +17,15 @@ import os
 import random
 import time
 
-logging.getLogger('boto3').setLevel(logging.INFO)
-logging.getLogger('botocore').setLevel(logging.INFO)
+logging.getLogger("boto3").setLevel(logging.INFO)
+logging.getLogger("botocore").setLevel(logging.INFO)
 
-RESOURCE_PATH = os.path.join(os.path.dirname(__file__), '..', 'resources')
+RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "resources")
 
 
 def unique_name_from_base(base, max_length=63):
-    unique = '%04x' % random.randrange(16**4)  # 4-digit hex
+    unique = "%04x" % random.randrange(16 ** 4)  # 4-digit hex
     ts = str(int(time.time()))
     available_length = max_length - 2 - len(ts) - len(unique)
     trimmed = base[:available_length]
-    return '{}-{}-{}'.format(trimmed, ts, unique)
+    return "{}-{}-{}".format(trimmed, ts, unique)
