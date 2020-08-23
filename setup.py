@@ -26,47 +26,60 @@ def read(fname):
 
 
 def read_version():
-    return read('VERSION').strip()
+    return read("VERSION").strip()
 
 
-test_dependencies = ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                     'sagemaker==1.51.3', 'tensorflow<2.4', 'docker-compose', 'boto3==1.10.50',
-                     'six==1.13.0', 'python-dateutil>=2.1,<2.8.1', 'botocore==1.13.50',
-                     'requests-mock', 'awscli==1.16.314']
+test_dependencies = [
+    "tox",
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "mock",
+    "sagemaker==1.51.3",
+    "tensorflow<2.4",
+    "docker-compose",
+    "boto3==1.10.50",
+    "six==1.13.0",
+    "python-dateutil>=2.1,<2.8.1",
+    "botocore==1.13.50",
+    "requests-mock",
+    "awscli==1.16.314",
+]
 
 if sys.version_info.major > 2:
-    test_dependencies.append('sagemaker-experiments==0.1.7')
+    test_dependencies.append("sagemaker-experiments==0.1.7")
 
 setup(
-    name='sagemaker_tensorflow_training',
+    name="sagemaker_tensorflow_training",
     version=read_version(),
-    description='Open source library for creating '
-                'TensorFlow containers to run on Amazon SageMaker.',
-
-    packages=find_packages(where='src', exclude=('test',)),
-    package_dir={'': 'src'},
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-
-    long_description=read('README.rst'),
-    author='Amazon Web Services',
-    url='https://github.com/aws/sagemaker-tensorflow-containers',
-    license='Apache License 2.0',
-
+    description="Open source library for creating "
+    "TensorFlow containers to run on Amazon SageMaker.",
+    packages=find_packages(where="src", exclude=("test",)),
+    package_dir={"": "src"},
+    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
+    long_description=read("README.rst"),
+    author="Amazon Web Services",
+    url="https://github.com/aws/sagemaker-tensorflow-containers",
+    license="Apache License 2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ],
-
-    install_requires=['sagemaker-training>=3.5.2', 'numpy', 'scipy', 'sklearn',
-                      'pandas', 'Pillow', 'h5py'],
-    extras_require={
-        'test': test_dependencies,
-        'benchmark': ['click'],
-    },
+    install_requires=[
+        "sagemaker-training>=3.5.2",
+        "numpy",
+        "scipy",
+        "sklearn",
+        "pandas",
+        "Pillow",
+        "h5py",
+    ],
+    extras_require={"test": test_dependencies, "benchmark": ["click"], },
 )

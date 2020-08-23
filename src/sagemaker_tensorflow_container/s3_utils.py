@@ -20,23 +20,23 @@ from six.moves.urllib.parse import urlparse
 
 def configure(model_dir, job_region):
 
-    os.environ['S3_REGION'] = _s3_region(job_region, model_dir)
+    os.environ["S3_REGION"] = _s3_region(job_region, model_dir)
 
     # setting log level to WARNING
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-    os.environ['S3_USE_HTTPS'] = '1'
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+    os.environ["S3_USE_HTTPS"] = "1"
 
 
 def _s3_region(job_region, model_dir):
-    if model_dir and model_dir.startswith('s3://'):
-        s3 = boto3.client('s3', region_name=job_region)
+    if model_dir and model_dir.startswith("s3://"):
+        s3 = boto3.client("s3", region_name=job_region)
 
         # We get the AWS region of the checkpoint bucket, which may be different from
         # the region this container is currently running in.
         parsed_url = urlparse(model_dir)
         bucket_name = parsed_url.netloc
 
-        bucket_location = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
+        bucket_location = s3.get_bucket_location(Bucket=bucket_name)["LocationConstraint"]
 
         return bucket_location or job_region
     else:
