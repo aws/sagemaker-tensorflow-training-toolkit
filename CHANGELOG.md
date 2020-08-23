@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.1.1 (2020-08-23)
+
+### Bug Fixes and Other Changes
+
+ * call entry_point.run with capture_error=True
+
 ## v20.1.0 (2020-08-06)
 
 ### Features
