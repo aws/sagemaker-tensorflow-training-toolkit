@@ -81,5 +81,5 @@ setup(
         "Pillow",
         "h5py",
     ],
-    extras_require={"test": test_dependencies, "benchmark": ["click"],},
+    extras_require={"test": test_dependencies, "benchmark": ["click"], },
 )

@@ -91,7 +91,7 @@ def query_bucket():
     region = _retrieve_instance_region()
 
     if instance_id is not None and region is not None:
-        url = "https://aws-deep-learning-containers-{0}.s3.{0}.amazonaws.com/dlc-containers.txt?x-instance-id={1}".format(
+        url = "https://aws-deep-learning-containers-{0}.s3.{0}.amazonaws.com/dlc-containers.txt?x-instance-id={1}".format(  # noqa: E501
             region, instance_id
         )
         response = requests_helper(url, timeout=0.2)
