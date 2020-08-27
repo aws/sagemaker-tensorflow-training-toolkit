@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.1.2 (2020-08-27)
+
+### Bug Fixes and Other Changes
+
+ * add a missing comma
+
 ## v20.1.1 (2020-08-23)
 
 ### Bug Fixes and Other Changes
