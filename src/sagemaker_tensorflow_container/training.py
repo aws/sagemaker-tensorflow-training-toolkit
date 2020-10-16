@@ -204,7 +204,7 @@ def _log_model_missing_warning(model_dir):
 
 
 def _model_dir_with_training_job(model_dir, job_name):
-    if model_dir.startswith("/opt/ml"):
+    if model_dir and model_dir.startswith("/opt/ml"):
         return model_dir
     else:
         return "{}/{}/model".format(model_dir, job_name)
