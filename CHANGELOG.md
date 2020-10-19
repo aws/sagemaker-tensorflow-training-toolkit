@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.1.3 (2020-10-19)
+
+### Bug Fixes and Other Changes
+
+ * add condition to avoid error when 'model_dir' is None
+
 ## v20.1.2 (2020-08-27)
 
 ### Bug Fixes and Other Changes
