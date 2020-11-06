@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.1.4 (2020-11-06)
+
+### Bug Fixes and Other Changes
+
+ * propagate log level
+
 ## v20.1.3 (2020-10-19)
 
 ### Bug Fixes and Other Changes
