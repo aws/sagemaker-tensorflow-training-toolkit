@@ -51,12 +51,11 @@ def _test_distributed_training_horovod(
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, "hvdbasic", "train_hvd_basic.py"),
         role="SageMakerRole",
-        train_instance_type=instance_type,
+        instance_type=instance_type,
         sagemaker_session=session,
-        train_instance_count=instances,
-        image_name=image_uri,
+        instance_count=instances,
+        image_uri=image_uri,
         output_path=output_path,
-        framework_version=framework_version,
         hyperparameters={
             "sagemaker_mpi_enabled": True,
             "sagemaker_network_interface_name": "eth0",

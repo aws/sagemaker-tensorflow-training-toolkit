@@ -28,9 +28,9 @@ def test_model_dir_with_training_job_name(
     estimator = TensorFlow(
         entry_point=script,
         role="SageMakerRole",
-        train_instance_type=instance_type,
-        train_instance_count=1,
-        image_name=image_uri,
+        instance_type=instance_type,
+        instance_count=1,
+        image_uri=image_uri,
         framework_version=framework_version,
         py_version="py3",
         sagemaker_session=sagemaker_session,

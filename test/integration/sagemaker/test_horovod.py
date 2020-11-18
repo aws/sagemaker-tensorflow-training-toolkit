@@ -31,12 +31,11 @@ def test_distributed_training_horovod(
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, "mnist", "horovod_mnist.py"),
         role="SageMakerRole",
-        train_instance_type=instance_type,
-        train_instance_count=2,
-        image_name=image_uri,
+        instance_type=instance_type,
+        instance_count=2,
+        image_uri=image_uri,
         framework_version=framework_version,
         py_version="py3",
-        script_mode=True,
         hyperparameters={
             "sagemaker_mpi_enabled": True,
             "sagemaker_mpi_custom_mpi_options": mpi_options,
@@ -64,12 +63,11 @@ def test_distributed_training_horovod_with_env_vars(
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, "hvdbasic", "train_hvd_env_vars.py"),
         role="SageMakerRole",
-        train_instance_type=instance_type,
-        train_instance_count=2,
-        image_name=image_uri,
+        instance_type=instance_type,
+        instance_count=2,
+        image_uri=image_uri,
         framework_version=framework_version,
         py_version="py3",
-        script_mode=True,
         hyperparameters={
             "sagemaker_mpi_enabled": True,
             "sagemaker_mpi_custom_mpi_options": mpi_options,

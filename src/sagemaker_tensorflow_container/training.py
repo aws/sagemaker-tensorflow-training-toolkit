@@ -27,6 +27,7 @@ from sagemaker_tensorflow_container import s3_utils
 logger = logging.getLogger(__name__)
 
 SAGEMAKER_PARAMETER_SERVER_ENABLED = "sagemaker_parameter_server_enabled"
+SAGEMAKER_DISTRIBUTED_DATAPARALLEL_ENABLED = "sagemaker_distributed_dataparallel_enabled"
 MODEL_DIR = "/opt/ml/model"
 
 
@@ -136,6 +137,9 @@ def train(env, cmd_args):
     parameter_server_enabled = env.additional_framework_parameters.get(
         SAGEMAKER_PARAMETER_SERVER_ENABLED, False
     )
+    sagemaker_distributed_dataparallel_enabled = env.additional_framework_parameters.get(
+        SAGEMAKER_DISTRIBUTED_DATAPARALLEL_ENABLED, False
+    )
     if len(env.hosts) > 1 and parameter_server_enabled:
 
         tf_config = _build_tf_config(hosts=env.hosts, current_host=env.current_host)
@@ -155,6 +159,8 @@ def train(env, cmd_args):
 
         if mpi_enabled:
             runner_type = runner.MPIRunnerType
+        elif sagemaker_distributed_dataparallel_enabled:
+            runner_type = runner.SMDataParallelRunnerType
         else:
             runner_type = runner.ProcessRunnerType
 

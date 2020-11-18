@@ -107,6 +107,21 @@ def test_train_horovod(run_module, single_machine_training_env):
     )
 
 
+@patch("sagemaker_training.entry_point.run")
+def test_train_smdataparallel(run_module, single_machine_training_env):
+    single_machine_training_env.additional_framework_parameters["sagemaker_distributed_dataparallel_enabled"] = True
+
+    training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
+    run_module.assert_called_with(
+        uri=MODULE_DIR,
+        user_entry_point=MODULE_NAME,
+        args=MODEL_DIR_CMD_LIST,
+        env_vars=single_machine_training_env.to_env_vars(),
+        capture_error=True,
+        runner_type=runner.SMDataParallelRunnerType,
+    )
+
+
 @pytest.mark.skip_on_pipeline
 @pytest.mark.skipif(
     sys.version_info.major != 3, reason="Skip this for python 2 because of dict key order mismatch"
