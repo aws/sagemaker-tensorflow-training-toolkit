@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.1.5 (2020-12-08)
+
+### Bug Fixes and Other Changes
+
+ * workaround to print stderr when capture_error is True
+
 ## v20.1.4 (2020-11-06)
 
 ### Bug Fixes and Other Changes
