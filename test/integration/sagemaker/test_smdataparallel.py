@@ -23,7 +23,6 @@ from integration import DEFAULT_TIMEOUT, RESOURCE_PATH
 from integration.sagemaker.timeout import timeout
 
 
-@pytest.mark.skip(reason="SMDataParallel DLC is not publicly accessible")
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
@@ -44,9 +43,7 @@ def test_smdataparallel_training(instances, instance_type, sagemaker_session, im
         output_path=output_path,
         framework_version=framework_version,
         py_version="py3",
-        hyperparameters={
-            "sagemaker_distributed_dataparallel_enabled": True
-        }
+        distribution={"smdistributed": {"dataparallel": {"enabled": True}}}
     )
 
     with timeout(minutes=DEFAULT_TIMEOUT):
