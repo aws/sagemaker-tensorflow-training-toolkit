@@ -73,6 +73,7 @@ setup(
     ],
     install_requires=[
         "sagemaker-training>=3.7.0",
+        "pip==20.3.1",
         "numpy",
         "scipy",
         "sklearn",
