@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.2.0 (2020-12-11)
+
+### Features
+
+ * include sm-data-distributed and upgrade dependencies
+
 ## v20.1.5 (2020-12-08)
 
 ### Bug Fixes and Other Changes
