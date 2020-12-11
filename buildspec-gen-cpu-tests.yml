@@ -1,0 +1,38 @@
+version: 0.2
+
+env:
+  variables:
+    FRAMEWORK_VERSION: '2.3.1'
+    CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
+    ECR_REPO: 'sagemaker-test'
+
+phases:
+  pre_build:
+    commands:
+      - start-dockerd
+      - ACCOUNT=$(aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text)
+      - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - BUILD_ID="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
+      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
+
+  build:
+    commands:
+      - TOX_PARALLEL_NO_SPINNER=1
+      - PY_COLORS=0
+
+      # define tags
+      - GEN_CPU_TAG="$FRAMEWORK_VERSION-gen-cpu-$BUILD_ID"
+
+      # establish common test options
+      - TEST_OPTS=" --dockerfile-type tf --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --tag $GEN_CPU_TAG"
+
+      # run local CPU integration tests (build and push the image to ECR repo)
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --build-image --push-image $TEST_OPTS"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-cpu-tests.yml"
+
+      # run CPU sagemaker integration tests
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $CPU_INSTANCE_TYPE $TEST_OPTS"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-cpu-tests.yml"
+    finally:
+      # remove ECR image
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GEN_CPU_TAG
