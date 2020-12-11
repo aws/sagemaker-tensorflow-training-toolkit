@@ -31,7 +31,7 @@ from integration.sagemaker.timeout import timeout
 )
 def test_smdataparallel_training(instances, instance_type, sagemaker_session, image_uri, framework_version, tmpdir):
     default_bucket = sagemaker_session.default_bucket()
-    output_path = "s3://" + os.path.join(default_bucket, "tensorflow/smdataparallel")
+    output_path = "s3://{}/{}/{}".format(default_bucket, "tensorflow", "smdataparallel")
 
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, "mnist", "smdataparallel_mnist.py"),
