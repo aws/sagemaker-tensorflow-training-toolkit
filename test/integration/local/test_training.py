@@ -102,10 +102,10 @@ def run_tf_training(
     estimator = TensorFlow(
         entry_point=script,
         role="SageMakerRole",
-        train_instance_count=instance_count,
-        train_instance_type=instance_type,
+        instance_count=instance_count,
+        instance_type=instance_type,
         sagemaker_session=sagemaker_local_session,
-        image_name=image_uri,
+        image_uri=image_uri,
         model_dir="/opt/ml/model",
         output_path=output_path,
         hyperparameters=hyperparameters,

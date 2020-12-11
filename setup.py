@@ -36,15 +36,14 @@ test_dependencies = [
     "pytest-cov",
     "pytest-xdist",
     "mock",
-    "sagemaker==1.51.3",
+    "sagemaker[local]>=2",
     "tensorflow<2.4",
     "docker-compose",
-    "boto3==1.10.50",
-    "six==1.13.0",
+    "boto3==1.16.34",
     "python-dateutil>=2.1,<2.8.1",
-    "botocore==1.13.50",
+    "botocore==1.19.34",
     "requests-mock",
-    "awscli==1.16.314",
+    "awscli==1.18.194",
 ]
 
 if sys.version_info.major > 2:
@@ -68,12 +67,11 @@ setup(
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
     install_requires=[
-        "sagemaker-training>=3.6.4",
+        "sagemaker-training>=3.7.0",
         "numpy",
         "scipy",
         "sklearn",

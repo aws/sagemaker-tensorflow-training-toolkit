@@ -9,7 +9,7 @@ env:
     GITHUB_REPO: 'sagemaker-tensorflow-container'
     DLC_ACCOUNT: '763104351884'
     SETUP_FILE: 'setup_cmds.sh'
-    SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip\npython3.6 -m pip install -U -e .\npython3.6 -m pip install -U -e .[test]'
+    SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip==20.3.1\npython3.6 -m pip install -U .\npython3.6 -m pip install -U .[test]'
 
 phases:
   pre_build:
@@ -30,7 +30,7 @@ phases:
       - tox -e flake8,twine
 
       # run unit tests
-      - tox -e py27,py36,py37 --parallel all test/unit
+      - tox -e py36,py37 --parallel all test/unit
 
       # define tags
       - GENERIC_TAG="$FRAMEWORK_VERSION-tensorflow-$BUILD_ID"
