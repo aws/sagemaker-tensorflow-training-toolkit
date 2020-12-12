@@ -35,6 +35,7 @@ test_dependencies = [
     "pytest",
     "pytest-cov",
     "pytest-xdist",
+    "pytest-rerunfailures",
     "mock",
     "sagemaker[local]>=2",
     "tensorflow<2.4",
