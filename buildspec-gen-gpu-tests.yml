@@ -5,7 +5,7 @@ env:
     FRAMEWORK_VERSION: '2.3.1'
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     ECR_REPO: 'sagemaker-test'
-    GITHUB_REPO: 'sagemaker-tensorflow-container'
+    GITHUB_REPO: 'sagemaker-tensorflow-training-toolkit'
     DLC_ACCOUNT: '763104351884'
     SETUP_FILE: 'setup_cmds.sh'
     SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip==20.3.1\npython3.6 -m pip install -U .\npython3.6 -m pip install -U .[test]'
