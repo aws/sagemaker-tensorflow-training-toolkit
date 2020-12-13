@@ -12,5 +12,6 @@ phases:
 
   build:
     commands:
+      - echo 'Passing in base ref directly'
       - error_cmd="echo 'In order to make changes to the docker files, please, use https://github.com/aws/deep-learning-containers repository.' && exit 1"
       - execute-command-if-has-matching-changes "$error_cmd" "docker/"
