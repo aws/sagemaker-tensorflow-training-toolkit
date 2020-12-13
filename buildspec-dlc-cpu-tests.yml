@@ -13,7 +13,7 @@ phases:
       - ACCOUNT=$(aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text)
       - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
       - BUILD_ID="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
-      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
+      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from a pull request.'
 
   build:
     commands:
