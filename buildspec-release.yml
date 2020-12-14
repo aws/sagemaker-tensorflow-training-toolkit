@@ -14,16 +14,6 @@ phases:
         AWS_CONTAINER_CREDENTIALS_RELATIVE_URI= AWS_DEFAULT_REGION=
         tox -e py36,py37 --parallel all -- test/unit
 
-      # run local integ tests
-      #- $(aws ecr get-login --no-include-email --region us-west-2)
-      #- IGNORE_COVERAGE=- tox -e py37 -- test/integ/local
-
-      # run sagemaker integ tests
-      #- IGNORE_COVERAGE=- tox -e py37 -- test/integ/sagemaker
-
-      # generate the distribution package
-      - python3 setup.py sdist
-
       # publish the release to github
       - git-release --publish
 

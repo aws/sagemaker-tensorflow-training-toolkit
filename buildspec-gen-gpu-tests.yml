@@ -1,0 +1,63 @@
+version: 0.2
+
+env:
+  variables:
+    FRAMEWORK_VERSION: '2.3.1'
+    GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
+    ECR_REPO: 'sagemaker-test'
+    GITHUB_REPO: 'sagemaker-tensorflow-training-toolkit'
+    DLC_ACCOUNT: '763104351884'
+    SETUP_FILE: 'setup_cmds.sh'
+    SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip==20.3.1\npython3.6 -m pip install -U .\npython3.6 -m pip install -U .[test]'
+
+phases:
+  pre_build:
+    commands:
+      - start-dockerd
+      - ACCOUNT=$(aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text)
+      - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
+      - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - BUILD_ID="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
+      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from a pull request.'
+
+  build:
+    commands:
+      - TOX_PARALLEL_NO_SPINNER=1
+      - PY_COLORS=0
+
+      # define tags
+      - GEN_GPU_TAG="$FRAMEWORK_VERSION-gen-gpu-$BUILD_ID"
+
+      # establish common test options
+      - TEST_OPTS=" --dockerfile-type tf --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $GEN_GPU_TAG"
+
+      # build Generic GPU image on build host instead of GPU instance
+      - python3.6 setup.py sdist
+      - build_dir="test/container/$FRAMEWORK_VERSION"
+      - docker build -f "$build_dir/Dockerfile.tf" -t $PREPROD_IMAGE:$GEN_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
+      # push Generic GPU image to ECR
+      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker push $PREPROD_IMAGE:$GEN_GPU_TAG
+
+      # launch remote GPU instance
+      - prefix='ml.'
+      - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
+      - create-key-pair
+      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu-latest
+
+      # run generic gpu local tests on remote host 
+      - printf "$SETUP_CMDS" > $SETUP_FILE
+      - generic_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local $TEST_OPTS"
+      - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$generic_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-gpu-tests.yml"
+
+      # run GPU sagemaker integration tests
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $GPU_INSTANCE_TYPE $TEST_OPTS"
+      - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-gpu-tests.yml"
+    finally:
+      # shut down remote GPU instance
+      - cleanup-gpu-instances
+      - cleanup-key-pairs
+
+      # remove ECR image
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GEN_GPU_TAG
