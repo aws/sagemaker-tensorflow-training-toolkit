@@ -1,5 +1,19 @@
 # Changelog
 
+## v20.3.0 (2020-12-17)
+
+### Features
+
+ * use tensorflow 2.3.1 and add data parallel integ test
+
+### Bug Fixes and Other Changes
+
+ * upgrade to sagemaker-training 3.7.1
+
+### Testing and Release Infrastructure
+
+ * include granular buildspecs for dlc and generic cpu and gpu testing
+
 ## v20.2.0 (2020-12-11)
 
 ### Features
