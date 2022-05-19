@@ -14,33 +14,30 @@ from __future__ import absolute_import
 
 import os
 
-import boto3
-import pytest
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.utils import unique_name_from_base
-from six.moves.urllib.parse import urlparse
-
-from timeout import timeout
-
 
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
 
-
-def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framework_version):
+def test_multi_node(
+    sagemaker_session, instance_type, image_uri, tmpdir, framework_version
+):
     estimator = TensorFlow(
-                        entry_point=os.path.join(RESOURCE_PATH, "multi_worker_mirrored", "train_sample.py"),
-                        role="SageMakerRole",
-                        instance_type=instance_type,
-                        instance_count=2,
-                        image_name=image_uri,
-                        framework_version=framework_version,
-                        py_version="py3",
-                        hyperparameters={
-                                    'sagemaker_multi_worker_mirrored_enabled': True,
-                        },
-                        sagemaker_session=sagemaker_session,
-                    )
+        entry_point=os.path.join(
+            RESOURCE_PATH, "multi_worker_mirrored", "train_sample.py"
+        ),
+        role="SageMakerRole",
+        instance_type=instance_type,
+        instance_count=2,
+        image_name=image_uri,
+        framework_version=framework_version,
+        py_version="py3",
+        hyperparameters={
+            "sagemaker_multi_worker_mirrored_enabled": True,
+        },
+        sagemaker_session=sagemaker_session,
+    )
     estimator.fit(job_name=unique_name_from_base("test-tf-mwms"))
-    raise NotImplementedError('Yet to add assertion')
+    raise NotImplementedError("Yet to add assertion")
