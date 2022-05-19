@@ -31,10 +31,14 @@ HOST_LIST = [HOST1, HOST2]
 CURRENT_HOST = HOST1
 CMD_ARGS = {"some_key": "some_value"}
 CLUSTER_WITH_PS = {
-    "master": ["{}:2222".format(HOST1)],
-    "worker": ["{}:2222".format(HOST2)],
+    "master": ["{}:8890".format(HOST1)],
+    "worker": ["{}:8890".format(HOST2)],
     "ps": ["{}:2223".format(HOST1), "{}:2223".format(HOST2)],
 }
+CLUSTER_WITH_MWMS = {
+    "worker": ["{}:8890".format(HOST) for HOST IN (HOST1, HOST2)],
+}
+
 MASTER_TASK = {"index": 0, "type": "master"}
 WORKER_TASK = {"index": 0, "type": "worker"}
 PS_TASK_1 = {"index": 0, "type": "ps"}
@@ -226,32 +230,45 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     )
 
 
-def test_build_tf_config():
-    assert training._build_tf_config(HOST_LIST, HOST1) == {
+def test_build_tf_config_for_mwms():
+    assert training._build_tf_config_for_mwms(HOST_LIST, HOST1) == {
+        "cluster": CLUSTER_WITH_MWMS,
+        "environment": "cloud",
+        "task": {"index": HOST_LIST.index(HOST1), "type": "worker"},
+    }
+    assert training._build_tf_config_for_mwms(HOST_LIST, HOST2) == {
+        "cluster": CLUSTER_WITH_MWMS,
+        "environment": "cloud",
+        "task": {"index": HOST_LIST.index(HOST2), "type": "worker"},
+    }
+
+
+def test_build_tf_config_for_ps():
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST1) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": MASTER_TASK,
     }
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_task=True) == {
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST1, ps_task=True) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": PS_TASK_1,
     }
-    assert training._build_tf_config(HOST_LIST, HOST2) == {
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST2) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": WORKER_TASK,
     }
-    assert training._build_tf_config(HOST_LIST, HOST2, ps_task=True) == {
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST2, ps_task=True) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": PS_TASK_2,
     }
 
 
-def test_build_tf_config_error():
+def test_build_tf_config_for_ps_error():
     with pytest.raises(ValueError) as error:
-        training._build_tf_config([HOST1], HOST1, ps_task=True)
+        training._build_tf_config_for_ps([HOST1], HOST1, ps_task=True)
     assert "Cannot have a ps task if there are no parameter servers in the cluster" in str(
         error.value
     )

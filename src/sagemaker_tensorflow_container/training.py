@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 SAGEMAKER_PARAMETER_SERVER_ENABLED = "sagemaker_parameter_server_enabled"
 SAGEMAKER_DISTRIBUTED_DATAPARALLEL_ENABLED = "sagemaker_distributed_dataparallel_enabled"
+SAGEMAKER_MULTI_WORKER_MIRRORED_ENABLED = "sagemaker_multi_worker_mirrored_enabled"
 MODEL_DIR = "/opt/ml/model"
 
 
@@ -35,7 +36,7 @@ def _is_host_master(hosts, current_host):
     return current_host == hosts[0]
 
 
-def _build_tf_config(hosts, current_host, ps_task=False):
+def _build_tf_config_for_ps(hosts, current_host, ps_task=False):
     """Builds a dictionary containing cluster information based on number of hosts and number of
     parameter servers.
 
@@ -82,6 +83,31 @@ def _build_tf_config(hosts, current_host, ps_task=False):
         task_index = workers.index(current_host)
 
     tf_config["task"] = {"index": task_index, "type": task_type}
+    return tf_config
+
+
+def _build_tf_config_for_mwm(hosts, current_host):
+    """Builds a dictionary containing cluster information based on number of workers
+    for Multi Worker Mirrored distribution strategy.
+
+    Args:
+        hosts (list[str]): List of host names in the cluster
+        current_host (str): Current host name
+
+    Returns:
+        dict[str: dict]: A dictionary describing the cluster setup for distributed training.
+            For more information regarding TF_CONFIG:
+            https://cloud.google.com/ml-engine/docs/tensorflow/distributed-training-details
+    """
+    workers = hosts
+
+    def host_addresses(hosts, port=8890):
+        return ["{}:{}".format(host, port) for host in hosts]
+
+    tf_config = {"cluster": {}, "environment": "cloud"}
+    tf_config["cluster"]["worker"] = host_addresses(workers)
+    tf_config["task"] = {"index": workers.index(current_host), "type": "worker"}
+
     return tf_config
 
 
@@ -136,15 +162,30 @@ def train(env, cmd_args):
     """
     parameter_server_enabled = env.additional_framework_parameters.get(
         SAGEMAKER_PARAMETER_SERVER_ENABLED, False
+    ) and len(env.hosts) > 1
+    multi_worker_mirrored_enabled = env.additional_framework_parameters.get(
+        SAGEMAKER_MULTI_WORKER_MIRRORED_ENABLED, False
     )
     sagemaker_distributed_dataparallel_enabled = env.additional_framework_parameters.get(
         SAGEMAKER_DISTRIBUTED_DATAPARALLEL_ENABLED, False
     )
     if len(env.hosts) > 1 and parameter_server_enabled:
-
-        tf_config = _build_tf_config(hosts=env.hosts, current_host=env.current_host)
-
+    
+    # Setup
+    if parameter_server_enabled:
+        
+        tf_config = _build_tf_config_for_ps(hosts=env.hosts, current_host=env.current_host)
         logger.info("Running distributed training job with parameter servers")
+    
+    elif multi_worker_mirrored_enabled:
+        
+        tf_config = _build_tf_config_for_mwm(hosts=env.hosts, current_host=env.current_host)
+        logger.info("Running distributed training job with multi_worker_mirrored setup")
+
+
+    # Run
+    if parameter_server_enabled:
+        
         logger.info("Launching parameter server process")
         _run_ps(env, tf_config["cluster"])
         logger.info("Launching worker process")
