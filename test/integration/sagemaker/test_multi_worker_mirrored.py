@@ -37,7 +37,10 @@ def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framewo
                         image_name=image_uri,
                         framework_version=framework_version,
                         py_version="py3",
+                        hyperparameters={
+                                    'sagemaker_multi_worker_mirrored_enabled': True,
+                        },
                         sagemaker_session=sagemaker_session,
                     )
     estimator.fit(job_name=unique_name_from_base("test-tf-mwms"))
-    raise NotImplementedError('Yet to add assertions')
+    raise NotImplementedError('Yet to add assertion')
