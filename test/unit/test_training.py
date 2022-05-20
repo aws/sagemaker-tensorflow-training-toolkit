@@ -31,8 +31,8 @@ HOST_LIST = [HOST1, HOST2]
 CURRENT_HOST = HOST1
 CMD_ARGS = {"some_key": "some_value"}
 CLUSTER_WITH_PS = {
-    "master": ["{}:8890".format(HOST1)],
-    "worker": ["{}:8890".format(HOST2)],
+    "master": ["{}:2222".format(HOST1)],
+    "worker": ["{}:2222".format(HOST2)],
     "ps": ["{}:2223".format(HOST1), "{}:2223".format(HOST2)],
 }
 CLUSTER_WITH_MWMS = {"worker": ["{}:8890".format(HOST) for HOST in HOST_LIST]}
@@ -246,13 +246,13 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     )
 
 
-def test_build_tf_config_for_mwms():
-    assert training._build_tf_config_for_mwms(HOST_LIST, HOST1) == {
+def test_build_tf_config_for_mwm():
+    assert training._build_tf_config_for_mwm(HOST_LIST, HOST1) == {
         "cluster": CLUSTER_WITH_MWMS,
         "environment": "cloud",
         "task": {"index": HOST_LIST.index(HOST1), "type": "worker"},
     }
-    assert training._build_tf_config_for_mwms(HOST_LIST, HOST2) == {
+    assert training._build_tf_config_for_mwm(HOST_LIST, HOST2) == {
         "cluster": CLUSTER_WITH_MWMS,
         "environment": "cloud",
         "task": {"index": HOST_LIST.index(HOST2), "type": "worker"},
