@@ -47,7 +47,6 @@ Options:
 --instance-counts 1 \
 \
 --py-versions py3 \
---py-versions py2 \
 \
 --subnets subnet-125fb674  \
 \
