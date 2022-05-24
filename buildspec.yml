@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.15.2'
+    FRAMEWORK_VERSION: '1.15.5'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     ECR_REPO: 'sagemaker-test'
@@ -33,7 +33,7 @@ phases:
       - tox -e flake8,twine
 
       # run unit tests
-      - tox -e py27,py36,py37 --parallel all test/unit
+      - tox -e py37 --parallel all test/unit
 
       # define tags
       - GENERIC_TAG="$FRAMEWORK_VERSION-tensorflow-$BUILD_ID"
