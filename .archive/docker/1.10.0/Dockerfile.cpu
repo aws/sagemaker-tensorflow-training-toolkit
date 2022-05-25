@@ -43,8 +43,8 @@ RUN buildDeps=" \
     && rm -rf /var/lib/apt/lists/*
 
 RUN if [ $py_version -eq 3 ]; \
-        then apt-get update && apt-get install -y --no-install-recommends python3.6-dev \
-             && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
+        then apt-get update && apt-get install -y --no-install-recommends python3.7-dev \
+             && ln -s -f /usr/bin/python3.7 /usr/bin/python; \
         else apt-get update && apt-get install -y --no-install-recommends python-dev; fi
 
 RUN curl -fSsL -O https://bootstrap.pypa.io/get-pip.py && \

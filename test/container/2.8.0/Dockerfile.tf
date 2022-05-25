@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.3.1-gpu
+FROM tensorflow/tensorflow:2.8.0-gpu
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 

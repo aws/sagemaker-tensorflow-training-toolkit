@@ -67,7 +67,7 @@ def pytest_addoption(parser):
     parser.addoption("--docker-base-name", default="sagemaker-tensorflow-training")
     parser.addoption("--tag", default=None)
     parser.addoption("--region", default="us-west-2")
-    parser.addoption("--framework-version", default="2.2.0")
+    parser.addoption("--framework-version", default="2.8.0")
     parser.addoption("--processor", default="cpu", choices=["cpu", "gpu", "cpu,gpu"])
     parser.addoption("--py-version", default="3", choices=["2", "3", "2,3"])
     parser.addoption("--account-id", default="142577830533")
