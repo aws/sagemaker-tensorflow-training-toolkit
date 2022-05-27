@@ -38,7 +38,7 @@ test_dependencies = [
     "pytest-rerunfailures",
     "mock",
     "sagemaker[local]>=2",
-    "tensorflow<2.4",
+    "tensorflow<2.9",
     "docker-compose",
     "boto3==1.16.34",
     "python-dateutil>=2.1,<2.8.1",
@@ -53,14 +53,14 @@ if sys.version_info.major > 2:
 setup(
     name="sagemaker_tensorflow_training",
     version=read_version(),
-    description="Open source library for creating "
-    "TensorFlow containers to run on Amazon SageMaker.",
+    description="Open source library for using "
+    "TensorFlow to train models on on Amazon SageMaker.",
     packages=find_packages(where="src", exclude=("test",)),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     long_description=read("README.rst"),
     author="Amazon Web Services",
-    url="https://github.com/aws/sagemaker-tensorflow-containers",
+    url="https://github.com/aws/sagemaker-tensorflow-training-toolkit",
     license="Apache License 2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -68,11 +68,12 @@ setup(
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     install_requires=[
-        "sagemaker-training>=3.7.1",
+        "sagemaker-training>=4.1.0",
         "numpy",
         "scipy",
         "sklearn",
