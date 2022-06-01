@@ -47,12 +47,12 @@ phases:
 
       # run generic gpu local tests on remote host 
       - printf "$SETUP_CMDS" > $SETUP_FILE
-      - generic_cmd="IGNORE_COVERAGE=- tox -e py39 -- test/integration/local $TEST_OPTS"
+      - generic_cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/local $TEST_OPTS"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$generic_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-gpu-tests.yml"
 
       # run GPU sagemaker integration tests
-      - test_cmd="IGNORE_COVERAGE=- tox -e py39 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $GPU_INSTANCE_TYPE $TEST_OPTS"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $GPU_INSTANCE_TYPE $TEST_OPTS"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-gpu-tests.yml"
     finally:
       # shut down remote GPU instance

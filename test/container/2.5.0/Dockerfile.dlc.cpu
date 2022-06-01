@@ -1,6 +1,5 @@
-FROM tensorflow/tensorflow:2.8.0-gpu
-
-ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
+ARG region
+FROM 763104351884.dkr.ecr.$region.amazonaws.com/tensorflow-training:2.5.0-cpu-py37-ubuntu18.04-sagemaker
 
 COPY dist/sagemaker_tensorflow_training-*.tar.gz /sagemaker_tensorflow_training.tar.gz
 RUN pip install --upgrade --no-cache-dir /sagemaker_tensorflow_training.tar.gz && \
