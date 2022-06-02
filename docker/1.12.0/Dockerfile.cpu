@@ -57,7 +57,7 @@ WORKDIR /
 
 ARG py_version
 
-RUN if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.7; else PYTHON_VERSION=python2.7; fi && \
+RUN if [ $py_version -eq 3 ]; then PYTHON_VERSION=python3.6; else PYTHON_VERSION=python2.7; fi && \
         apt-get update && apt-get install -y --no-install-recommends $PYTHON_VERSION-dev --allow-unauthenticated  && \
         ln -s -f /usr/bin/$PYTHON_VERSION /usr/bin/python && \
     rm -rf /var/lib/apt/lists/*
