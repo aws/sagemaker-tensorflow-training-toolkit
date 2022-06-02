@@ -6,3 +6,4 @@ COPY dist/sagemaker_tensorflow_training-*.tar.gz /sagemaker_tensorflow_training.
 RUN pip install --upgrade --no-cache-dir /sagemaker_tensorflow_training.tar.gz && \
     rm /sagemaker_tensorflow_training.tar.gz
 RUN pip install --no-cache-dir tensorflow-io
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-server && mkdir -p /var/run/sshd
