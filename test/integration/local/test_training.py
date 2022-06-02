@@ -27,7 +27,7 @@ def py_full_version(py_version):  # noqa: F811
     if py_version == "2":
         return "2.7"
     else:
-        return "3.7"
+        return "3.8"
 
 
 @pytest.mark.skip_gpu
