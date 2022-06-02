@@ -62,7 +62,7 @@ NO_P3_REGIONS = [
 def pytest_addoption(parser):
     parser.addoption("--build-image", "-B", action="store_true")
     parser.addoption("--push-image", "-P", action="store_true")
-    parser.addoption("--dockerfile-type", "-T", choices=["dlc.cpu", "dlc.gpu", "tf"], default="tf")
+    parser.addoption("--dockerfile-type", "-T", choices=["dlc.cpu", "dlc.gpu", "tf.gpu", "tf.cpu"], default="tf.cpu")
     parser.addoption("--dockerfile", "-D", default=None)
     parser.addoption("--docker-base-name", default="sagemaker-tensorflow-training")
     parser.addoption("--tag", default=None)

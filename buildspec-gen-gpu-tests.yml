@@ -29,12 +29,12 @@ phases:
       - GEN_GPU_TAG="$FRAMEWORK_VERSION-gen-gpu-$BUILD_ID"
 
       # establish common test options
-      - TEST_OPTS=" --dockerfile-type tf --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $GEN_GPU_TAG"
+      - TEST_OPTS=" --dockerfile-type tf.gpu --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $GEN_GPU_TAG"
 
       # build Generic GPU image on build host instead of GPU instance
       - python3 setup.py sdist
       - build_dir="test/container/$FRAMEWORK_VERSION"
-      - docker build -f "$build_dir/Dockerfile.tf" -t $PREPROD_IMAGE:$GEN_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
+      - docker build -f "$build_dir/Dockerfile.tf.gpu" -t $PREPROD_IMAGE:$GEN_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
       # push Generic GPU image to ECR
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - docker push $PREPROD_IMAGE:$GEN_GPU_TAG
