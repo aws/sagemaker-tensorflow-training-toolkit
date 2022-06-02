@@ -3,12 +3,12 @@ version: 0.2
 env:
   variables:
     FRAMEWORK_VERSION: '2.5.0'
-    GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
+    GPU_INSTANCE_TYPE: 'ml.p3.2xlarge'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-tensorflow-training-toolkit'
     DLC_ACCOUNT: '763104351884'
     SETUP_FILE: 'setup_cmds.sh'
-    SETUP_CMDS: '#!/bin/bash\npython3 -m pip install --upgrade pip==20.3.1\npython3 -m pip install -U .\npython3 -m pip install -U .[test]'
+    SETUP_CMDS: '#!/bin/bash\npython3 -m pip install --upgrade pip==21.3.1\npython3 -m pip install -U .\npython3 -m pip install -U .[test]'
 
 phases:
   pre_build:
