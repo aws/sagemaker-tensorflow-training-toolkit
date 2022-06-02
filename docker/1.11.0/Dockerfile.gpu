@@ -47,7 +47,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* \
     && rm /usr/lib/x86_64-linux-gnu/libnvparsers* \
     && if [ $py_version -eq 3 ]; \
-           then apt-get install -y --no-install-recommends python3.7-dev \
+           then apt-get install -y --no-install-recommends python3.6-dev \
                 && ln -s -f /usr/bin/python3.6 /usr/bin/python; \
            else apt-get install -y --no-install-recommends python-dev; fi \
     && rm -rf /var/lib/apt/lists/*
