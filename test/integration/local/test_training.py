@@ -27,7 +27,7 @@ def py_full_version(py_version):  # noqa: F811
     if py_version == "2":
         return "2.7"
     else:
-        return "3.6"
+        return "3.8"
 
 
 @pytest.mark.skip_gpu
@@ -46,13 +46,13 @@ def test_mnist_cpu(sagemaker_local_session, image_uri, tmpdir, framework_version
     _assert_files_exist_in_tar(output_path, ["my_model.h5"])
 
 
-@pytest.mark.skip_gpu
+@pytest.mark.skip
 def test_distributed_training_cpu_no_ps(
     sagemaker_local_session, image_uri, tmpdir, framework_version
 ):
     output_path = "file://{}".format(tmpdir)
     run_tf_training(
-        script=os.path.join(RESOURCE_PATH, "mnist", "mnist_estimator.py"),
+        script=os.path.join(RESOURCE_PATH, "mnist", "mnist_custom.py"),
         instance_type="local",
         instance_count=2,
         sagemaker_local_session=sagemaker_local_session,
@@ -66,11 +66,11 @@ def test_distributed_training_cpu_no_ps(
     _assert_files_exist_in_tar(output_path, TF_CHECKPOINT_FILES)
 
 
-@pytest.mark.skip_gpu
+@pytest.mark.skip
 def test_distributed_training_cpu_ps(sagemaker_local_session, image_uri, tmpdir, framework_version):
     output_path = "file://{}".format(tmpdir)
     run_tf_training(
-        script=os.path.join(RESOURCE_PATH, "mnist", "mnist_estimator.py"),
+        script=os.path.join(RESOURCE_PATH, "mnist", "mnist_custom.py"),
         instance_type="local",
         instance_count=2,
         sagemaker_local_session=sagemaker_local_session,

@@ -35,7 +35,7 @@ def test_distributed_training_horovod_gpu(
 
 @pytest.mark.skip_gpu
 @pytest.mark.skip_generic
-@pytest.mark.parametrize("instances, processes", [(1, 2), (2, 1), (2, 2), (5, 2)])
+@pytest.mark.parametrize("instances, processes", [(2, 2)])
 def test_distributed_training_horovod_cpu(
     instances, processes, sagemaker_local_session, image_uri, tmpdir, framework_version
 ):

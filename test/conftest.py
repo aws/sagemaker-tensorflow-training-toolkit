@@ -62,12 +62,12 @@ NO_P3_REGIONS = [
 def pytest_addoption(parser):
     parser.addoption("--build-image", "-B", action="store_true")
     parser.addoption("--push-image", "-P", action="store_true")
-    parser.addoption("--dockerfile-type", "-T", choices=["dlc.cpu", "dlc.gpu", "tf"], default="tf")
+    parser.addoption("--dockerfile-type", "-T", choices=["dlc.cpu", "dlc.gpu", "tf.gpu", "tf.cpu"], default="tf.cpu")
     parser.addoption("--dockerfile", "-D", default=None)
     parser.addoption("--docker-base-name", default="sagemaker-tensorflow-training")
     parser.addoption("--tag", default=None)
     parser.addoption("--region", default="us-west-2")
-    parser.addoption("--framework-version", default="2.2.0")
+    parser.addoption("--framework-version", default="2.5.0")
     parser.addoption("--processor", default="cpu", choices=["cpu", "gpu", "cpu,gpu"])
     parser.addoption("--py-version", default="3", choices=["2", "3", "2,3"])
     parser.addoption("--account-id", default="142577830533")
@@ -158,7 +158,7 @@ def account_id(request):
 @pytest.fixture
 def instance_type(request, processor):
     provided_instance_type = request.config.getoption("--instance-type")
-    default_instance_type = "ml.c4.xlarge" if processor == "cpu" else "ml.p2.xlarge"
+    default_instance_type = "ml.c4.xlarge" if processor == "cpu" else "ml.p3.2xlarge"
     return provided_instance_type if provided_instance_type is not None else default_instance_type
 
 

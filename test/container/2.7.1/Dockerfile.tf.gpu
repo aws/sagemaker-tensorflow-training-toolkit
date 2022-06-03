@@ -1,0 +1,13 @@
+FROM tensorflow/tensorflow:2.7.1-gpu
+
+ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
+
+COPY dist/sagemaker_tensorflow_training-*.tar.gz /sagemaker_tensorflow_training.tar.gz
+RUN pip install --upgrade --no-cache-dir /sagemaker_tensorflow_training.tar.gz && \
+    rm /sagemaker_tensorflow_training.tar.gz
+RUN pip install --no-cache-dir tensorflow-io
+RUN apt-key del 7fa2af80 \
+ && rm /etc/apt/sources.list.d/nvidia-ml.list \
+ && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends openssh-server && mkdir -p /var/run/sshd

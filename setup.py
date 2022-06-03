@@ -45,6 +45,7 @@ test_dependencies = [
     "botocore==1.19.34",
     "requests-mock",
     "awscli==1.18.194",
+    "protobuf>=3.20,<3.21"
 ]
 
 if sys.version_info.major > 2:
@@ -53,14 +54,14 @@ if sys.version_info.major > 2:
 setup(
     name="sagemaker_tensorflow_training",
     version=read_version(),
-    description="Open source library for creating "
-    "TensorFlow containers to run on Amazon SageMaker.",
+    description="Open source library for using "
+    "TensorFlow to train models on on Amazon SageMaker.",
     packages=find_packages(where="src", exclude=("test",)),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     long_description=read("README.rst"),
     author="Amazon Web Services",
-    url="https://github.com/aws/sagemaker-tensorflow-containers",
+    url="https://github.com/aws/sagemaker-tensorflow-training-toolkit",
     license="Apache License 2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -68,11 +69,12 @@ setup(
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     install_requires=[
-        "sagemaker-training>=3.7.1",
+        "sagemaker-training>=4.1.0",
         "numpy",
         "scipy",
         "sklearn",

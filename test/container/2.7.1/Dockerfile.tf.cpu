@@ -1,7 +1,9 @@
-FROM tensorflow/tensorflow:2.3.1-gpu
+FROM tensorflow/tensorflow:2.7.1
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_tensorflow_container.training:main
 
 COPY dist/sagemaker_tensorflow_training-*.tar.gz /sagemaker_tensorflow_training.tar.gz
 RUN pip install --upgrade --no-cache-dir /sagemaker_tensorflow_training.tar.gz && \
     rm /sagemaker_tensorflow_training.tar.gz
+RUN pip install --no-cache-dir tensorflow-io
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-server && mkdir -p /var/run/sshd
