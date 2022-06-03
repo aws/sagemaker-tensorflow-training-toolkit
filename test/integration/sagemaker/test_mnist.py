@@ -121,6 +121,7 @@ def test_tuning(sagemaker_session, image_uri, instance_type, framework_version):
         tuner.fit(inputs, job_name=tuning_job_name)
         tuner.wait()
 
+
 def _assert_checkpoint_exists_v2(region, model_dir, checkpoint_number):
     """
     Checking for v2 style checkpoints i.e. checkpoint and .index files
@@ -128,6 +129,7 @@ def _assert_checkpoint_exists_v2(region, model_dir, checkpoint_number):
     _assert_s3_file_exists(region, os.path.join(model_dir, 'checkpoint'))
     _assert_s3_file_exists(region,
                            os.path.join(model_dir, 'model.ckpt-{}.index'.format(checkpoint_number)))
+
 
 def _assert_checkpoint_exists(region, model_dir, checkpoint_number):
     _assert_s3_file_exists(region, os.path.join(model_dir, "graph.pbtxt"))
