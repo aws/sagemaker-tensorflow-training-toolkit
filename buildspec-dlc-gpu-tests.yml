@@ -8,7 +8,7 @@ env:
     GITHUB_REPO: 'sagemaker-tensorflow-training-toolkit'
     DLC_ACCOUNT: '763104351884'
     SETUP_FILE: 'setup_cmds.sh'
-    SETUP_CMDS: '#!/bin/bash\npython3.7 -m pip install --upgrade pip==20.3.1\npython3.7 -m pip install -U .\npython3.7 -m pip install -U .[test]'
+    SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip==20.3.1\npython3.6 -m pip install -U .\npython3.6 -m pip install -U .[test]'
 
 phases:
   pre_build:
@@ -32,7 +32,7 @@ phases:
       - TEST_OPTS=" --dockerfile-type dlc.gpu --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --account-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
 
       # build DLC GPU image because the base DLC image is too big and takes too long to build as part of the test
-      - python3.7 setup.py sdist
+      - python3.6 setup.py sdist
       - build_dir="test/container/$FRAMEWORK_VERSION"
       - $(aws ecr get-login --registry-ids $DLC_ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
@@ -48,12 +48,12 @@ phases:
 
       # run dlc gpu local tests on remote host
       - printf "$SETUP_CMDS" > $SETUP_FILE
-      - dlc_cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/local $TEST_OPTS"
+      - dlc_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/local $TEST_OPTS"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-dlc-gpu-tests.yml"
 
       # run GPU sagemaker integration tests
-      - test_cmd="IGNORE_COVERAGE=- tox -e py37 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $GPU_INSTANCE_TYPE $TEST_OPTS"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $GPU_INSTANCE_TYPE $TEST_OPTS"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-dlc-gpu-tests.yml"
     finally:
       # shut down remote GPU instance
