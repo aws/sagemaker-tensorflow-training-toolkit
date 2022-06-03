@@ -52,9 +52,7 @@ def distributed_training_env():
     env = simple_training_env()
 
     env.hosts = HOST_LIST
-    env.additional_framework_parameters = {
-        training.SAGEMAKER_PARAMETER_SERVER_ENABLED: True
-    }
+    env.additional_framework_parameters = {training.SAGEMAKER_PARAMETER_SERVER_ENABLED: True}
     return env
 
 
@@ -98,9 +96,7 @@ def test_single_machine(run_module, single_machine_training_env):
 
 @patch("sagemaker_training.entry_point.run")
 def test_train_horovod(run_module, single_machine_training_env):
-    single_machine_training_env.additional_framework_parameters[
-        "sagemaker_mpi_enabled"
-    ] = True
+    single_machine_training_env.additional_framework_parameters["sagemaker_mpi_enabled"] = True
 
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
     run_module.assert_called_with(
@@ -115,7 +111,9 @@ def test_train_horovod(run_module, single_machine_training_env):
 
 @patch("sagemaker_training.entry_point.run")
 def test_train_smdataparallel(run_module, single_machine_training_env):
-    single_machine_training_env.additional_framework_parameters["sagemaker_distributed_dataparallel_enabled"] = True
+    single_machine_training_env.additional_framework_parameters[
+        "sagemaker_distributed_dataparallel_enabled"
+    ] = True
 
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
     run_module.assert_called_with(
@@ -138,9 +136,7 @@ def test_train_smdataparallel(run_module, single_machine_training_env):
 @patch("sagemaker_training.entry_point.run")
 @patch("multiprocessing.Process", lambda target: target())
 @patch("time.sleep", MagicMock())
-def test_train_distributed_master(
-    run, tf_server, cluster_spec, distributed_training_env
-):
+def test_train_distributed_master(run, tf_server, cluster_spec, distributed_training_env):
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
     cluster_spec.assert_called_with(
@@ -187,9 +183,7 @@ def test_train_distributed_master(
 @patch("sagemaker_training.entry_point.run")
 @patch("multiprocessing.Process", lambda target: target())
 @patch("time.sleep", MagicMock())
-def test_train_distributed_worker(
-    run, tf_server, cluster_spec, distributed_training_env
-):
+def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_training_env):
     distributed_training_env.current_host = HOST2
 
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
@@ -285,9 +279,8 @@ def test_build_tf_config_for_ps():
 def test_build_tf_config_for_ps_error():
     with pytest.raises(ValueError) as error:
         training._build_tf_config_for_ps([HOST1], HOST1, ps_task=True)
-    assert (
-        "Cannot have a ps task if there are no parameter servers in the cluster"
-        in str(error.value)
+    assert "Cannot have a ps task if there are no parameter servers in the cluster" in str(
+        error.value
     )
 
 
@@ -309,9 +302,7 @@ def test_log_model_missing_warning_no_model(logger):
 
 @patch("sagemaker_tensorflow_container.training.logger")
 def test_log_model_missing_warning_wrong_format(logger):
-    training._log_model_missing_warning(
-        os.path.join(RESOURCE_PATH, "test_dir_wrong_model")
-    )
+    training._log_model_missing_warning(os.path.join(RESOURCE_PATH, "test_dir_wrong_model"))
     logger.warn.assert_called_with(
         "Your model will NOT be servable with SageMaker TensorFlow Serving container. "
         "The model artifact was not saved in the TensorFlow "
@@ -322,22 +313,16 @@ def test_log_model_missing_warning_wrong_format(logger):
 
 @patch("sagemaker_tensorflow_container.training.logger")
 def test_log_model_missing_warning_wrong_parent_dir(logger):
-    training._log_model_missing_warning(
-        os.path.join(RESOURCE_PATH, "test_dir_wrong_parent_dir")
-    )
+    training._log_model_missing_warning(os.path.join(RESOURCE_PATH, "test_dir_wrong_parent_dir"))
     logger.warn.assert_called_with(
         "Your model will NOT be servable with SageMaker TensorFlow Serving containers. "
-        'The SavedModel bundle is under directory "{}", not a numeric name.'.format(
-            "not-digit"
-        )
+        'The SavedModel bundle is under directory "{}", not a numeric name.'.format("not-digit")
     )
 
 
 @patch("sagemaker_tensorflow_container.training.logger")
 def test_log_model_missing_warning_correct(logger):
-    training._log_model_missing_warning(
-        os.path.join(RESOURCE_PATH, "test_dir_correct_model")
-    )
+    training._log_model_missing_warning(os.path.join(RESOURCE_PATH, "test_dir_correct_model"))
     logger.warn.assert_not_called()
 
 
@@ -410,9 +395,7 @@ def test_main_tuning_model_dir(
     training_env.return_value = single_machine_training_env
     os.environ["SAGEMAKER_REGION"] = REGION
     training.main()
-    expected_model_dir = "{}/{}/model".format(
-        MODEL_DIR, single_machine_training_env.job_name
-    )
+    expected_model_dir = "{}/{}/model".format(MODEL_DIR, single_machine_training_env.job_name)
     configure_s3_env.assert_called_once_with(expected_model_dir, REGION)
 
 

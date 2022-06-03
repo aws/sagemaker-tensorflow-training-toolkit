@@ -21,13 +21,9 @@ from sagemaker.utils import unique_name_from_base
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
 
-def test_multi_node(
-    sagemaker_session, instance_type, image_uri, tmpdir, framework_version
-):
+def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framework_version):
     estimator = TensorFlow(
-        entry_point=os.path.join(
-            RESOURCE_PATH, "multi_worker_mirrored", "train_sample.py"
-        ),
+        entry_point=os.path.join(RESOURCE_PATH, "multi_worker_mirrored", "train_sample.py"),
         role="SageMakerRole",
         instance_type=instance_type,
         instance_count=2,
@@ -35,7 +31,7 @@ def test_multi_node(
         framework_version=framework_version,
         py_version="py3",
         hyperparameters={
-            "sagemaker_multi_worker_mirrored_enabled": True,
+            "sagemaker_multi_worker_mirrored_strategy_enabled": True,
         },
         sagemaker_session=sagemaker_session,
     )
