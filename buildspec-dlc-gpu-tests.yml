@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     FRAMEWORK_VERSION: '2.7.1'
-    GPU_INSTANCE_TYPE: 'ml.p3.16xlarge'
+    GPU_INSTANCE_TYPE: 'ml.p3.2xlarge'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-tensorflow-training-toolkit'
     DLC_ACCOUNT: '763104351884'

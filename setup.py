@@ -45,7 +45,7 @@ test_dependencies = [
     "botocore==1.19.34",
     "requests-mock",
     "awscli==1.18.194",
-    "protobuf==3.19.4"
+    "protobuf>=3.20,<3.21"
 ]
 
 if sys.version_info.major > 2:
