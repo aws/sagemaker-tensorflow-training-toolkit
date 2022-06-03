@@ -23,7 +23,7 @@ RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
 def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framework_version):
     estimator = TensorFlow(
-        entry_point=os.path.join(RESOURCE_PATH, "multi_worker_mirrored", "train_sample.py"),
+        entry_point=os.path.join(RESOURCE_PATH, "multi_worker_mirrored", "train_dummy.py"),
         role="SageMakerRole",
         instance_type=instance_type,
         instance_count=2,
