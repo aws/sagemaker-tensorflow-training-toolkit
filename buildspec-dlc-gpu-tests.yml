@@ -24,6 +24,7 @@ phases:
     commands:
       - TOX_PARALLEL_NO_SPINNER=1
       - PY_COLORS=0
+
       # define tags
       - DLC_GPU_TAG="$FRAMEWORK_VERSION-dlc-gpu-$BUILD_ID"
 
