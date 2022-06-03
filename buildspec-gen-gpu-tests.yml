@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     FRAMEWORK_VERSION: '2.7.1'
-    GPU_INSTANCE_TYPE: 'ml.p3.2xlarge'
+    GPU_INSTANCE_TYPE: 'ml.p3.8xlarge'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-tensorflow-training-toolkit'
     DLC_ACCOUNT: '763104351884'
@@ -52,7 +52,7 @@ phases:
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-gpu-tests.yml"
 
       # run GPU sagemaker integration tests
-      - test_cmd="IGNORE_COVERAGE=- tox -e py38 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $GPU_INSTANCE_TYPE $TEST_OPTS"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py38 -- test/integration/sagemaker -n auto --reruns 1 --reruns-delay 15 --instance-type $GPU_INSTANCE_TYPE $TEST_OPTS"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-gen-gpu-tests.yml"
     finally:
       # shut down remote GPU instance

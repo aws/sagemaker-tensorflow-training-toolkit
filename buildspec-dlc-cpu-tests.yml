@@ -31,7 +31,7 @@ phases:
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-dlc-cpu-tests.yml"
 
       # run sagemaker CPU sagemaker integration tests
-      - test_cmd="IGNORE_COVERAGE=- tox -e py38 -- test/integration/sagemaker -n auto --reruns 3 --reruns-delay 15 --instance-type $CPU_INSTANCE_TYPE $TEST_OPTS"
+      - test_cmd="IGNORE_COVERAGE=- tox -e py38 -- test/integration/sagemaker -n auto --reruns 1 --reruns-delay 15 --instance-type $CPU_INSTANCE_TYPE $TEST_OPTS"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-dlc-cpu-tests.yml"
     finally:
       # remove ECR image
