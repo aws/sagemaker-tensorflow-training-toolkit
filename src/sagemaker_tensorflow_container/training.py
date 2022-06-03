@@ -88,7 +88,7 @@ def _build_tf_config_for_ps(hosts, current_host, ps_task=False):
     return tf_config
 
 
-def _build_tf_config_for_mwm(hosts, current_host):
+def _build_tf_config_for_mwms(hosts, current_host):
     """Builds a dictionary containing cluster information based on number of workers
     for Multi Worker Mirrored distribution strategy.
 
@@ -181,7 +181,7 @@ def train(env, cmd_args):
 
     elif multi_worker_mirrored_enabled:
 
-        tf_config = _build_tf_config_for_mwm(hosts=env.hosts, current_host=env.current_host)
+        tf_config = _build_tf_config_for_mwms(hosts=env.hosts, current_host=env.current_host)
         logger.info("Running distributed training job with multi_worker_mirrored setup")
 
     # Run

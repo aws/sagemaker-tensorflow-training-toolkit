@@ -240,13 +240,13 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     )
 
 
-def test_build_tf_config_for_mwm():
-    assert training._build_tf_config_for_mwm(HOST_LIST, HOST1) == {
+def test_build_tf_config_for_mwms():
+    assert training._build_tf_config_for_mwms(HOST_LIST, HOST1) == {
         "cluster": CLUSTER_WITH_MWMS,
         "environment": "cloud",
         "task": {"index": HOST_LIST.index(HOST1), "type": "worker"},
     }
-    assert training._build_tf_config_for_mwm(HOST_LIST, HOST2) == {
+    assert training._build_tf_config_for_mwms(HOST_LIST, HOST2) == {
         "cluster": CLUSTER_WITH_MWMS,
         "environment": "cloud",
         "task": {"index": HOST_LIST.index(HOST2), "type": "worker"},
