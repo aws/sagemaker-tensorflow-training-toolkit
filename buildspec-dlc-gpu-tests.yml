@@ -49,7 +49,7 @@ phases:
       # run dlc gpu local tests on remote host
       - printf "$SETUP_CMDS" > $SETUP_FILE
       - dlc_cmd="IGNORE_COVERAGE=- tox -e py38 -- test/integration/local $TEST_OPTS"
-      - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
+      - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\" --python-version 3.8"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec-dlc-gpu-tests.yml"
 
       # run GPU sagemaker integration tests
