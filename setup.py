@@ -40,7 +40,6 @@ test_dependencies = [
     "sagemaker[local]>=2",
     "tensorflow<2.4",
     "docker-compose",
-    "protobuf>=3.20,<3.21",
     "boto3==1.16.34",
     "python-dateutil>=2.1,<2.8.1",
     "botocore==1.19.34",
