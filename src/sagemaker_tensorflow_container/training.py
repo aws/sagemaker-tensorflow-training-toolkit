@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 
 SAGEMAKER_PARAMETER_SERVER_ENABLED = "sagemaker_parameter_server_enabled"
 SAGEMAKER_DISTRIBUTED_DATAPARALLEL_ENABLED = "sagemaker_distributed_dataparallel_enabled"
-SAGEMAKER_MULTI_WORKER_MIRRORED_ENABLED = "sagemaker_multi_worker_mirrored_strategy_enabled"
+SAGEMAKER_MULTI_WORKER_MIRRORED_STRATEGY_ENABLED = (
+    "sagemaker_multi_worker_mirrored_strategy_enabled"
+)
 MODEL_DIR = "/opt/ml/model"
 
 
@@ -165,7 +167,7 @@ def train(env, cmd_args):
         and len(env.hosts) > 1
     )
     multi_worker_mirrored_enabled = env.additional_framework_parameters.get(
-        SAGEMAKER_MULTI_WORKER_MIRRORED_ENABLED, False
+        SAGEMAKER_MULTI_WORKER_MIRRORED_STRATEGY_ENABLED, False
     )
     sagemaker_distributed_dataparallel_enabled = env.additional_framework_parameters.get(
         SAGEMAKER_DISTRIBUTED_DATAPARALLEL_ENABLED, False
