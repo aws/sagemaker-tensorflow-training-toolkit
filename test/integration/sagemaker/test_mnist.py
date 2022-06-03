@@ -65,7 +65,7 @@ def test_distributed_mnist_no_ps(sagemaker_session, image_uri, instance_type, fr
 
 def test_distributed_mnist_ps(sagemaker_session, image_uri, instance_type, framework_version):
     resource_path = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
-    script = os.path.join(resource_path, "mnist", "mnist_estimator.py")
+    script = os.path.join(resource_path, "mnist", "mnist_custom.py")
     estimator = TensorFlow(
         entry_point=script,
         role="SageMakerRole",
@@ -81,8 +81,7 @@ def test_distributed_mnist_ps(sagemaker_session, image_uri, instance_type, frame
         key_prefix="scriptmode/mnist-distributed",
     )
     estimator.fit(inputs, job_name=unique_name_from_base("test-tf-sm-distributed-mnist"))
-    _assert_checkpoint_exists(sagemaker_session.boto_region_name, estimator.model_dir, 0)
-    _assert_s3_file_exists(sagemaker_session.boto_region_name, estimator.model_data)
+    _assert_checkpoint_exists_v2(sagemaker_session.boto_region_name, estimator.model_dir, 10)
 
 
 def test_tuning(sagemaker_session, image_uri, instance_type, framework_version):
@@ -121,6 +120,15 @@ def test_tuning(sagemaker_session, image_uri, instance_type, framework_version):
         tuning_job_name = unique_name_from_base("test-tf-sm-tuning", max_length=32)
         tuner.fit(inputs, job_name=tuning_job_name)
         tuner.wait()
+
+
+def _assert_checkpoint_exists_v2(region, model_dir, checkpoint_number):
+    """
+    Checking for v2 style checkpoints i.e. checkpoint and .index files
+    """
+    _assert_s3_file_exists(region, os.path.join(model_dir, 'checkpoint'))
+    _assert_s3_file_exists(region,
+                           os.path.join(model_dir, 'model.ckpt-{}.index'.format(checkpoint_number)))
 
 
 def _assert_checkpoint_exists(region, model_dir, checkpoint_number):
