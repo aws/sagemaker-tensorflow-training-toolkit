@@ -173,6 +173,8 @@ def train(env, cmd_args):
         SAGEMAKER_DISTRIBUTED_DATAPARALLEL_ENABLED, False
     )
 
+    env_vars = env.to_env_vars()
+
     # Setup
     if parameter_server_enabled:
 
@@ -181,7 +183,9 @@ def train(env, cmd_args):
 
     elif multi_worker_mirrored_strategy_enabled:
 
-        tf_config = _build_tf_config_for_mwms(hosts=env.hosts, current_host=env.current_host)
+        env_vars["TF_CONFIG"] = _build_tf_config_for_mwms(
+            hosts=env.hosts, current_host=env.current_host
+        )
         logger.info("Running distributed training job with multi_worker_mirrored_strategy setup")
 
     # Run
@@ -210,7 +214,7 @@ def train(env, cmd_args):
             uri=env.module_dir,
             user_entry_point=env.user_entry_point,
             args=cmd_args,
-            env_vars=env.to_env_vars(),
+            env_vars=env_vars,
             capture_error=True,
             runner_type=runner_type,
         )
