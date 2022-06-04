@@ -38,6 +38,5 @@ def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framewo
     estimator.fit(job_name=unique_name_from_base("test-tf-mwms"))
     captured = capsys.readouterr()
     logs = captured.out + captured.err
-    assert 'Running distributed training job with multi_worker_mirrored_strategy setup' in logs
-    assert 'TF_CONFIG=' in logs
-    
+    assert "Running distributed training job with multi_worker_mirrored_strategy setup" in logs
+    assert "TF_CONFIG=" in logs
