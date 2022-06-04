@@ -23,4 +23,4 @@ def dataset_fn(ctx):
 dist_dataset = strategy.distribute_datasets_from_function(dataset_fn)
 
 model.compile()
-model.fit(dist_dataset)
+model.fit(dist_dataset, epochs=3, steps_per_epoch=100)
