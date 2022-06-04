@@ -74,7 +74,7 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     install_requires=[
-        "sagemaker-training>=4.1.0",
+        "sagemaker-training>=4.1.3",
         "numpy",
         "scipy",
         "sklearn",

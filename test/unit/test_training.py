@@ -35,6 +35,8 @@ CLUSTER_WITH_PS = {
     "worker": ["{}:2222".format(HOST2)],
     "ps": ["{}:2223".format(HOST1), "{}:2223".format(HOST2)],
 }
+CLUSTER_WITH_MWMS = {"worker": ["{}:8890".format(HOST) for HOST in HOST_LIST]}
+
 MASTER_TASK = {"index": 0, "type": "master"}
 WORKER_TASK = {"index": 0, "type": "worker"}
 PS_TASK_1 = {"index": 0, "type": "ps"}
@@ -109,7 +111,9 @@ def test_train_horovod(run_module, single_machine_training_env):
 
 @patch("sagemaker_training.entry_point.run")
 def test_train_smdataparallel(run_module, single_machine_training_env):
-    single_machine_training_env.additional_framework_parameters["sagemaker_distributed_dataparallel_enabled"] = True
+    single_machine_training_env.additional_framework_parameters[
+        "sagemaker_distributed_dataparallel_enabled"
+    ] = True
 
     training.train(single_machine_training_env, MODEL_DIR_CMD_LIST)
     run_module.assert_called_with(
@@ -124,7 +128,8 @@ def test_train_smdataparallel(run_module, single_machine_training_env):
 
 @pytest.mark.skip_on_pipeline
 @pytest.mark.skipif(
-    sys.version_info.major != 3, reason="Skip this for python 2 because of dict key order mismatch"
+    sys.version_info.major != 3,
+    reason="Skip this for python 2 because of dict key order mismatch",
 )
 @patch("tensorflow.train.ClusterSpec")
 @patch("tensorflow.distribute.Server")
@@ -135,7 +140,11 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
     cluster_spec.assert_called_with(
-        {"worker": ["host2:2222"], "master": ["host1:2222"], "ps": ["host1:2223", "host2:2223"]}
+        {
+            "worker": ["host2:2222"],
+            "master": ["host1:2222"],
+            "ps": ["host1:2223", "host2:2223"],
+        }
     )
 
     tf_server.assert_called_with(
@@ -166,7 +175,8 @@ def test_train_distributed_master(run, tf_server, cluster_spec, distributed_trai
 
 @pytest.mark.skip_on_pipeline
 @pytest.mark.skipif(
-    sys.version_info.major != 3, reason="Skip this for python 2 because of dict key order mismatch"
+    sys.version_info.major != 3,
+    reason="Skip this for python 2 because of dict key order mismatch",
 )
 @patch("tensorflow.train.ClusterSpec")
 @patch("tensorflow.distribute.Server")
@@ -179,7 +189,11 @@ def test_train_distributed_worker(run, tf_server, cluster_spec, distributed_trai
     training.train(distributed_training_env, MODEL_DIR_CMD_LIST)
 
     cluster_spec.assert_called_with(
-        {"worker": ["host2:2222"], "master": ["host1:2222"], "ps": ["host1:2223", "host2:2223"]}
+        {
+            "worker": ["host2:2222"],
+            "master": ["host1:2222"],
+            "ps": ["host1:2223", "host2:2223"],
+        }
     )
 
     tf_server.assert_called_with(
@@ -226,32 +240,45 @@ def test_train_distributed_no_ps(run, distributed_training_env):
     )
 
 
-def test_build_tf_config():
-    assert training._build_tf_config(HOST_LIST, HOST1) == {
+def test_build_tf_config_for_mwms():
+    assert training._build_tf_config_for_mwms(HOST_LIST, HOST1) == {
+        "cluster": CLUSTER_WITH_MWMS,
+        "environment": "cloud",
+        "task": {"index": HOST_LIST.index(HOST1), "type": "worker"},
+    }
+    assert training._build_tf_config_for_mwms(HOST_LIST, HOST2) == {
+        "cluster": CLUSTER_WITH_MWMS,
+        "environment": "cloud",
+        "task": {"index": HOST_LIST.index(HOST2), "type": "worker"},
+    }
+
+
+def test_build_tf_config_for_ps():
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST1) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": MASTER_TASK,
     }
-    assert training._build_tf_config(HOST_LIST, HOST1, ps_task=True) == {
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST1, ps_task=True) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": PS_TASK_1,
     }
-    assert training._build_tf_config(HOST_LIST, HOST2) == {
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST2) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": WORKER_TASK,
     }
-    assert training._build_tf_config(HOST_LIST, HOST2, ps_task=True) == {
+    assert training._build_tf_config_for_ps(HOST_LIST, HOST2, ps_task=True) == {
         "cluster": CLUSTER_WITH_PS,
         "environment": "cloud",
         "task": PS_TASK_2,
     }
 
 
-def test_build_tf_config_error():
+def test_build_tf_config_for_ps_error():
     with pytest.raises(ValueError) as error:
-        training._build_tf_config([HOST1], HOST1, ps_task=True)
+        training._build_tf_config_for_ps([HOST1], HOST1, ps_task=True)
     assert "Cannot have a ps task if there are no parameter servers in the cluster" in str(
         error.value
     )
@@ -327,7 +354,10 @@ def test_main(
 @patch("sagemaker_tensorflow_container.training.train")
 @patch("logging.Logger.setLevel")
 @patch("sagemaker_training.environment.Environment")
-@patch("sagemaker_training.environment.read_hyperparameters", return_value={"model_dir": MODEL_DIR})
+@patch(
+    "sagemaker_training.environment.read_hyperparameters",
+    return_value={"model_dir": MODEL_DIR},
+)
 @patch("sagemaker_tensorflow_container.s3_utils.configure")
 def test_main_simple_training_model_dir(
     configure_s3_env,
