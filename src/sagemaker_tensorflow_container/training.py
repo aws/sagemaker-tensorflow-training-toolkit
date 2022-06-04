@@ -183,8 +183,8 @@ def train(env, cmd_args):
 
     elif multi_worker_mirrored_strategy_enabled:
 
-        env_vars["TF_CONFIG"] = _build_tf_config_for_mwms(
-            hosts=env.hosts, current_host=env.current_host
+        env_vars["TF_CONFIG"] = json.dumps(
+            _build_tf_config_for_mwms(hosts=env.hosts, current_host=env.current_host)
         )
         logger.info("Running distributed training job with multi_worker_mirrored_strategy setup")
 
