@@ -21,7 +21,7 @@ from sagemaker.utils import unique_name_from_base
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
 
-def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framework_version):
+def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framework_version, capsys):
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, "multi_worker_mirrored", "train_dummy.py"),
         role="SageMakerRole",
@@ -36,4 +36,8 @@ def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framewo
         sagemaker_session=sagemaker_session,
     )
     estimator.fit(job_name=unique_name_from_base("test-tf-mwms"))
-    raise NotImplementedError("Yet to add assertion")
+    captured = capsys.readouterr()
+    logs = captured.out + captured.err
+    assert 'Running distributed training job with multi_worker_mirrored_strategy setup' in logs
+    assert 'TF_CONFIG=' in logs
+    
