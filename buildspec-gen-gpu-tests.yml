@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '2.7.1'
+    FRAMEWORK_VERSION: '2.9.1'
     GPU_INSTANCE_TYPE: 'ml.p3.16xlarge'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-tensorflow-training-toolkit'
