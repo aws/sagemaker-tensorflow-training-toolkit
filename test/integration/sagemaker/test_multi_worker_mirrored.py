@@ -14,10 +14,10 @@ from __future__ import absolute_import
 
 import os
 
+import pytest
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.utils import unique_name_from_base
 
-import pytest
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
