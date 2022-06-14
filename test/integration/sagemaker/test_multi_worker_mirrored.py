@@ -17,6 +17,7 @@ import os
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.utils import unique_name_from_base
 
+import pytest
 
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
@@ -44,19 +45,20 @@ def test_keras_example(
     assert "TF_CONFIG=" in logs
 
 
+@pytest.mark.skip_cpu
 def test_tf_model_garden(
     sagemaker_session, instance_type, image_uri, tmpdir, framework_version, capsys
 ):
     epochs = 10
-    batch_size = 512
-    train_steps = int(1024 * epochs / batch_size)
+    global_batch_size = 64
+    train_steps = int(1024 * epochs / global_batch_size)
     steps_per_loop = train_steps // 10
     overrides = (
         f"runtime.enable_xla=False,"
         f"runtime.num_gpus=1,"
         f"runtime.distribution_strategy=multi_worker_mirrored,"
         f"runtime.mixed_precision_dtype=float16,"
-        f"task.train_data.global_batch_size={batch_size},"
+        f"task.train_data.global_batch_size={global_batch_size},"
         f"task.train_data.input_path=/opt/ml/input/data/training/validation*,"
         f"task.train_data.cache=True,"
         f"trainer.train_steps={train_steps},"
