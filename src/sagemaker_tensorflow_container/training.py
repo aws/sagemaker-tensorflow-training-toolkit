@@ -103,7 +103,7 @@ def _build_tf_config_for_mwms(hosts, current_host):
     """
     workers = hosts
 
-    def host_addresses(hosts, port=8890):
+    def host_addresses(hosts, port=2222):
         return ["{}:{}".format(host, port) for host in hosts]
 
     tf_config = {"cluster": {}, "environment": "cloud"}
