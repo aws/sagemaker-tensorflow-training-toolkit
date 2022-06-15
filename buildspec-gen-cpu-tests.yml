@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '2.7.1'
+    FRAMEWORK_VERSION: '2.9.1'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
     ECR_REPO: 'sagemaker-test'
 

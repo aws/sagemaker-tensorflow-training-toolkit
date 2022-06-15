@@ -35,7 +35,7 @@ CLUSTER_WITH_PS = {
     "worker": ["{}:2222".format(HOST2)],
     "ps": ["{}:2223".format(HOST1), "{}:2223".format(HOST2)],
 }
-CLUSTER_WITH_MWMS = {"worker": ["{}:8890".format(HOST) for HOST in HOST_LIST]}
+CLUSTER_WITH_MWMS = {"worker": ["{}:2222".format(HOST) for HOST in HOST_LIST]}
 
 MASTER_TASK = {"index": 0, "type": "master"}
 WORKER_TASK = {"index": 0, "type": "worker"}

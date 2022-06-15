@@ -38,13 +38,13 @@ test_dependencies = [
     "pytest-rerunfailures",
     "mock",
     "sagemaker[local]>=2",
-    "tensorflow<2.4",
+    "tensorflow>=2.9",
     "docker-compose",
-    "boto3==1.16.34",
+    "boto3",
     "python-dateutil>=2.1,<2.8.1",
-    "botocore==1.19.34",
+    "botocore",
     "requests-mock",
-    "awscli==1.18.194",
+    "awscli",
     "protobuf>=3.20,<3.21"
 ]
 

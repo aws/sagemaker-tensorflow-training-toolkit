@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import os
 
+import pytest
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.utils import unique_name_from_base
 
@@ -21,7 +22,9 @@ from sagemaker.utils import unique_name_from_base
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "resources")
 
 
-def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framework_version, capsys):
+def test_keras_example(
+    sagemaker_session, instance_type, image_uri, tmpdir, framework_version, capsys
+):
     estimator = TensorFlow(
         entry_point=os.path.join(RESOURCE_PATH, "multi_worker_mirrored", "train_dummy.py"),
         role="SageMakerRole",
@@ -36,6 +39,65 @@ def test_multi_node(sagemaker_session, instance_type, image_uri, tmpdir, framewo
         sagemaker_session=sagemaker_session,
     )
     estimator.fit(job_name=unique_name_from_base("test-tf-mwms"))
+    captured = capsys.readouterr()
+    logs = captured.out + captured.err
+    assert "Running distributed training job with multi_worker_mirrored_strategy setup" in logs
+    assert "TF_CONFIG=" in logs
+
+
+@pytest.mark.skip_cpu
+def test_tf_model_garden(
+    sagemaker_session, instance_type, image_uri, tmpdir, framework_version, capsys
+):
+    epochs = 1
+    global_batch_size = 64
+    train_steps = int(10**5 * epochs / global_batch_size)
+    steps_per_loop = train_steps // 100
+    overrides = (
+        f"runtime.enable_xla=False,"
+        f"runtime.num_gpus=1,"
+        f"runtime.distribution_strategy=multi_worker_mirrored,"
+        f"runtime.mixed_precision_dtype=float16,"
+        f"task.train_data.global_batch_size={global_batch_size},"
+        f"task.train_data.input_path=/opt/ml/input/data/training/train-000*,"
+        f"task.train_data.cache=True,"
+        f"trainer.train_steps={train_steps},"
+        f"trainer.steps_per_loop={steps_per_loop},"
+        f"trainer.summary_interval={steps_per_loop},"
+        f"trainer.checkpoint_interval={train_steps},"
+        f"task.model.backbone.type=resnet,"
+        f"task.model.backbone.resnet.model_id=50"
+    )
+    estimator = TensorFlow(
+        git_config={
+            "repo": "https://github.com/tensorflow/models.git",
+            "branch": "v2.9.2",
+        },
+        source_dir=".",
+        entry_point="official/vision/train.py",
+        model_dir=False,
+        instance_type=instance_type,
+        instance_count=2,
+        image_uri=image_uri,
+        hyperparameters={
+            "sagemaker_multi_worker_mirrored_strategy_enabled": True,
+            "experiment": "resnet_imagenet",
+            "config_file": "official/vision/configs/experiments/image_classification/imagenet_resnet50_gpu.yaml",
+            "mode": "train",
+            "model_dir": "/opt/ml/model",
+            "params_override": overrides,
+        },
+        environment={
+            'NCCL_DEBUG': 'INFO',
+        },
+        max_run=60 * 60 * 12,  # 1 hour
+        role="SageMakerRole",
+        volume_size=400,
+    )
+    estimator.fit(
+        inputs="s3://collection-of-ml-datasets/Imagenet/TFRecords/train",
+        job_name=unique_name_from_base("test-tf-mwms"),
+    )
     captured = capsys.readouterr()
     logs = captured.out + captured.err
     assert "Running distributed training job with multi_worker_mirrored_strategy setup" in logs
