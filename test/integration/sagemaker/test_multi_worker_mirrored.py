@@ -51,7 +51,7 @@ def test_tf_model_garden(
 ):
     epochs = 1
     global_batch_size = 64
-    train_steps = int(10**6 * epochs / global_batch_size)
+    train_steps = int(10**5 * epochs / global_batch_size)
     steps_per_loop = train_steps // 100
     overrides = (
         f"runtime.enable_xla=False,"
@@ -59,7 +59,7 @@ def test_tf_model_garden(
         f"runtime.distribution_strategy=multi_worker_mirrored,"
         f"runtime.mixed_precision_dtype=float16,"
         f"task.train_data.global_batch_size={global_batch_size},"
-        f"task.train_data.input_path=/opt/ml/input/data/training/train*,"
+        f"task.train_data.input_path=/opt/ml/input/data/training/train-000*,"
         f"task.train_data.cache=True,"
         f"trainer.train_steps={train_steps},"
         f"trainer.steps_per_loop={steps_per_loop},"
