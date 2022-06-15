@@ -49,17 +49,17 @@ def test_keras_example(
 def test_tf_model_garden(
     sagemaker_session, instance_type, image_uri, tmpdir, framework_version, capsys
 ):
-    epochs = 10
+    epochs = 1
     global_batch_size = 64
-    train_steps = int(1024 * epochs / global_batch_size)
-    steps_per_loop = train_steps // 10
+    train_steps = int(10**6 * epochs / global_batch_size)
+    steps_per_loop = train_steps // 100
     overrides = (
         f"runtime.enable_xla=False,"
         f"runtime.num_gpus=1,"
         f"runtime.distribution_strategy=multi_worker_mirrored,"
         f"runtime.mixed_precision_dtype=float16,"
         f"task.train_data.global_batch_size={global_batch_size},"
-        f"task.train_data.input_path=/opt/ml/input/data/training/validation*,"
+        f"task.train_data.input_path=/opt/ml/input/data/training/train*,"
         f"task.train_data.cache=True,"
         f"trainer.train_steps={train_steps},"
         f"trainer.steps_per_loop={steps_per_loop},"
@@ -87,11 +87,14 @@ def test_tf_model_garden(
             "model_dir": "/opt/ml/model",
             "params_override": overrides,
         },
-        max_run=60 * 60 * 1,  # 1 hour
+        environment={
+            'NCCL_DEBUG': 'INFO',
+        },
+        max_run=60 * 60 * 12,  # 1 hour
         role="SageMakerRole",
     )
     estimator.fit(
-        inputs="s3://collection-of-ml-datasets/Imagenet/TFRecords/validation",
+        inputs="s3://collection-of-ml-datasets/Imagenet/TFRecords/train",
         job_name=unique_name_from_base("test-tf-mwms"),
     )
     captured = capsys.readouterr()
