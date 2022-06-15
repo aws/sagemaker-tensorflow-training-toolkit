@@ -92,6 +92,7 @@ def test_tf_model_garden(
         },
         max_run=60 * 60 * 12,  # 1 hour
         role="SageMakerRole",
+        volume_size=400,
     )
     estimator.fit(
         inputs="s3://collection-of-ml-datasets/Imagenet/TFRecords/train",
