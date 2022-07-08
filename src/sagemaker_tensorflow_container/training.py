@@ -176,17 +176,20 @@ def train(env, cmd_args):
     env_vars = env.to_env_vars()
 
     # Setup
-    if parameter_server_enabled:
+    if env.current_instance_group in env.distribution_instance_groups:
+        if parameter_server_enabled:
 
-        tf_config = _build_tf_config_for_ps(hosts=env.hosts, current_host=env.current_host)
-        logger.info("Running distributed training job with parameter servers")
+            tf_config = _build_tf_config_for_ps(hosts=env.distribution_hosts, current_host=env.current_host)
+            logger.info("Running distributed training job with parameter servers")
 
-    elif multi_worker_mirrored_strategy_enabled:
+        elif multi_worker_mirrored_strategy_enabled:
 
-        env_vars["TF_CONFIG"] = json.dumps(
-            _build_tf_config_for_mwms(hosts=env.hosts, current_host=env.current_host)
-        )
-        logger.info("Running distributed training job with multi_worker_mirrored_strategy setup")
+            env_vars["TF_CONFIG"] = json.dumps(
+                _build_tf_config_for_mwms(hosts=env.distribution_hosts, current_host=env.current_host)
+            )
+            logger.info("Running distributed training job with multi_worker_mirrored_strategy setup")
+
+    runner_type = runner.ProcessRunnerType
 
     # Run
     if parameter_server_enabled:
@@ -200,15 +203,13 @@ def train(env, cmd_args):
             _wait_until_master_is_down(env.hosts[0])
 
     else:
+        if env.current_instance_group in env.distribution_instance_groups:
+            mpi_enabled = env.additional_framework_parameters.get("sagemaker_mpi_enabled")
 
-        mpi_enabled = env.additional_framework_parameters.get("sagemaker_mpi_enabled")
-
-        if mpi_enabled:
-            runner_type = runner.MPIRunnerType
-        elif sagemaker_distributed_dataparallel_enabled:
-            runner_type = runner.SMDataParallelRunnerType
-        else:
-            runner_type = runner.ProcessRunnerType
+            if mpi_enabled:
+                runner_type = runner.MPIRunnerType
+            elif sagemaker_distributed_dataparallel_enabled:
+                runner_type = runner.SMDataParallelRunnerType
 
         entry_point.run(
             uri=env.module_dir,

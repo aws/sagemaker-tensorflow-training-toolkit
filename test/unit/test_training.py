@@ -52,6 +52,9 @@ def distributed_training_env():
     env = simple_training_env()
 
     env.hosts = HOST_LIST
+    env.current_instance_group = "test1"
+    env.distribution_hosts = ["host1", "host2"]
+    env.distribution_instance_groups = ["test1"]
     env.additional_framework_parameters = {training.SAGEMAKER_PARAMETER_SERVER_ENABLED: True}
     return env
 
@@ -63,6 +66,8 @@ def single_machine_training_env():
 
 def simple_training_env():
     env = MagicMock()
+    env.current_instance_group = "test1"
+    env.distribution_instance_groups = ["test1"]
     env.module_dir = MODULE_DIR
     env.user_entry_point = MODULE_NAME
     env.hyperparameters = {"model_dir": MODEL_DIR}
