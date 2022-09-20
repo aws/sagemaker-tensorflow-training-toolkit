@@ -39,6 +39,41 @@ To send us a pull request, please:
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
+### Committing your change
+
+We use commit messages to update the project version number and generate changelog entries, so it's important for them to follow the right format. Valid commit messages include a prefix, separated from the rest of the message by a colon and a space. Here are a few examples:
+
+```
+feature: support VPC config for hyperparameter tuning
+fix: fix flake8 errors
+documentation: add README documentation
+```
+
+Valid prefixes are listed in the table below.
+
+| Prefix          | Use for...                                                                                     |
+|----------------:|:-----------------------------------------------------------------------------------------------|
+| `breaking`      | Incompatible API changes.                                                                      |
+| `deprecation`   | Deprecating an existing API or feature, or removing something that was previously deprecated.  |
+| `feature`       | Adding a new feature.                                                                          |
+| `fix`           | Bug fixes.                                                                                     |
+| `change`        | Any other code change.                                                                         |
+| `documentation` | Documentation changes.                                                                         |
+
+Some of the prefixes allow abbreviation ; `break`, `feat`, `depr`, and `doc` are all valid. If you omit a prefix, the commit will be treated as a `change`.
+
+For the rest of the message, use imperative style and keep things concise but informative. See [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/) for guidance.
+
+
+### Sending a pull request
+
+GitHub provides additional document on [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
+
+Please remember to:
+* Use commit messages (and PR titles) that follow the guidelines under [Committing your change](#committing-your-change).
+* Send us a pull request, answering any default questions in the pull request interface.
+* Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
+
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws/sagemaker-tensorflow-training-toolkit/labels/help%20wanted) issues is a great place to start. 
