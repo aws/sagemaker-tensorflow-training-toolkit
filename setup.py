@@ -31,7 +31,7 @@ def read_version():
 
 test_dependencies = [
     "tox",
-    "flake8",
+    "flake8==4.0.1",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
