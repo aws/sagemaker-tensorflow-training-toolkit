@@ -77,7 +77,7 @@ setup(
         "sagemaker-training>=4.1.3",
         "numpy",
         "scipy",
-        "sklearn",
+        "scikit-learn",
         "pandas",
         "Pillow",
         "h5py",
