@@ -1,5 +1,11 @@
 # Changelog
 
+## v20.4.1 (2022-12-06)
+
+### Bug Fixes and Other Changes
+
+ * Update deprecated dependency package name from sklearn to scikit-learn
+
 ## v20.4.0 (2022-07-08)
 
 ### Features
