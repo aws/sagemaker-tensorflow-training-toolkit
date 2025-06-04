@@ -75,7 +75,7 @@ setup(
     ],
     install_requires=[
         "sagemaker-training>=4.3.0,<=4.8.3",
-        "numpy",
+        "numpy < 1.24",
         "scipy",
         "scikit-learn",
         "pandas",
