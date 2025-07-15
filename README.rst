@@ -5,6 +5,8 @@ SageMaker TensorFlow Training Toolkit
 The SageMaker TensorFlow Training Toolkit is an open source library for making the
 TensorFlow framework run on `Amazon SageMaker <https://aws.amazon.com/documentation/sagemaker/>`__.
 
+This toolkit depends and extends the base `SageMaker Training Toolkit <https://github.com/aws/sagemaker-training-toolkit>`__ with TensorFlow specific support.
+
 This repository also contains Dockerfiles which install this library, TensorFlow, and dependencies
 for building SageMaker TensorFlow images.
 
